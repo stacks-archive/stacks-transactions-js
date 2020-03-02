@@ -1,15 +1,21 @@
 import { 
   MAX_STRING_LENGTH_BYTES,
-  PrincipalType
-} 
-from './constants';
+  PrincipalType,
+  TransactionVersion,
+  AddressHashMode
+} from './constants';
+
+import {
+  StacksPublicKey
+} from './keys';
 
 import {
   BufferArray,
   BufferReader,
   intToHexString,
   hexStringToInt,
-  exceedsMaxLengthBytes
+  exceedsMaxLengthBytes,
+  hash_p2pkh
 } from './utils';
 
 import {
@@ -35,6 +41,49 @@ export class Address extends StacksMessage {
     }
   }
 
+  static fromData(version: number, data: string): Address {
+    let address = new Address();
+    address.version = version;
+    address.data = data;
+    return address;
+  }
+
+  static fromPublicKeys(
+    version: number, 
+    hashMode: AddressHashMode,
+    numSigs: number,
+    publicKeys: Array<StacksPublicKey>
+  ): Address {
+    if (!publicKeys && publicKeys.length === 0) {
+      throw Error('Invalid number of public keys');
+    }
+
+    if (hashMode === AddressHashMode.SerializeP2PKH || 
+      hashMode === AddressHashMode.SerializeP2WPKH) 
+    {
+      if (publicKeys.length != 1 || numSigs != 1) {
+        throw Error('Invalid number of public keys or signatures');
+      }
+    }
+    
+    if (hashMode === AddressHashMode.SerializeP2WPKH ||
+      hashMode === AddressHashMode.SerializeP2WSH)
+    {
+      for (let i = 0; i < publicKeys.length; i++) {
+        if (!publicKeys[i].compressed()){
+          throw Error('Public keys must be compressed for segwit');
+        }        
+      }
+    }
+
+    switch (hashMode) {
+      case AddressHashMode.SerializeP2PKH: 
+        return Address.fromData(version, (hash_p2pkh(publicKeys[0].toString())));
+      default:
+        return new Address(""); 
+    }
+  }
+
   toC32AddressString(): string { 
     return c32address(this.version, this.data).toString();
   }
@@ -45,9 +94,8 @@ export class Address extends StacksMessage {
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
-
     bufferArray.appendHexString(this.version.toString());
-    bufferArray.appendHexString(this.data)
+    bufferArray.appendHexString(this.data);
 
     return bufferArray.concatBuffer();
   }

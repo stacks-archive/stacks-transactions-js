@@ -15,9 +15,12 @@ import {
 
 import {
   BufferArray,
-  BufferReader,
-  Sha512Trunc256sum
+  BufferReader
 } from './utils';
+
+import {
+  sha512_256
+} from './vendor/js-sha512';
 
 import {
   Payload,
@@ -39,6 +42,10 @@ import {
 import {
   PostCondition
 } from './postcondition';
+
+import {
+  StacksPrivateKey
+} from './keys';
 
 export class StacksTransaction extends StacksMessage { 
   version: TransactionVersion;
@@ -91,7 +98,7 @@ export class StacksTransaction extends StacksMessage {
 
   }
 
-  signNextOrigin(sigHash: string, privateKey: string): string {
+  signNextOrigin(sigHash: string, privateKey: StacksPrivateKey): string {
     return this.signAndAppend(
       this.auth.spendingCondition, 
       sigHash, 
@@ -101,18 +108,24 @@ export class StacksTransaction extends StacksMessage {
   }
 
   signAndAppend(
-    originCondition: SpendingCondition, 
+    condition: SpendingCondition, 
     curSigHash: string, 
     authType: AuthType,
-    privateKey: string
+    privateKey: StacksPrivateKey
   ): string {
     let {nextSig, nextSigHash} = SpendingCondition.nextSignature(
       curSigHash, 
       authType, 
-      originCondition.feeRate, 
-      originCondition.nonce, 
+      condition.feeRate, 
+      condition.nonce, 
       privateKey
     );
+    if (condition.singleSig()) {
+      condition.signature = nextSig;
+    } else {
+      // condition.pushSignature();
+    }
+
     return nextSigHash;
   }
 
@@ -122,7 +135,7 @@ export class StacksTransaction extends StacksMessage {
 
   txid(): string {
     let serialized = this.serialize();
-    return Sha512Trunc256sum(serialized.toString('hex'));
+    return sha512_256(serialized.toString('hex'));
   }
 
   serialize(): Buffer {

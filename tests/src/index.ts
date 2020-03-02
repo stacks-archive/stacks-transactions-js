@@ -1,4 +1,4 @@
-import * as test from 'tape-promise/tape';
+import test from 'tape-promise/tape';
 import { 
   StacksTransaction,
 } from '../../src/transaction';
@@ -52,7 +52,7 @@ from '../../src/constants';
 
 import {
   BufferReader,
-  Sha512Trunc256sum
+  hash_p2pkh
 } from '../../src/utils';
 
 import {
@@ -61,8 +61,13 @@ import {
 } from '../../src/keys';
 
 import {
+  TransactionSigner
+} from '../../src/signer';
+
+import {
   serializeDeserialize
 } from './macros';
+
 
 test('Stacks public key and private keys', async (t) => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
@@ -77,6 +82,16 @@ test('Stacks public key and private keys', async (t) => {
   let privKey = new StacksPrivateKey(privKeyString);
   t.equal(privKey.getPublicKey().toString(), pubKeyString, 
     'private key generates correct public key');
+});
+
+test('ECDSA recoverable signature', async (t) => {
+  let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
+  let messagetoSign = "eec72e6cd1ce0ac1dd1a0c260f099a8fc72498c80b3447f962fd5d39a3d70921";
+  let correctSignature = "019901d8b1d67a7b853dc473d0609508ab2519ec370eabfef460aa0fd9234660" 
+    + "787970968562da9de8b024a7f36f946b2fdcbf39b2f59247267a9d72730f19276b";
+  let privKey = new StacksPrivateKey(privKeyString);
+  let signature = privKey.sign(messagetoSign).toString();
+  t.equal(signature, correctSignature, 'signature matches');
 });
 
 test('Length prefixed strings serialization and deserialization', async (t) => {
@@ -421,8 +436,8 @@ test('Single spending condition serialization and deserialization', async (t) =>
   let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
   let spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
   let emptySignature = MessageSignature.empty();
-  let deserialized = serializeDeserialize(spendingCondition, SingleSigSpendingCondition);
 
+  let deserialized = serializeDeserialize(spendingCondition, SingleSigSpendingCondition);
   t.equal(deserialized.addressHashMode, addressHashMode, "address hash mode matches");
   t.equal(deserialized.nonce, nonce, "nonce matches");
   t.equal(deserialized.feeRate, feeRate, "fee rate matches");
@@ -453,6 +468,7 @@ test('STX token transfer transaction serialization and deserialization', async (
   let nonce = BigInt(0);
   let feeRate = BigInt(0);
   let pubKey = "03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab";
+  let pubKeyHash = hash_p2pkh(pubKey);
   let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
   let spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
   let authType = AuthType.Standard;
@@ -464,15 +480,24 @@ test('STX token transfer transaction serialization and deserialization', async (
     payload
   );
 
+  let signer = new TransactionSigner(transaction);
+  signer.signOrigin(new StacksPrivateKey(secretKey));
+  let signature = '01051521ac2ac6e6123dcaf9dba000e0005d9855bcc1bc6b96aaf8b6a385238a2317' 
+    + 'ab21e489aca47af3288cdaebd358b0458a9159cadc314cecb7dd08043c0a6d';
+
   let deserialized = serializeDeserialize(transaction, StacksTransaction);
+
   t.equal(deserialized.version, transactionVersion, 'transaction version matches');
   t.equal(deserialized.chainId, chainId, 'chain ID matches');
   t.equal(deserialized.auth.authType, authType, 'authorization type matches');
   t.equal(deserialized.auth.spendingCondition.addressHashMode, addressHashMode, 
     'authorization nonce matches');
+  t.equal(deserialized.auth.spendingCondition.signerAddress.data, pubKeyHash, 
+    'pubkey hash matches');
   t.equal(deserialized.auth.spendingCondition.nonce, nonce, 'authorization nonce matches');
   t.equal(deserialized.auth.spendingCondition.feeRate, feeRate, 
     'authorization fee rate matches');
+  t.equal(deserialized.auth.spendingCondition.signature.toString(), signature, 'signature matches');
   t.equal(deserialized.anchorMode, anchorMode, 'anchor mode matches');
   t.equal(deserialized.postConditionMode, postConditionMode, 'post condition mode matches');
   t.equal(deserialized.postConditions.length, 0, 'has 0 post conditions');
@@ -482,7 +507,6 @@ test('STX token transfer transaction serialization and deserialization', async (
   t.equal(deserialized.payload.assetType, assetType, 'asset type matches');
   
 });
-
 
 // test('STX token transfer transaction w/ fungible post condition serialization and deserialization',
 //   async (t) => {

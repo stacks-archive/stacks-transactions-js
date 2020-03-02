@@ -1,6 +1,8 @@
 import {
-  sha512
+  sha256
 } from 'sha.js';
+
+import RIPEMD160 from 'ripemd160';
 
 export class BufferArray extends Array<Buffer> {
   appendHexString(hexString: string) {
@@ -35,13 +37,11 @@ export class BufferReader {
   }
 }
 
-export const Sha512Trunc256sum = (input: string): string => {
-  let digest = new sha512().update(input).digest('hex').substring(0, 64);
-  return digest;
-}
-
 export const leftPadHex = (hexString: string): string => 
   hexString.length % 2 == 0 ? hexString : '0' + hexString;
+
+export const leftPadHexToLength = (hexString: string, length: number): string => 
+  hexString.padStart(length, '0');
 
 export const bigIntToHexString = (integer: BigInt, lengthBytes: number = 8): string => 
   integer.toString(16).padStart(lengthBytes * 2, '0');
@@ -55,3 +55,12 @@ export const hexStringToInt = (hexString: string): number => parseInt(hexString,
 
 export const exceedsMaxLengthBytes = (string: string, maxLengthBytes: number): boolean => 
   string ? Buffer.from(string).length > maxLengthBytes : false;
+
+export const hash160 = (input: string) => {
+  let sha256Result = new sha256().update(input).digest('hex');
+  return new RIPEMD160().update(sha256Result).digest('hex');
+}
+
+export const hash_p2pkh = (input: string) => {
+  return hash160(input);
+}

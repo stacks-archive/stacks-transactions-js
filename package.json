@@ -57,8 +57,10 @@
     "webpack-dev-server": "^3.8.0"
   },
   "dependencies": {
+    "@types/ripemd160": "^2.0.0",
     "c32check": "^1.0.1",
     "elliptic": "^6.5.2",
+    "ripemd160": "^2.0.2",
     "sha.js": "^2.4.11"
   },
   "nyc": {

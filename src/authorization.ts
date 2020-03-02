@@ -9,16 +9,25 @@ import {
   BufferArray,
   BufferReader,
   bigIntToHexString,
-  hexStringToBigInt,
+  hexStringToBigInt
 } from './utils';
 
 import {
-  StacksPublicKey
+  Address
+} from './types';
+
+import {
+  StacksPublicKey,
+  StacksPrivateKey
 } from './keys';
 
 import {
   StacksMessage
 } from './message'
+
+import {
+  sha512_256
+} from './vendor/js-sha512';
 
 export class SpendingAuthorizationField {
   fieldID: Buffer;
@@ -30,6 +39,12 @@ export class MessageSignature extends StacksMessage {
 
   constructor(signature?: string) {
     super();
+    if (signature) {
+      let length = Buffer.from(signature, 'hex').byteLength;
+      if (length != RECOVERABLE_ECDSA_SIG_LENGTH_BYTES) {
+        throw Error('Invalid signature');
+      }
+    }
     this.signature = signature;
   }
   
@@ -58,8 +73,7 @@ export class MessageSignature extends StacksMessage {
 
 export class SpendingCondition extends StacksMessage {
   addressHashMode: AddressHashMode;
-  pubKey: StacksPublicKey;
-  pubKeyHash: string;
+  signerAddress: Address;
   nonce: BigInt;
   feeRate: BigInt;
   pubKeyEncoding: PubKeyEncoding;
@@ -74,19 +88,75 @@ export class SpendingCondition extends StacksMessage {
   ) {
     super();
     this.addressHashMode = addressHashMode;
-
+    if (addressHashMode && pubKey) {
+      this.signerAddress = Address.fromPublicKeys(
+        0, 
+        addressHashMode, 
+        1, 
+        [new StacksPublicKey(pubKey)]
+      );
+    }
     this.nonce = nonce;
     this.feeRate = feeRate;
+    if (pubKey) {
+      this.pubKeyEncoding = new StacksPublicKey(pubKey).compressed() 
+        ? PubKeyEncoding.Compressed : PubKeyEncoding.Uncompressed;
+    }
     this.signature = MessageSignature.empty();
   }
 
-  static makeSigHashPresign(
+  singleSig(): boolean {
+    if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
+      this.addressHashMode === AddressHashMode.SerializeP2WPKH)
+    {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static makeSigHashPreSign(
     curSigHash: string, 
     authType: AuthType, 
     feeRate: BigInt, 
     nonce: BigInt
-  ) {
+  ): string {
+    // new hash combines the previous hash and all the new data this signature will add. This
+    // includes:
+    // * the previous hash
+    // * the auth flag
+    // * the fee rate (big-endian 8-byte number)
+    // * nonce (big-endian 8-byte number)
+    let hashLength = 32 + 1 + 8 + 8;
 
+    let sigHash = curSigHash + authType + bigIntToHexString(feeRate, 8) + bigIntToHexString(nonce, 8);
+
+    if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
+      throw Error('Invalid signature hash length');
+    }
+
+    return sha512_256(sigHash);
+  }
+
+  static makeSigHashPostSign(
+    curSigHash: string, 
+    publicKey: StacksPublicKey, 
+    signature: MessageSignature
+  ): string {
+    // new hash combines the previous hash and all the new data this signature will add.  This
+    // includes:
+    // * the public key compression flag
+    // * the signature
+    let hashLength = 32 + 1 + RECOVERABLE_ECDSA_SIG_LENGTH_BYTES;
+    let pubKeyEncoding = publicKey.compressed() ? PubKeyEncoding.Compressed : PubKeyEncoding.Uncompressed;
+
+    let sigHash = curSigHash + pubKeyEncoding + signature.toString();
+
+    if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
+      throw Error('Invalid signature hash length');
+    }
+
+    return sha512_256(sigHash);
   }
 
   static nextSignature(
@@ -94,13 +164,19 @@ export class SpendingCondition extends StacksMessage {
     authType: AuthType, 
     feeRate: BigInt, 
     nonce: BigInt, 
-    privateKey: string,
-  ) {
-    let sigHashPreSign = this.makeSigHashPresign(curSigHash, authType, feeRate, nonce);
+    privateKey: StacksPrivateKey
+  ): {
+    nextSig: MessageSignature, 
+    nextSigHash: string
+  } {
+    let sigHashPreSign = this.makeSigHashPreSign(curSigHash, authType, feeRate, nonce);
+    let signature = privateKey.sign(sigHashPreSign);
+    let publicKey = privateKey.getPublicKey();
+    let nextSigHash = this.makeSigHashPostSign(sigHashPreSign, publicKey, signature);
 
     return {
-      nextSig: "",
-      nextSigHash: "",
+      nextSig: signature,
+      nextSigHash: nextSigHash,
     }
   }
 
@@ -112,7 +188,7 @@ export class SpendingCondition extends StacksMessage {
     let bufferArray: BufferArray = new BufferArray();
 
     bufferArray.appendHexString(this.addressHashMode);
-    // bufferArray.push(this.pubKeyHash);
+    bufferArray.appendHexString(this.signerAddress.data);
     bufferArray.appendHexString(bigIntToHexString(this.nonce));
     bufferArray.appendHexString(bigIntToHexString(this.feeRate));
 
@@ -131,8 +207,9 @@ export class SpendingCondition extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.addressHashMode = bufferReader.read(1).toString("hex") as AddressHashMode;
-    // this.pubKeyHash = bufferReader.read(20);
+    this.addressHashMode = bufferReader.read(1).toString('hex') as AddressHashMode;
+    let signerPubKeyHash = bufferReader.read(20).toString('hex');
+    this.signerAddress = Address.fromData(0, signerPubKeyHash);
     this.nonce = hexStringToBigInt(bufferReader.read(8).toString('hex'));
     this.feeRate = hexStringToBigInt(bufferReader.read(8).toString('hex'));
 
@@ -157,14 +234,11 @@ export class SingleSigSpendingCondition extends SpendingCondition {
     feeRate?: BigInt
   ) {
     super(addressHashMode, pubKey, nonce, feeRate);
-    this.pubKey = new StacksPublicKey(pubKey);
-    this.pubKeyEncoding = pubKey && this.pubKey.compressed()
-      ? PubKeyEncoding.Compressed : PubKeyEncoding.Uncompressed;
     this.signaturesRequired = 1;
   }
 
   numSignatures(): number {
-    return this.signature.toString() === MessageSignature.empty().toString() ? 1 : 0;
+    return this.signature.toString() === MessageSignature.empty().toString() ? 0 : 1;
   }
 }
 

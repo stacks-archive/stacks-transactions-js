@@ -6,6 +6,10 @@ import {
   AuthType
 } from './constants';
 
+import {
+  StacksPrivateKey
+} from './keys';
+
 export class TransactionSigner {
   transaction: StacksTransaction;
   sigHash: string;
@@ -16,13 +20,14 @@ export class TransactionSigner {
   constructor(
     transaction: StacksTransaction
   ) {
+    this.transaction = transaction;
     this.sigHash = transaction.signBegin();
     this.originDone = false;
     this.checkOversign = true;
     this.checkOverlap = true;
   }
 
-  signOrigin(privateKey: string) {
+  signOrigin(privateKey: StacksPrivateKey) {
     if (this.checkOverlap && this.originDone) {
       throw Error("Cannot sign origin after sponsor key");
     }
