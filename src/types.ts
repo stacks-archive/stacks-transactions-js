@@ -1,5 +1,6 @@
 import { 
   MAX_STRING_LENGTH_BYTES,
+  MEMO_MAX_LENGTH_BYTES,
   PrincipalType,
   TransactionVersion,
   AddressHashMode
@@ -15,7 +16,8 @@ import {
   intToHexString,
   hexStringToInt,
   exceedsMaxLengthBytes,
-  hash_p2pkh
+  hash_p2pkh,
+  rightPadHexToLength
 } from './utils';
 
 import {
@@ -196,6 +198,36 @@ export class CodeBodyString extends LengthPrefixedString {
     let lengthPrefixBytes = 4;
     let maxLengthBytes = 100000;
     super(content, lengthPrefixBytes, maxLengthBytes);
+  }
+}
+
+export class MemoString extends StacksMessage {
+  content: string;
+
+  constructor(content?: string) {
+    super();
+    if (content && exceedsMaxLengthBytes(content, MEMO_MAX_LENGTH_BYTES)) {
+      throw new Error('Memo exceeds maximum length of ' 
+        + MEMO_MAX_LENGTH_BYTES.toString() + ' bytes');
+    }
+    this.content = content;
+  }
+
+  toString(): string {
+    return this.content;
+  }
+
+  serialize(): Buffer {
+    let bufferArray: BufferArray = new BufferArray();
+    let contentBuffer = Buffer.from(this.content);
+    let paddedContent = rightPadHexToLength(contentBuffer.toString('hex'), 
+      MEMO_MAX_LENGTH_BYTES * 2);
+    bufferArray.push(Buffer.from(paddedContent, 'hex'));
+    return bufferArray.concatBuffer();
+  }
+
+  deserialize(bufferReader: BufferReader) {
+    this.content = bufferReader.read(MEMO_MAX_LENGTH_BYTES).toString();
   }
 }
 

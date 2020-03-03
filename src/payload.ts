@@ -16,7 +16,8 @@ import {
   Address,
   LengthPrefixedString,
   CodeBodyString,
-  AssetInfo
+  AssetInfo,
+  MemoString
 } from './types';
 
 import {
@@ -31,7 +32,7 @@ export class Payload extends StacksMessage {
   assetName: LengthPrefixedString;
   recipientAddress: Address;
   amount: BigInt;
-  memo: LengthPrefixedString;
+  memo: MemoString;
 
   contractAddress: Address;
   contractName: LengthPrefixedString;
@@ -65,6 +66,7 @@ export class Payload extends StacksMessage {
         }
         bufferArray.push(this.recipientAddress.serialize());
         bufferArray.appendHexString(bigIntToHexString(this.amount));
+        bufferArray.push(this.memo.serialize());
         break;
       case PayloadType.ContractCall:
         bufferArray.push(this.contractAddress.serialize());
@@ -110,6 +112,7 @@ export class Payload extends StacksMessage {
         this.recipientAddress = Address.deserialize(bufferReader);
         let amount = bufferReader.read(8).toString('hex');
         this.amount = hexStringToBigInt(amount);
+        this.memo = LengthPrefixedString.deserialize(bufferReader);
         break;
       case PayloadType.ContractCall:
         this.contractAddress = Address.deserialize(bufferReader);
@@ -147,7 +150,7 @@ export class TokenTransferPayload extends Payload {
     this.assetType = assetType || AssetType.STX;
     this.recipientAddress = new Address(recipientAddress);
     this.amount = amount;
-    this.memo = memo && new LengthPrefixedString(memo);
+    this.memo = memo ? new MemoString(memo) : new MemoString("");
     this.assetInfo = assetInfo;
     this.assetName = assetName && new LengthPrefixedString(assetName);
   }
