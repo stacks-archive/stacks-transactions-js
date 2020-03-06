@@ -6,7 +6,8 @@ import {
 import {
   BufferArray,
   BufferReader,
-  leftPadHexToLength
+  leftPadHexToLength,
+  intToHexString
 } from './utils';
 
 import { 
@@ -30,9 +31,10 @@ export class StacksPublicKey extends StacksMessage {
   }
 
   static fromPrivateKey(privateKey: string): StacksPublicKey {
+    let privKey = new StacksPrivateKey(privateKey);
     let ec = new EC('secp256k1');
-    let keyPair = ec.keyFromPrivate(privateKey, 'hex');
-    let pubKey = keyPair.getPublic(true, 'hex');
+    let keyPair = ec.keyFromPrivate(privKey.data.toString('hex').slice(0, 64), 'hex');
+    let pubKey = keyPair.getPublic(privKey.compressed, 'hex');
     return new StacksPublicKey(pubKey);
   }
 
@@ -84,7 +86,8 @@ export class StacksPrivateKey {
     let coordinateValueBytes = 32;
     let r = leftPadHexToLength(signature.r.toString('hex'), coordinateValueBytes * 2);
     let s = leftPadHexToLength(signature.s.toString('hex'), coordinateValueBytes * 2);
-    let recoverableSignatureString = '01' + r + s;
+    let recoveryParam = intToHexString(signature.recoveryParam, 1);
+    let recoverableSignatureString = recoveryParam + r + s;
     let recoverableSignature = new MessageSignature(recoverableSignatureString);
     return recoverableSignature;
   }
