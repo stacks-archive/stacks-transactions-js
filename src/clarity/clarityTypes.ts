@@ -325,7 +325,13 @@ class TupleCV<T extends { [key: string]: ClarityValue }> extends ClarityValue {
     length.writeUInt32BE(Object.keys(this.data).length, 0);
     buffers.push(length);
 
-    for (let key in this.data) {
+    const lexicographicOrder = this.keys().sort((a, b) => {
+      const bufA = Buffer.from(a);
+      const bufB = Buffer.from(b);
+      return bufA.compare(bufB);
+    })
+
+    for (let key of lexicographicOrder) {
       const nameWithLength = new LengthPrefixedString(key);
       buffers.push(nameWithLength.serialize());
 

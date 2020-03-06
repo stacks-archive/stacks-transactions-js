@@ -112,10 +112,19 @@ describe('Clarity Types Serialization/Deserialization', () => {
 
   test('Tuple', () => {
     const tuple = new TupleCV({
-      one: new TrueCV(),
-      two: new FalseCV(),
+      c: new TrueCV(),
+      b: new FalseCV(),
+      a: new TrueCV(),
     });
-    const serializedDeserialized = serializeDeserialize(tuple);
+    const serializedDeserialized = serializeDeserialize(tuple) as TupleCV<any>;
     expect(serializedDeserialized).toEqual(tuple);
+
+    // Test lexicographic ordering of tuple keys
+    const lexicographic = tuple.keys().sort((a, b) => {
+      const bufA = Buffer.from(a);
+      const bufB = Buffer.from(b);
+      return bufA.compare(bufB);
+    })
+    expect(serializedDeserialized.keys()).toEqual(lexicographic)
   });
 });
