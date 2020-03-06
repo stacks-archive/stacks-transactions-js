@@ -1,27 +1,7 @@
 import BN from 'bn.js';
 import { LengthPrefixedString, Address } from '../types';
-import { CLARITY_INT_SIZE } from '../constants';
+import { CLARITY_INT_SIZE, ClarityType } from '../constants';
 import { BufferReader, BufferArray } from '../utils';
-
-/**
- * Type IDs corresponding to each of the Clarity value types as described here:
- * {@link https://github.com/blockstack/blockstack-core/blob/sip/sip-005/sip/sip-005-blocks-and-transactions.md#clarity-value-representation}
- */
-enum ClarityType {
-  Int = '00',
-  UInt = '01',
-  Buffer = '02',
-  BoolTrue = '03',
-  BoolFalse = '04',
-  PrincipalStandard = '05',
-  PrincipalContract = '06',
-  ResponseOk = '07',
-  ResponseErr = '08',
-  OptionalNone = '09',
-  OptionalSome = '10',
-  List = '11',
-  Tuple = '12',
-}
 
 const prefixTypeID = (typeId: ClarityType, buffer: Buffer): Buffer => {
   const id = Buffer.from(typeId, 'hex');
