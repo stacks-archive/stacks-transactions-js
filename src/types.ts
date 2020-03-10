@@ -96,14 +96,14 @@ export class Address extends StacksMessage {
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
-    bufferArray.appendHexString(this.version.toString());
+    bufferArray.appendHexString(intToHexString(this.version, 1));
     bufferArray.appendHexString(this.data);
 
     return bufferArray.concatBuffer();
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.version = parseInt(bufferReader.read(1).toString('hex'));
+    this.version = hexStringToInt(bufferReader.read(1).toString('hex'));
     this.data = bufferReader.read(20).toString('hex');
   }
 }
