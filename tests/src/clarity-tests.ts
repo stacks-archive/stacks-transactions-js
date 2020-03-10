@@ -13,6 +13,7 @@ import {
   ResponseErrorCV,
   ListCV,
   TupleCV,
+  BooleanCV,
 } from '../../src/clarity/clarityTypes';
 import { BufferReader } from '../../src/utils';
 

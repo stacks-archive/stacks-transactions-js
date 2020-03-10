@@ -203,8 +203,8 @@ class StandardPrincipalCV extends ClarityValue {
   }
 
   fromBuffer(version: number, buffer: Buffer) {
-    const br = new BufferReader(Buffer.concat([Buffer.from([version]), buffer]))
-    this.address = Address.deserialize(br);
+    const bufferReader = new BufferReader(Buffer.concat([Buffer.from([version]), buffer]))
+    this.address = Address.deserialize(bufferReader);
     return this;
   }
 
