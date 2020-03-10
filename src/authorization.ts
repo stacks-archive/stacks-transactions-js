@@ -9,7 +9,8 @@ import {
   BufferArray,
   BufferReader,
   bigIntToHexString,
-  hexStringToBigInt
+  hexStringToBigInt,
+  txidFromData
 } from './utils';
 
 import {
@@ -135,7 +136,7 @@ export class SpendingCondition extends StacksMessage {
       throw Error('Invalid signature hash length');
     }
 
-    return sha512_256(sigHash);
+    return txidFromData(Buffer.from(sigHash, 'hex'));
   }
 
   static makeSigHashPostSign(

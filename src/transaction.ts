@@ -15,7 +15,8 @@ import {
 
 import {
   BufferArray,
-  BufferReader
+  BufferReader,
+  txidFromData
 } from './utils';
 
 import {
@@ -135,7 +136,7 @@ export class StacksTransaction extends StacksMessage {
 
   txid(): string {
     let serialized = this.serialize();
-    return sha512_256(serialized.toString('hex'));
+    return txidFromData(serialized);
   }
 
   serialize(): Buffer {

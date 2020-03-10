@@ -2,6 +2,10 @@ import {
   sha256
 } from 'sha.js';
 
+import {
+  sha512_256
+} from './vendor/js-sha512';
+
 import RIPEMD160 from 'ripemd160';
 
 export class BufferArray extends Array<Buffer> {
@@ -59,9 +63,14 @@ export const hexStringToInt = (hexString: string): number => parseInt(hexString,
 export const exceedsMaxLengthBytes = (string: string, maxLengthBytes: number): boolean => 
   string ? Buffer.from(string).length > maxLengthBytes : false;
 
+export const txidFromData = (data: Buffer): string => {
+  return sha512_256(data);
+}
+
 export const hash160 = (input: string) => {
-  let sha256Result = new sha256().update(input).digest('hex');
-  return new RIPEMD160().update(sha256Result).digest('hex');
+  let inputBuffer = Buffer.from(input, 'hex');
+  let sha256Result = new sha256().update(inputBuffer).digest('hex');
+  return new RIPEMD160().update(Buffer.from(sha256Result, 'hex')).digest('hex');
 }
 
 export const hash_p2pkh = (input: string) => {
