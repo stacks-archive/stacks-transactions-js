@@ -15,9 +15,9 @@ enum PayloadType {
 }
 
 enum AnchorMode {
-  Any = "01",
-  OnChainOnly = "02",
-  OffChainOnly = "03"
+  OnChainOnly = "01",
+  OffChainOnly = "02",
+  Any = "03"
 }
 
 enum TransactionVersion {
