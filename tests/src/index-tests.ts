@@ -1,4 +1,3 @@
-import test from 'tape-promise/tape';
 import { 
   StacksTransaction,
 } from '../../src/transaction';
@@ -67,62 +66,44 @@ import {
 import {
   serializeDeserialize
 } from './macros';
+import { TrueCV, FalseCV } from '../../src/clarity/clarityTypes';
 
-
-test('Stacks public key and private keys', async (t) => {
+test('Stacks public key and private keys', () => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
   let pubKeyString = "03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab"; 
   let pubKey = StacksPublicKey.fromPrivateKey(privKeyString);
-  t.equal(pubKey.toString(), pubKeyString, 'correct public key derived from private key');
+  expect(pubKey.toString()).toBe(pubKeyString);
 
   let deserialized = serializeDeserialize(pubKey, StacksPublicKey);
-  t.equal(deserialized.toString(), pubKeyString, 
-    "public key serializes and deserializes correctly");
+  expect(deserialized.toString()).toBe(pubKeyString);
 
   let privKey = new StacksPrivateKey(privKeyString);
-  t.equal(privKey.getPublicKey().toString(), pubKeyString, 
-    'private key generates correct public key');
+  expect(privKey.getPublicKey().toString()).toBe(pubKeyString);
 });
 
-test('ECDSA recoverable signature', async (t) => {
+test('ECDSA recoverable signature', () => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
   let messagetoSign = "eec72e6cd1ce0ac1dd1a0c260f099a8fc72498c80b3447f962fd5d39a3d70921";
   let correctSignature = "019901d8b1d67a7b853dc473d0609508ab2519ec370eabfef460aa0fd9234660" 
     + "787970968562da9de8b024a7f36f946b2fdcbf39b2f59247267a9d72730f19276b";
   let privKey = new StacksPrivateKey(privKeyString);
   let signature = privKey.sign(messagetoSign).toString();
-  t.equal(signature, correctSignature, 'signature matches');
+  expect(signature).toBe(correctSignature);
 });
 
-test('Length prefixed strings serialization and deserialization', async (t) => {
+test('Length prefixed strings serialization and deserialization', () => {
   let testString = 'test message string';
   let lpString = new LengthPrefixedString(testString);
   let deserialized = serializeDeserialize(lpString, LengthPrefixedString);
-  t.equal(deserialized.content, testString, 'string matches');
+  expect(deserialized.content).toBe(testString);
 
   let longTestString = 'a'.repeat(129);
   let longString = new LengthPrefixedString(longTestString);
 
-  t.throws(() => longString.serialize(),
-  /Error: String length exceeds maximum bytes/,
-  'Errors when string exceeds maximum allowed length')
+  expect(() => longString.serialize()).toThrow('String length exceeds maximum bytes 128');
 });
 
-test('Length prefixed strings serialization and deserialization', async (t) => {
-  let testString = 'test message string';
-  let lpString = new LengthPrefixedString(testString);
-  let deserialized = serializeDeserialize(lpString, LengthPrefixedString);
-  t.equal(deserialized.content, testString, 'string matches');
-
-  let longTestString = 'a'.repeat(129);
-  let longString = new LengthPrefixedString(longTestString);
-
-  t.throws(() => longString.serialize(),
-  /Error: String length exceeds maximum bytes/,
-  'Errors when string exceeds maximum allowed length')
-});
-
-test('Length prefixed list serialization and deserialization', async (t) => {
+test('Length prefixed list serialization and deserialization', () => {
   let addressList = [
     new Address('SP9YX31TK12T0EZKWP3GZXX8AM37JDQHAWM7VBTH'),
     new Address('SP26KJ60PHEBVMJ7DD515T3VEMM4XWJG7GMWSDFC2'),
@@ -140,33 +121,32 @@ test('Length prefixed list serialization and deserialization', async (t) => {
   let bufferReader = new BufferReader(serialized);
   let deserialized = LengthPrefixedList.deserialize(bufferReader, Address);
 
-  t.equal(deserialized.length, addressList.length, 'list length matches');
+  expect(deserialized.length).toBe(addressList.length);
 
   for (let index = 0; index < addressList.length; index++) {
-    t.equal(deserialized[index].toString(), addressList[index].toString(), 
-      'list item index ' + index + ' matches');
+    expect(deserialized[index].toString()).toBe(addressList[index].toString());
   }
 });
 
-test('C32check addresses serialization and deserialization', async (t) => {
+test('C32check addresses serialization and deserialization', () => {
   let c32AddressString = 'SP9YX31TK12T0EZKWP3GZXX8AM37JDQHAWM7VBTH';
   let address = new Address(c32AddressString);
   let deserialized = serializeDeserialize(address, Address);
-  t.equal(deserialized.toString(), c32AddressString, 'address matches');
+  expect(deserialized.toString()).toBe(c32AddressString);
 });
 
-test('Asset info serialization and deserialization', async (t) => {
+test('Asset info serialization and deserialization', () => {
   let assetAddress = "SP2ZP4GJDZJ1FDHTQ963F0292PE9J9752TZJ68F21";
   let assetContractName = "contract_name";
   let assetName = "asset_name";
   let assetInfo = new AssetInfo(assetAddress, assetContractName, assetName);
   let deserialized = serializeDeserialize(assetInfo, AssetInfo);
-  t.equal(deserialized.address.toString(), assetAddress, 'address matches');
-  t.equal(deserialized.contractName.toString(), assetContractName, 'contract name matches');
-  t.equal(deserialized.assetName.toString(), assetName, 'name matches');
+  expect(deserialized.address.toString()).toBe(assetAddress);
+  expect(deserialized.contractName.toString()).toBe(assetContractName);
+  expect(deserialized.assetName.toString()).toBe(assetName);
 });
 
-test('STX token transfer payload serialization and deserialization', async (t) => {
+test('STX token transfer payload serialization and deserialization', () => {
   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
   let amount = BigInt(2500000);
   let assetType = AssetType.STX;
@@ -179,13 +159,13 @@ test('STX token transfer payload serialization and deserialization', async (t) =
   );
 
   let deserialized = serializeDeserialize(payload, TokenTransferPayload);
-  t.equal(deserialized.payloadType, payload.payloadType, 'payloadType matches');
-  t.equal(deserialized.assetType, assetType, 'assetType matches');
-  t.equal(deserialized.recipientAddress.toString(), recipientAddress, 'recipient address matches');
-  t.equal(deserialized.amount, amount, 'amount matches');
+  expect(deserialized.payloadType).toBe(payload.payloadType);
+  expect(deserialized.assetType).toBe(assetType);
+  expect(deserialized.recipientAddress.toString()).toBe(recipientAddress);
+  expect(deserialized.amount).toBe(amount);
 });
 
-test('Fungible token transfer payload serialization and deserialization', async (t) => {
+test('Fungible token transfer payload serialization and deserialization', () => {
   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
   let amount = BigInt(2500000); 
   let assetType = AssetType.Fungible;
@@ -203,17 +183,16 @@ test('Fungible token transfer payload serialization and deserialization', async 
   );
 
   let deserialized = serializeDeserialize(payload, TokenTransferPayload);
-  t.equal(deserialized.payloadType, payload.payloadType, 'payload type matches');
-  t.equal(deserialized.assetType, assetType, 'asset type matches');
-  t.equal(deserialized.assetInfo.address.toString(), assetAddress, 'assetInfo address matches');
-  t.equal(deserialized.assetInfo.contractName.toString(), assetContractName, 
-    'assetInfo contract name matches');
-  t.equal(deserialized.assetInfo.assetName.toString(), assetName, 'assetInfo asset name matches');
-  t.equal(deserialized.recipientAddress.toString(), recipientAddress, 'recipient address matches');
-  t.equal(deserialized.amount, amount, 'amount matches');
+  expect(deserialized.payloadType).toBe(payload.payloadType);
+  expect(deserialized.assetType).toBe(assetType);
+  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
+  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
+  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
+  expect(deserialized.recipientAddress.toString()).toBe(recipientAddress);
+  expect(deserialized.amount).toBe(amount);
 });
 
-test('Non-fungible token transfer payload serialization and deserialization', async (t) => {
+test('Non-fungible token transfer payload serialization and deserialization', () => {
   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
   let amount = BigInt(2500000);
   let assetType = AssetType.NonFungible;
@@ -233,36 +212,34 @@ test('Non-fungible token transfer payload serialization and deserialization', as
   );
 
   let deserialized = serializeDeserialize(payload, TokenTransferPayload);
-  t.equal(deserialized.payloadType, payload.payloadType, 'payload type matches');
-  t.equal(deserialized.assetType, assetType, 'asset type matches');
-  t.equal(deserialized.assetInfo.address.toString(), assetAddress, 'assetInfo address matches');
-  t.equal(deserialized.assetInfo.contractName.toString(), assetContractName, 
-    'assetInfo contract name matches');
-  t.equal(deserialized.assetInfo.assetName.toString(), assetName, 'assetInfo asset name matches');
-  t.equal(deserialized.assetName.toString(), nftAssetName, 
-    'non-fungible token asset name matches');
-  t.equal(deserialized.recipientAddress.toString(), recipientAddress, 'recipient address matches');
-  t.equal(deserialized.amount, amount, 'amount matches');
+  expect(deserialized.payloadType).toBe(payload.payloadType);
+  expect(deserialized.assetType).toBe(assetType);
+  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
+  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
+  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
+  expect(deserialized.assetName.toString()).toBe(nftAssetName);
+  expect(deserialized.recipientAddress.toString()).toBe(recipientAddress);
+  expect(deserialized.amount).toBe(amount);
 });
 
-test('Contract call payload serialization and deserialization', async (t) => {
+test('Contract call payload serialization and deserialization', () => {
   let contractAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
   let contractName = "contract_name";
   let functionName = "function_name";
+  let args = [new TrueCV(), new FalseCV()];
 
   let payload = new ContractCallPayload(
     contractAddress, 
     contractName, 
-    functionName
+    functionName,
+    args
   );
 
   let deserialized = serializeDeserialize(payload, ContractCallPayload);
-  t.equal(deserialized.contractAddress.toString(), contractAddress, 'contract address matches');
-  t.equal(deserialized.contractName.toString(), contractName, 'contract name matches');
-  t.equal(deserialized.functionName.toString(), functionName, 'function name matches');
+  expect(deserialized).toEqual(payload);
 });
 
-test('Smart contract payload serialization and deserialization', async (t) => {
+test('Smart contract payload serialization and deserialization', () => {
   let contractName = "contract_name";
   let codeBody = 
   "(define-map store ((key (buff 32))) ((value (buff 32))))" +
@@ -281,11 +258,11 @@ test('Smart contract payload serialization and deserialization', async (t) => {
   );
 
   let deserialized = serializeDeserialize(payload, SmartContractPayload);
-  t.equal(deserialized.contractName.toString(), contractName, 'contract name matches');
-  t.equal(deserialized.codeBody.toString(), codeBody, 'code body matches');
+  expect(deserialized.contractName.toString()).toBe(contractName);
+  expect(deserialized.codeBody.toString()).toBe(codeBody);
 });
 
-test('Coinbase payload serialization and deserialization', async (t) =>{
+test('Coinbase payload serialization and deserialization', () =>{
   let coinbaseBuffer = Buffer.alloc(COINBASE_BUFFER_LENGTH_BYTES, 0);
   coinbaseBuffer.write("coinbase buffer");
 
@@ -294,11 +271,10 @@ test('Coinbase payload serialization and deserialization', async (t) =>{
   );
 
   let deserialized = serializeDeserialize(payload, CoinbasePayload);
-  t.equal(deserialized.coinbaseBuffer.toString(), coinbaseBuffer.toString(), 
-  'coinbase buffer matches');
+  expect(deserialized.coinbaseBuffer.toString()).toBe(coinbaseBuffer.toString());
 });
 
-test('Post condition principal serialization and deserialization', async (t) => {
+test('Post condition principal serialization and deserialization', () => {
   let standardPrincipalType = PrincipalType.Standard;
   let contractPrincipalType = PrincipalType.Contract;
   let address = "SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B";
@@ -309,9 +285,8 @@ test('Post condition principal serialization and deserialization', async (t) => 
   );
 
   let standardDeserialized = serializeDeserialize(standardPrincipal, StandardPrincipal);
-  t.equal(standardDeserialized.principalType, standardPrincipalType, 
-    'standard principal type matches');
-  t.equal(standardDeserialized.address.toString(), address, 'standard principal address matches');
+  expect(standardDeserialized.principalType).toBe(standardPrincipalType);
+  expect(standardDeserialized.address.toString()).toBe(address);
 
   let contractPrincipal = new ContractPrincipal(
     address,
@@ -319,14 +294,12 @@ test('Post condition principal serialization and deserialization', async (t) => 
   )
 
   let contractDeserialized = serializeDeserialize(contractPrincipal, ContractPrincipal);
-  t.equal(contractDeserialized.principalType, contractPrincipalType, 
-    'contract principal type matches');
-  t.equal(contractDeserialized.address.toString(), address, 'contract principal address matches');
-  t.equal(contractDeserialized.contractName.toString(), contractName, 
-    'contract principal contract name matches');
+  expect(contractDeserialized.principalType).toBe(contractPrincipalType);
+  expect(contractDeserialized.address.toString()).toBe(address);
+  expect(contractDeserialized.contractName.toString()).toBe(contractName);
 });
 
-test('STX post condition serialization and deserialization', async (t) => {
+test('STX post condition serialization and deserialization', () => {
   let postConditionType =  PostConditionType.STX;
 
   let standardPrincipalType = PrincipalType.Standard;
@@ -345,14 +318,14 @@ test('STX post condition serialization and deserialization', async (t) => {
   );
 
   let deserialized = serializeDeserialize(postCondition, STXPostCondition);
-  t.equal(deserialized.postConditionType, postConditionType, 'post condition type matches');
-  t.equal(deserialized.principal.principalType, standardPrincipalType, 'principal type matches');
-  t.equal(deserialized.principal.address.toString(), address, 'principal address matches');
-  t.equal(deserialized.conditionCode, conditionCode, 'condition code matches');
-  t.equal(deserialized.amount, amount, 'amount matches');
+  expect(deserialized.postConditionType).toBe(postConditionType);
+  expect(deserialized.principal.principalType).toBe(standardPrincipalType);
+  expect(deserialized.principal.address.toString()).toBe(address);
+  expect(deserialized.conditionCode).toBe(conditionCode);
+  expect(deserialized.amount).toBe(amount);
 });
 
-test('Fungible post condition serialization and deserialization', async (t) => {
+test('Fungible post condition serialization and deserialization', () => {
   let postConditionType =  PostConditionType.Fungible;
 
   let standardPrincipalType = PrincipalType.Standard;
@@ -375,18 +348,17 @@ test('Fungible post condition serialization and deserialization', async (t) => {
   );
 
   let deserialized = serializeDeserialize(postCondition, FungiblePostCondition);
-  t.equal(deserialized.postConditionType, postConditionType, 'post condition type matches');
-  t.equal(deserialized.principal.principalType, standardPrincipalType, 'principal type matches');
-  t.equal(deserialized.principal.address.toString(), address, 'principal address matches');
-  t.equal(deserialized.conditionCode, conditionCode, 'condition code matches');
-  t.equal(deserialized.amount, amount, 'amount matches');
-  t.equal(deserialized.assetInfo.address.toString(), assetAddress, 'asset address matches');
-  t.equal(deserialized.assetInfo.contractName.toString(), assetContractName, 
-  'asset contract name matches');
-  t.equal(deserialized.assetInfo.assetName.toString(), assetName, 'asset name matches');
+  expect(deserialized.postConditionType).toBe(postConditionType);
+  expect(deserialized.principal.principalType).toBe(standardPrincipalType);
+  expect(deserialized.principal.address.toString()).toBe(address);
+  expect(deserialized.conditionCode).toBe(conditionCode);
+  expect(deserialized.amount).toBe(amount);
+  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
+  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
+  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
 });
 
-test('Non-fungible post condition serialization and deserialization', async (t) => {
+test('Non-fungible post condition serialization and deserialization', () => {
   let postConditionType =  PostConditionType.NonFungible;
 
   let contractPrincipalType = PrincipalType.Contract;
@@ -414,21 +386,19 @@ test('Non-fungible post condition serialization and deserialization', async (t) 
   );
 
   let deserialized = serializeDeserialize(postCondition, NonFungiblePostCondition);
-  t.equal(deserialized.postConditionType, postConditionType, 'post condition type matches');
-  t.equal(deserialized.principal.principalType, contractPrincipalType, 'principal type matches');
-  t.equal(deserialized.principal.address.toString(), address, 'principal address matches');
-  t.equal(deserialized.principal.contractName.toString(), contractName, 
-  'principal contract name matches');
-  t.equal(deserialized.conditionCode, conditionCode, 'condition code matches');
-  t.equal(deserialized.amount, undefined, 'amount should be undefined');
-  t.equal(deserialized.assetInfo.address.toString(), assetAddress, 'asset address matches');
-  t.equal(deserialized.assetInfo.contractName.toString(), assetContractName, 
-  'asset contract name matches');
-  t.equal(deserialized.assetInfo.assetName.toString(), assetName, 'asset name matches');
-  t.equal(deserialized.assetName.toString(), nftAssetName, 'nft asset name matches');
+  expect(deserialized.postConditionType).toBe(postConditionType);
+  expect(deserialized.principal.principalType).toBe(contractPrincipalType);
+  expect(deserialized.principal.address.toString()).toBe(address);
+  expect(deserialized.principal.contractName.toString()).toBe(contractName);
+  expect(deserialized.conditionCode).toBe(conditionCode);
+  expect(deserialized.amount).toBe(undefined);
+  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
+  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
+  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
+  expect(deserialized.assetName.toString()).toBe(nftAssetName);
 });
 
-test('Single spending condition serialization and deserialization', async (t) => {
+test('Single spending condition serialization and deserialization', () => {
   let addressHashMode = AddressHashMode.SerializeP2PKH;
   let nonce = BigInt(0);
   let feeRate = BigInt(0);
@@ -438,13 +408,13 @@ test('Single spending condition serialization and deserialization', async (t) =>
   let emptySignature = MessageSignature.empty();
 
   let deserialized = serializeDeserialize(spendingCondition, SingleSigSpendingCondition);
-  t.equal(deserialized.addressHashMode, addressHashMode, "address hash mode matches");
-  t.equal(deserialized.nonce, nonce, "nonce matches");
-  t.equal(deserialized.feeRate, feeRate, "fee rate matches");
-  t.equal(deserialized.signature.toString(), emptySignature.toString(), "signature should be empty");
+  expect(deserialized.addressHashMode).toBe(addressHashMode);
+  expect(deserialized.nonce).toBe(nonce);
+  expect(deserialized.feeRate).toBe(feeRate);
+  expect(deserialized.signature.toString()).toBe(emptySignature.toString());
 });
 
-test('STX token transfer transaction serialization and deserialization', async (t) => {
+test('STX token transfer transaction serialization and deserialization', () => {
 
   let transactionVersion = TransactionVersion.Testnet;
   let chainId = DEFAULT_CHAIN_ID;
@@ -486,30 +456,23 @@ test('STX token transfer transaction serialization and deserialization', async (
     + 'ab21e489aca47af3288cdaebd358b0458a9159cadc314cecb7dd08043c0a6d';
 
   let deserialized = serializeDeserialize(transaction, StacksTransaction);
-
-  t.equal(deserialized.version, transactionVersion, 'transaction version matches');
-  t.equal(deserialized.chainId, chainId, 'chain ID matches');
-  t.equal(deserialized.auth.authType, authType, 'authorization type matches');
-  t.equal(deserialized.auth.spendingCondition.addressHashMode, addressHashMode, 
-    'authorization nonce matches');
-  t.equal(deserialized.auth.spendingCondition.signerAddress.data, pubKeyHash, 
-    'pubkey hash matches');
-  t.equal(deserialized.auth.spendingCondition.nonce, nonce, 'authorization nonce matches');
-  t.equal(deserialized.auth.spendingCondition.feeRate, feeRate, 
-    'authorization fee rate matches');
-  t.equal(deserialized.auth.spendingCondition.signature.toString(), signature, 'signature matches');
-  t.equal(deserialized.anchorMode, anchorMode, 'anchor mode matches');
-  t.equal(deserialized.postConditionMode, postConditionMode, 'post condition mode matches');
-  t.equal(deserialized.postConditions.length, 0, 'has 0 post conditions');
-  t.equal(deserialized.payload.recipientAddress.toString(), recipientAddress, 
-    'recipient address matches');
-  t.equal(deserialized.payload.amount, amount, 'amount matches');
-  t.equal(deserialized.payload.assetType, assetType, 'asset type matches');
+  expect(deserialized.version).toBe(transactionVersion);
+  expect(deserialized.chainId).toBe(chainId);
+  expect(deserialized.auth.authType).toBe(authType);
+  expect(deserialized.auth.spendingCondition.addressHashMode).toBe(addressHashMode);
+  expect(deserialized.auth.spendingCondition.nonce).toBe(nonce);
+  expect(deserialized.auth.spendingCondition.feeRate).toBe(feeRate);
+  expect(deserialized.anchorMode).toBe(anchorMode);
+  expect(deserialized.postConditionMode).toBe(postConditionMode);
+  expect(deserialized.postConditions.length).toBe(0);
+  expect(deserialized.payload.recipientAddress.toString()).toBe(recipientAddress);
+  expect(deserialized.payload.amount).toBe(amount);
+  expect(deserialized.payload.assetType).toBe(assetType);
   
 });
 
 // test('STX token transfer transaction w/ fungible post condition serialization and deserialization',
-//   async (t) => {
+//   () => {
 
 //   let transactionVersion = TransactionVersion.Testnet;
 //   let chainId = DEFAULT_CHAIN_ID;
