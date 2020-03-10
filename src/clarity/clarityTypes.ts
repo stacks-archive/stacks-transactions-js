@@ -57,7 +57,6 @@ function readCV(bufferReader: BufferReader): ClarityValue {
 
       case ClarityType.List:
         const listLength = bufferReader.read(4).readUInt32BE(0);
-        //TODO: how do I type this?
         const listContents: ClarityValue[] = [];
         for (let i = 0; i < listLength; i++) {
           listContents.push(readCV(bufferReader));
