@@ -52,7 +52,9 @@ from '../../src/constants';
 
 import {
   BufferReader,
-  hash_p2pkh
+  hash_p2pkh,
+  BufferArray,
+  intToHexString
 } from '../../src/utils';
 
 import {
@@ -65,13 +67,18 @@ import {
 } from '../../src/signer';
 
 import {
+  makeSTXTokenTransfer
+} from '../../src/builders';
+
+import {
   serializeDeserialize
 } from './macros';
 
 
 test('Stacks public key and private keys', async (t) => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
-  let pubKeyString = "03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab"; 
+  let pubKeyString = "04ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab" 
+    + "5b435d20ea91337cdd8c30dd7427bb098a5355e9c9bfad43797899b8137237cf"; 
   let pubKey = StacksPublicKey.fromPrivateKey(privKeyString);
   t.equal(pubKey.toString(), pubKeyString, 'correct public key derived from private key');
 
@@ -482,8 +489,8 @@ test('STX token transfer transaction serialization and deserialization', async (
 
   let signer = new TransactionSigner(transaction);
   signer.signOrigin(new StacksPrivateKey(secretKey));
-  let signature = '01051521ac2ac6e6123dcaf9dba000e0005d9855bcc1bc6b96aaf8b6a385238a2317' 
-    + 'ab21e489aca47af3288cdaebd358b0458a9159cadc314cecb7dd08043c0a6d';
+  let signature = '0161f6de302ae127660d37f32880025ad89df55514270ef79fb0433fd0bed6de2d21f7b' 
+  + '241bb19cd2849589708c8a37b02fc011ec798677ea423b79423a9a1d8e7';
 
   let deserialized = serializeDeserialize(transaction, StacksTransaction);
 
@@ -508,101 +515,32 @@ test('STX token transfer transaction serialization and deserialization', async (
   
 });
 
-// test('STX token transfer transaction w/ fungible post condition serialization and deserialization',
-//   async (t) => {
+test('Make STX token transfer', async (t) => {
+  let recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  let amount = BigInt(12345);
+  let feeRate = BigInt(0);
+  let nonce = BigInt(0);
+  let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+  let memo = "test memo";
 
-//   let transactionVersion = TransactionVersion.Testnet;
-//   let chainId = DEFAULT_CHAIN_ID;
-
-//   let anchorMode = AnchorMode.Any;
-//   let postConditionMode = PostConditionMode.Deny;
-
-//   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
-//   let amount = BigInt(2500000);
-//   let memo = "memo (not included";
-//   let assetType = AssetType.STX;
-
-//   let payload = new TokenTransferPayload(
-//     recipientAddress,
-//     amount,
-//     memo,
-//     assetType
-//   )
-
-//   let transaction = new StacksTransaction(
-//     transactionVersion,
-//     null, 
-//     payload
-//   );
-
-//   let postConditionType =  PostConditionType.STX;
-//   let standardPrincipalType = PrincipalType.Standard;
-//   let address = "SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B";
-//   let standardPrincipal = new StandardPrincipal(
-//     address
-//   );
-
-//   let conditionCode = FungibleConditionCode.Less;
-//   let postConditionAmount = BigInt(1000000);
-
-//   let postCondition = new STXPostCondition(
-//     standardPrincipal, 
-//     conditionCode, 
-//     postConditionAmount
-//   );
-
-//   let secondPostConditionType =  PostConditionType.STX;
-//   let secondSPrincipalType = PrincipalType.Standard;
-//   let secondPrincipal = new StandardPrincipal(
-//     recipientAddress
-//   );
-
-//   let secondConditionCode = FungibleConditionCode.Less;
-//   let secondPostConditionAmount = BigInt(1000000);
-
-//   let secondPostCondition = new STXPostCondition(
-//     secondPrincipal, 
-//     secondConditionCode, 
-//     secondPostConditionAmount
-//   );
-
-//   transaction.addPostCondition(postCondition);
-//   transaction.addPostCondition(secondPostCondition);
-
-//   let deserialized = serializeDeserialize(transaction, StacksTransaction);
-//   t.equal(deserialized.version, transactionVersion, 'transaction version matches');
-//   t.equal(deserialized.chainId, chainId, 'chain ID matches');
-
-//   // TODO: authorization
-
-//   t.equal(deserialized.anchorMode, anchorMode, 'anchor mode matches');
-//   t.equal(deserialized.postConditionMode, postConditionMode, 'post condition mode matches');
-//   t.equal(deserialized.postConditions.length, 2, 'has 2 post conditions');
-//   t.equal(deserialized.postConditions[0].postConditionType, postConditionType, 
-//     'first post condition type matches');
-//   t.equal(deserialized.postConditions[0].principal.principalType, standardPrincipalType, 
-//     'first post condition principal type matches');
-//   t.equal(deserialized.postConditions[0].principal.address.toString(), address, 
-//     'first post condition principal address matches');
-//   t.equal(deserialized.postConditions[0].conditionCode, conditionCode, 
-//     'first post condition code matches');
-//   t.equal(deserialized.postConditions[0].amount, postConditionAmount, 
-//     'first post condition amount matches');
-
-//   t.equal(deserialized.postConditions[1].postConditionType, secondPostConditionType, 
-//     'second post condition type matches');
-//   t.equal(deserialized.postConditions[1].principal.principalType, secondSPrincipalType, 
-//     'second post condition principal type matches');
-//   t.equal(deserialized.postConditions[1].principal.address.toString(), recipientAddress, 
-//     'second post condition principal address matches');
-//   t.equal(deserialized.postConditions[1].conditionCode, secondConditionCode, 
-//     'second post condition code matches');
-//   t.equal(deserialized.postConditions[1].amount, secondPostConditionAmount, 
-//     'second post condition amount matches');
-
-      
-//   t.equal(deserialized.payload.recipientAddress.toString(), recipientAddress, 'recipient address matches');
-//   t.equal(deserialized.payload.amount, amount, 'amount matches');
-//   t.equal(deserialized.payload.assetType, assetType, 'asset type matches');
+  let transaction = makeSTXTokenTransfer(
+    recipientAddress,
+    amount,
+    feeRate,
+    nonce,
+    secretKey,
+    TransactionVersion.Mainnet,
+    memo
+  );
   
-// });
+  let serialized = transaction.serialize().toString('hex');
+
+  let tx = '0000000000040015c31b8c1c11c515e244b75806bac48d1399c775000000000000000000000000000' 
+    + '000000000b5209127f79c26d46eadf0f173445481e5d6ef961a21c7253be408a1e2e4fde3250b66f26a1a2bbf8ec119a' 
+    + '64482e556154f71070b379d2694e56a47d462597f030200000000000016df0ba3e79792be7be5e50a370289accfc8c9e' 
+    + '032000000000000303974657374206d656d6f00000000000000000000000000000000000000000000000000';
+  
+  t.equal(serialized, tx, "serialized transaction matches");
+});
+
+
