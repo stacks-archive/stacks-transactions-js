@@ -23,6 +23,7 @@ import {
 import {
   StacksMessage,
 } from './message'
+import { ClarityValue } from './clarity/clarityTypes';
 
 export class Payload extends StacksMessage {
   payloadType: PayloadType;
@@ -37,7 +38,7 @@ export class Payload extends StacksMessage {
   contractAddress: Address;
   contractName: LengthPrefixedString;
   functionName: LengthPrefixedString;
-  functionArgs: string[];
+  functionArgs: ClarityValue[];
 
   codeBody: CodeBodyString;
 
@@ -72,7 +73,12 @@ export class Payload extends StacksMessage {
         bufferArray.push(this.contractAddress.serialize());
         bufferArray.push(this.contractName.serialize());
         bufferArray.push(this.functionName.serialize());
-        // TODO: serialize function args
+        const numArgs = Buffer.alloc(4);
+        numArgs.writeUInt32BE(this.functionArgs.length, 0);
+        bufferArray.push(numArgs)
+        this.functionArgs.forEach(arg => {
+          bufferArray.push(arg.serialize());
+        })
         break;
       case PayloadType.SmartContract:
         bufferArray.push(this.contractName.serialize());
@@ -118,7 +124,12 @@ export class Payload extends StacksMessage {
         this.contractAddress = Address.deserialize(bufferReader);
         this.contractName = LengthPrefixedString.deserialize(bufferReader);
         this.functionName = LengthPrefixedString.deserialize(bufferReader); 
-        // TODO: deserialize function args
+        this.functionArgs = [];
+        const numberOfArgs = bufferReader.read(4).readUInt32BE(0);
+        for (let i = 0; i < numberOfArgs; i++) {
+          const clarityValue = ClarityValue.deserialize(bufferReader);
+          this.functionArgs.push(clarityValue);
+        }
         break;
       case PayloadType.SmartContract:
         this.contractName = LengthPrefixedString.deserialize(bufferReader);
@@ -161,7 +172,7 @@ export class ContractCallPayload extends Payload {
     contractAddress?: string, 
     contractName?: string, 
     functionName?: string, 
-    functionArgs?: string[],
+    functionArgs?: ClarityValue[],
   ) {
     super();
     this.payloadType = PayloadType.ContractCall;
