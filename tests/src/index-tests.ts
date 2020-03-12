@@ -40,7 +40,6 @@ import {
   PostConditionMode,
   AuthType,
   PayloadType,
-  AssetType,
   PrincipalType,
   PostConditionType,
   FungibleConditionCode,
@@ -64,13 +63,18 @@ import {
 } from '../../src/signer';
 
 import {
+  makeSTXTokenTransfer
+} from '../../src/builders';
+
+import {
   serializeDeserialize
 } from './macros';
 import { TrueCV, FalseCV } from '../../src/clarity/clarityTypes';
 
 test('Stacks public key and private keys', () => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
-  let pubKeyString = "03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab"; 
+  let pubKeyString = "04ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab" 
+    + "5b435d20ea91337cdd8c30dd7427bb098a5355e9c9bfad43797899b8137237cf"; 
   let pubKey = StacksPublicKey.fromPrivateKey(privKeyString);
   expect(pubKey.toString()).toBe(pubKeyString);
 
@@ -149,75 +153,15 @@ test('Asset info serialization and deserialization', () => {
 test('STX token transfer payload serialization and deserialization', () => {
   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
   let amount = BigInt(2500000);
-  let assetType = AssetType.STX;
 
   let payload = new TokenTransferPayload(
     recipientAddress, 
     amount, 
     "memo (not being included)", 
-    assetType
   );
 
   let deserialized = serializeDeserialize(payload, TokenTransferPayload);
   expect(deserialized.payloadType).toBe(payload.payloadType);
-  expect(deserialized.assetType).toBe(assetType);
-  expect(deserialized.recipientAddress.toString()).toBe(recipientAddress);
-  expect(deserialized.amount).toBe(amount);
-});
-
-test('Fungible token transfer payload serialization and deserialization', () => {
-  let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
-  let amount = BigInt(2500000); 
-  let assetType = AssetType.Fungible;
-  let assetAddress = "SP2ZP4GJDZJ1FDHTQ963F0292PE9J9752TZJ68F21";
-  let assetContractName = "contract_name";
-  let assetName = "asset_name";
-  let assetInfo = new AssetInfo(assetAddress, assetContractName, assetName);
-
-  let payload = new TokenTransferPayload(
-    recipientAddress, 
-    amount, 
-    "memo (not being included)", 
-    assetType, 
-    assetInfo
-  );
-
-  let deserialized = serializeDeserialize(payload, TokenTransferPayload);
-  expect(deserialized.payloadType).toBe(payload.payloadType);
-  expect(deserialized.assetType).toBe(assetType);
-  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
-  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
-  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
-  expect(deserialized.recipientAddress.toString()).toBe(recipientAddress);
-  expect(deserialized.amount).toBe(amount);
-});
-
-test('Non-fungible token transfer payload serialization and deserialization', () => {
-  let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
-  let amount = BigInt(2500000);
-  let assetType = AssetType.NonFungible;
-  let assetAddress = "SP2ZP4GJDZJ1FDHTQ963F0292PE9J9752TZJ68F21";
-  let assetContractName = "contract_name";
-  let assetName = "asset_name";
-  let assetInfo = new AssetInfo(assetAddress, assetContractName, assetName);
-  let nftAssetName = "nft_asset_name";
-
-  let payload = new TokenTransferPayload(
-    recipientAddress, 
-    amount, 
-    "memo (not being included)", 
-    assetType, 
-    assetInfo,
-    nftAssetName
-  );
-
-  let deserialized = serializeDeserialize(payload, TokenTransferPayload);
-  expect(deserialized.payloadType).toBe(payload.payloadType);
-  expect(deserialized.assetType).toBe(assetType);
-  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
-  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
-  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
-  expect(deserialized.assetName.toString()).toBe(nftAssetName);
   expect(deserialized.recipientAddress.toString()).toBe(recipientAddress);
   expect(deserialized.amount).toBe(amount);
 });
@@ -425,13 +369,11 @@ test('STX token transfer transaction serialization and deserialization', () => {
   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
   let amount = BigInt(2500000);
   let memo = "memo (not included";
-  let assetType = AssetType.STX;
 
   let payload = new TokenTransferPayload(
     recipientAddress,
     amount,
-    memo,
-    assetType
+    memo
   )
 
   let addressHashMode = AddressHashMode.SerializeP2PKH;
@@ -467,105 +409,34 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserialized.postConditions.length).toBe(0);
   expect(deserialized.payload.recipientAddress.toString()).toBe(recipientAddress);
   expect(deserialized.payload.amount).toBe(amount);
-  expect(deserialized.payload.assetType).toBe(assetType);
-  
 });
 
-// test('STX token transfer transaction w/ fungible post condition serialization and deserialization',
-//   () => {
+test('Make STX token transfer', () => {
+  let recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  let amount = BigInt(12345);
+  let feeRate = BigInt(0);
+  let nonce = BigInt(0);
+  let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+  let memo = "test memo";
 
-//   let transactionVersion = TransactionVersion.Testnet;
-//   let chainId = DEFAULT_CHAIN_ID;
+  let transaction = makeSTXTokenTransfer(
+    recipientAddress,
+    amount,
+    feeRate,
+    nonce,
+    secretKey,
+    TransactionVersion.Mainnet,
+    memo
+  );
 
-//   let anchorMode = AnchorMode.Any;
-//   let postConditionMode = PostConditionMode.Deny;
+  let serialized = transaction.serialize().toString('hex');
 
-//   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
-//   let amount = BigInt(2500000);
-//   let memo = "memo (not included";
-//   let assetType = AssetType.STX;
+  let tx = '0000000000040015c31b8c1c11c515e244b75806bac48d1399c775000000000000000000000000000' 
+    + '00000000004ae1e7a04089e596377ab4a0f74dfbae05c615a8223f1896df0f28fc334dc794f6faed38abdb' 
+    + 'c611a0f1816738016afa25b4478e607b4d2a58c3d07925f8e040302000000000016df0ba3e79792be7be5e' 
+    + '50a370289accfc8c9e032000000000000303974657374206d656d6f0000000000000000000000000000000' 
+    + '0000000000000000000';
 
-//   let payload = new TokenTransferPayload(
-//     recipientAddress,
-//     amount,
-//     memo,
-//     assetType
-//   )
+  expect(serialized).toBe(tx);
+});
 
-//   let transaction = new StacksTransaction(
-//     transactionVersion,
-//     null, 
-//     payload
-//   );
-
-//   let postConditionType =  PostConditionType.STX;
-//   let standardPrincipalType = PrincipalType.Standard;
-//   let address = "SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B";
-//   let standardPrincipal = new StandardPrincipal(
-//     address
-//   );
-
-//   let conditionCode = FungibleConditionCode.Less;
-//   let postConditionAmount = BigInt(1000000);
-
-//   let postCondition = new STXPostCondition(
-//     standardPrincipal, 
-//     conditionCode, 
-//     postConditionAmount
-//   );
-
-//   let secondPostConditionType =  PostConditionType.STX;
-//   let secondSPrincipalType = PrincipalType.Standard;
-//   let secondPrincipal = new StandardPrincipal(
-//     recipientAddress
-//   );
-
-//   let secondConditionCode = FungibleConditionCode.Less;
-//   let secondPostConditionAmount = BigInt(1000000);
-
-//   let secondPostCondition = new STXPostCondition(
-//     secondPrincipal, 
-//     secondConditionCode, 
-//     secondPostConditionAmount
-//   );
-
-//   transaction.addPostCondition(postCondition);
-//   transaction.addPostCondition(secondPostCondition);
-
-//   let deserialized = serializeDeserialize(transaction, StacksTransaction);
-//   t.equal(deserialized.version, transactionVersion, 'transaction version matches');
-//   t.equal(deserialized.chainId, chainId, 'chain ID matches');
-
-//   // TODO: authorization
-
-//   t.equal(deserialized.anchorMode, anchorMode, 'anchor mode matches');
-//   t.equal(deserialized.postConditionMode, postConditionMode, 'post condition mode matches');
-//   t.equal(deserialized.postConditions.length, 2, 'has 2 post conditions');
-//   t.equal(deserialized.postConditions[0].postConditionType, postConditionType, 
-//     'first post condition type matches');
-//   t.equal(deserialized.postConditions[0].principal.principalType, standardPrincipalType, 
-//     'first post condition principal type matches');
-//   t.equal(deserialized.postConditions[0].principal.address.toString(), address, 
-//     'first post condition principal address matches');
-//   t.equal(deserialized.postConditions[0].conditionCode, conditionCode, 
-//     'first post condition code matches');
-//   t.equal(deserialized.postConditions[0].amount, postConditionAmount, 
-//     'first post condition amount matches');
-
-//   t.equal(deserialized.postConditions[1].postConditionType, secondPostConditionType, 
-//     'second post condition type matches');
-//   t.equal(deserialized.postConditions[1].principal.principalType, secondSPrincipalType, 
-//     'second post condition principal type matches');
-//   t.equal(deserialized.postConditions[1].principal.address.toString(), recipientAddress, 
-//     'second post condition principal address matches');
-//   t.equal(deserialized.postConditions[1].conditionCode, secondConditionCode, 
-//     'second post condition code matches');
-//   t.equal(deserialized.postConditions[1].amount, secondPostConditionAmount, 
-//     'second post condition amount matches');
-
-      
-//   t.equal(deserialized.payload.recipientAddress.toString(), recipientAddress, 'recipient address matches');
-//   t.equal(deserialized.payload.amount, amount, 'amount matches');
-//   t.equal(deserialized.payload.assetType, assetType, 'asset type matches');
-  
-// });
