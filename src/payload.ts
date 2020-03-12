@@ -51,20 +51,6 @@ export class Payload extends StacksMessage {
     
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
-        bufferArray.appendHexString(this.assetType);
-        if (this.assetType == AssetType.Fungible || 
-          this.assetType == AssetType.NonFungible) {
-            if (!this.assetInfo) {
-              throw new Error('Fungible/Non-fungible token transfer requires asset info');
-            } 
-            bufferArray.push(this.assetInfo.serialize());
-          }
-        if (this.assetType == AssetType.NonFungible) {
-          if (!this.assetName) {
-            throw new Error('Non-fungible token transfer requires asset name');
-          } 
-          bufferArray.push(this.assetName.serialize());
-        }
         bufferArray.push(this.recipientAddress.serialize());
         bufferArray.appendHexString(bigIntToHexString(this.amount));
         bufferArray.push(this.memo.serialize());
@@ -104,17 +90,6 @@ export class Payload extends StacksMessage {
     this.payloadType = bufferReader.read(1).toString("hex") as PayloadType;
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
-        this.assetType = bufferReader.read(1).toString("hex") as AssetType;
-
-        if (this.assetType == AssetType.Fungible || 
-          this.assetType == AssetType.NonFungible) {
-          this.assetInfo = AssetInfo.deserialize(bufferReader);
-        }
-
-        if (this.assetType == AssetType.NonFungible) {
-          this.assetName = LengthPrefixedString.deserialize(bufferReader);
-        }
-
         this.recipientAddress = Address.deserialize(bufferReader);
         let amount = bufferReader.read(8).toString('hex');
         this.amount = hexStringToBigInt(amount);
@@ -151,19 +126,14 @@ export class TokenTransferPayload extends Payload {
   constructor(
     recipientAddress?: string, 
     amount?: BigInt, 
-    memo?: string, 
-    assetType?: AssetType,
-    assetInfo?: AssetInfo,
-    assetName?: string
+    memo?: string
   ) {
     super();
     this.payloadType = PayloadType.TokenTransfer;
-    this.assetType = assetType || AssetType.STX;
+
     this.recipientAddress = new Address(recipientAddress);
     this.amount = amount;
     this.memo = memo ? new MemoString(memo) : new MemoString("");
-    this.assetInfo = assetInfo;
-    this.assetName = assetName && new LengthPrefixedString(assetName);
   }
 }
 
