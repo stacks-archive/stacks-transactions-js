@@ -63,7 +63,8 @@ import {
 } from '../../src/signer';
 
 import {
-  makeSTXTokenTransfer
+  makeSTXTokenTransfer,
+  makeSmartContractDeploy
 } from '../../src/builders';
 
 import {
@@ -440,3 +441,44 @@ test('Make STX token transfer', () => {
   expect(serialized).toBe(tx);
 });
 
+test('Make smart contract deploy', () => {
+  let contractName = "contract_name";
+  let codeBody = 
+    "(define-map store ((key (buff 32))) ((value (buff 32))))" +
+    "(define-public (get-value (key (buff 32)))" +
+    "   (match (map-get? store ((key key)))" +
+    "       entry (ok (get value entry))" +
+    "       (err 0)))" +
+    "(define-public (set-value (key (buff 32)) (value (buff 32)))" +
+    "   (begin" +
+    "       (map-set store ((key key)) ((value value)))" +
+    "       (ok 'true)))";
+
+  let feeRate = BigInt(0);
+  let nonce = BigInt(0);
+  let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+
+  let transaction = makeSmartContractDeploy(
+    contractName,
+    codeBody,
+    feeRate,
+    nonce,
+    secretKey
+  );
+  
+  let serialized = transaction.serialize().toString('hex');
+
+  let tx = '0000000000040015c31b8c1c11c515e244b75806bac48d1399c7750000000000000000000000000000' 
+    + '000000017af27712cb2a7754758f3d52479a7c31b7914257c8ac161b8c7883f7f6f8f4f8747ce8ad0949e38' 
+    + 'd8e4981c18d2352184780efe9440459e19f8d7a1ffa465db9030200000000020d636f6e74726163745f6e61' 
+    + '6d650000014528646566696e652d6d61702073746f72652028286b657920286275666620333229292920282' 
+    + '876616c75652028627566662033322929292928646566696e652d7075626c696320286765742d76616c7565' 
+    + '20286b6579202862756666203332292929202020286d6174636820286d61702d6765743f2073746f7265202' 
+    + '8286b6579206b657929292920202020202020656e74727920286f6b20286765742076616c756520656e7472' 
+    + '7929292020202020202028657272203029292928646566696e652d7075626c696320287365742d76616c756' 
+    + '520286b65792028627566662033322929202876616c75652028627566662033322929292020202862656769' 
+    + '6e20202020202020286d61702d7365742073746f72652028286b6579206b6579292920282876616c7565207' 
+    + '6616c756529292920202020202020286f6b202774727565292929'
+
+  expect(serialized).toBe(tx);
+});
