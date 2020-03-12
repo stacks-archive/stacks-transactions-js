@@ -14,8 +14,7 @@
     "build:node": "shx rm -rf lib && tsc",
     "build:node:watch": "shx rm -rf lib && tsc --watch",
     "test": "jest",
-    "test:unitTests": "cross-env NODE_ENV=test nyc node ./tests/src/index.ts",
-    "test:build": "cross-env NODE_ENV=test tsc -p ./tests/src/tsconfig.json"
+    "test:unitTests": "cross-env NODE_ENV=test nyc node ./tests/src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -60,10 +59,12 @@
     "webpack-dev-server": "^3.8.0"
   },
   "dependencies": {
+    "@types/randombytes": "^2.0.0",
     "@types/ripemd160": "^2.0.0",
     "bn.js": "^5.1.1",
     "c32check": "^1.0.1",
     "elliptic": "^6.5.2",
+    "randombytes": "^2.1.0",
     "ripemd160": "^2.0.2",
     "sha.js": "^2.4.11"
   },
