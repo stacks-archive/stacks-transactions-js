@@ -70,7 +70,11 @@ import {
 import {
   serializeDeserialize
 } from './macros';
-import { TrueCV, FalseCV } from '../../src/clarity/clarityTypes';
+
+import { 
+  TrueCV, 
+  FalseCV 
+} from '../../src/clarity/clarityTypes';
 
 test('Stacks public key and private keys', () => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
@@ -84,6 +88,9 @@ test('Stacks public key and private keys', () => {
 
   let privKey = new StacksPrivateKey(privKeyString);
   expect(privKey.getPublicKey().toString()).toBe(pubKeyString);
+
+  let randomKey = StacksPrivateKey.makeRandom();
+  expect(randomKey.toString().length).toEqual(64);
 });
 
 test('ECDSA recoverable signature', () => {

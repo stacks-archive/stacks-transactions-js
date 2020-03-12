@@ -7,7 +7,8 @@ import {
   BufferArray,
   BufferReader,
   leftPadHexToLength,
-  intToHexString
+  intToHexString,
+  randomBytes
 } from './utils';
 
 import { 
@@ -77,6 +78,14 @@ export class StacksPrivateKey {
     }
 
     this.data = Buffer.from(key, 'hex');
+  }
+
+  static makeRandom(): StacksPrivateKey {
+    let ec = new EC('secp256k1');
+    let options = { entropy: randomBytes(32) };
+    let keyPair = ec.genKeyPair(options);
+    let privateKey = keyPair.getPrivate().toString('hex');
+    return new StacksPrivateKey(privateKey);
   }
 
   sign(input: string): MessageSignature {
