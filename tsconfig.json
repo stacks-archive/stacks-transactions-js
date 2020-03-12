@@ -6,7 +6,7 @@
     "noImplicitAny": false,
     "sourceMap": true,
     "outDir": "lib",
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "skipLibCheck": true,
     "allowJs": true
   },

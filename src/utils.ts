@@ -6,7 +6,11 @@ import {
   sha512_256
 } from './vendor/js-sha512';
 
-import RIPEMD160 from 'ripemd160';
+import * as RIPEMD160 from 'ripemd160';
+
+import * as randombytes from 'randombytes';
+
+export { randombytes as randomBytes };
 
 export class BufferArray extends Array<Buffer> {
   appendHexString(hexString: string) {

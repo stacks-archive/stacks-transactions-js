@@ -1,4 +1,4 @@
-import BN from 'bn.js';
+import * as BN from 'bn.js';
 import { LengthPrefixedString, Address } from '../types';
 import { CLARITY_INT_SIZE, ClarityType } from '../constants';
 import { BufferReader, BufferArray } from '../utils';
