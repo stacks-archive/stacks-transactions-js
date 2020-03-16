@@ -10,6 +10,7 @@
     "build:webpack": "shx rm -rf dist/* && cross-env NODE_ENV=production webpack --mode=production",
     "build:webpack:watch": "shx rm -rf dist/* && cross-env NODE_ENV=development webpack --mode=development --watch --progress --info-verbosity verbose",
     "build:webpack:analyze": "shx rm -rf dist/* && cross-env NODE_ENV=production ANALYZE=true webpack --mode=production",
+    "build:docs": "rimraf docs && cross-env typedoc --name \"stacks-transactions-js $npm_package_version Library Reference\" --tsconfig tsconfig.typedoc.json --out docs --json docs/docs.json src",
     "start": "webpack-dev-server",
     "build:node": "shx rm -rf lib && tsc",
     "build:node:watch": "shx rm -rf lib && tsc --watch",
@@ -61,7 +62,8 @@
     "elliptic": "^6.5.2",
     "randombytes": "^2.1.0",
     "ripemd160": "^2.0.2",
-    "sha.js": "^2.4.11"
+    "sha.js": "^2.4.11",
+    "typedoc": "^0.16.11"
   },
   "nyc": {
     "all": true,
