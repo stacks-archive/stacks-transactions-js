@@ -170,7 +170,7 @@ test('STX token transfer payload serialization and deserialization', () => {
 
   let deserialized = serializeDeserialize(payload, TokenTransferPayload);
   expect(deserialized.payloadType).toBe(payload.payloadType);
-  expect(deserialized.recipientAddress.toString()).toBe(recipientAddress);
+  expect(deserialized.recipientAddress!.toString()).toBe(recipientAddress);
   expect(deserialized.amount).toBe(amount);
 });
 
@@ -210,8 +210,8 @@ test('Smart contract payload serialization and deserialization', () => {
   );
 
   let deserialized = serializeDeserialize(payload, SmartContractPayload);
-  expect(deserialized.contractName.toString()).toBe(contractName);
-  expect(deserialized.codeBody.toString()).toBe(codeBody);
+  expect(deserialized.contractName!.toString()).toBe(contractName);
+  expect(deserialized.codeBody!.toString()).toBe(codeBody);
 });
 
 test('Coinbase payload serialization and deserialization', () =>{
@@ -223,7 +223,7 @@ test('Coinbase payload serialization and deserialization', () =>{
   );
 
   let deserialized = serializeDeserialize(payload, CoinbasePayload);
-  expect(deserialized.coinbaseBuffer.toString()).toBe(coinbaseBuffer.toString());
+  expect(deserialized.coinbaseBuffer!.toString()).toBe(coinbaseBuffer.toString());
 });
 
 test('Post condition principal serialization and deserialization', () => {
@@ -271,8 +271,8 @@ test('STX post condition serialization and deserialization', () => {
 
   let deserialized = serializeDeserialize(postCondition, STXPostCondition);
   expect(deserialized.postConditionType).toBe(postConditionType);
-  expect(deserialized.principal.principalType).toBe(standardPrincipalType);
-  expect(deserialized.principal.address.toString()).toBe(address);
+  expect(deserialized.principal!.principalType).toBe(standardPrincipalType);
+  expect(deserialized.principal!.address.toString()).toBe(address);
   expect(deserialized.conditionCode).toBe(conditionCode);
   expect(deserialized.amount).toBe(amount);
 });
@@ -301,13 +301,13 @@ test('Fungible post condition serialization and deserialization', () => {
 
   let deserialized = serializeDeserialize(postCondition, FungiblePostCondition);
   expect(deserialized.postConditionType).toBe(postConditionType);
-  expect(deserialized.principal.principalType).toBe(standardPrincipalType);
-  expect(deserialized.principal.address.toString()).toBe(address);
+  expect(deserialized.principal!.principalType).toBe(standardPrincipalType);
+  expect(deserialized.principal!.address.toString()).toBe(address);
   expect(deserialized.conditionCode).toBe(conditionCode);
   expect(deserialized.amount).toBe(amount);
-  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
-  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
-  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
+  expect(deserialized.assetInfo!.address.toString()).toBe(assetAddress);
+  expect(deserialized.assetInfo!.contractName.toString()).toBe(assetContractName);
+  expect(deserialized.assetInfo!.assetName.toString()).toBe(assetName);
 });
 
 test('Non-fungible post condition serialization and deserialization', () => {
@@ -339,15 +339,15 @@ test('Non-fungible post condition serialization and deserialization', () => {
 
   let deserialized = serializeDeserialize(postCondition, NonFungiblePostCondition);
   expect(deserialized.postConditionType).toBe(postConditionType);
-  expect(deserialized.principal.principalType).toBe(contractPrincipalType);
-  expect(deserialized.principal.address.toString()).toBe(address);
-  expect(deserialized.principal.contractName.toString()).toBe(contractName);
+  expect(deserialized.principal!.principalType).toBe(contractPrincipalType);
+  expect(deserialized.principal!.address.toString()).toBe(address);
+  expect(deserialized.principal!.contractName.toString()).toBe(contractName);
   expect(deserialized.conditionCode).toBe(conditionCode);
   expect(deserialized.amount).toBe(undefined);
-  expect(deserialized.assetInfo.address.toString()).toBe(assetAddress);
-  expect(deserialized.assetInfo.contractName.toString()).toBe(assetContractName);
-  expect(deserialized.assetInfo.assetName.toString()).toBe(assetName);
-  expect(deserialized.assetName.toString()).toBe(nftAssetName);
+  expect(deserialized.assetInfo!.address.toString()).toBe(assetAddress);
+  expect(deserialized.assetInfo!.contractName.toString()).toBe(assetContractName);
+  expect(deserialized.assetInfo!.assetName.toString()).toBe(assetName);
+  expect(deserialized.assetName!.toString()).toBe(nftAssetName);
 });
 
 test('Single spending condition serialization and deserialization', () => {
@@ -408,15 +408,15 @@ test('STX token transfer transaction serialization and deserialization', () => {
   let deserialized = serializeDeserialize(transaction, StacksTransaction);
   expect(deserialized.version).toBe(transactionVersion);
   expect(deserialized.chainId).toBe(chainId);
-  expect(deserialized.auth.authType).toBe(authType);
-  expect(deserialized.auth.spendingCondition.addressHashMode).toBe(addressHashMode);
-  expect(deserialized.auth.spendingCondition.nonce).toBe(nonce);
-  expect(deserialized.auth.spendingCondition.feeRate).toBe(feeRate);
+  expect(deserialized.auth!.authType).toBe(authType);
+  expect(deserialized.auth!.spendingCondition!.addressHashMode).toBe(addressHashMode);
+  expect(deserialized.auth!.spendingCondition!.nonce).toBe(nonce);
+  expect(deserialized.auth!.spendingCondition!.feeRate).toBe(feeRate);
   expect(deserialized.anchorMode).toBe(anchorMode);
   expect(deserialized.postConditionMode).toBe(postConditionMode);
   expect(deserialized.postConditions.length).toBe(0);
-  expect(deserialized.payload.recipientAddress.toString()).toBe(recipientAddress);
-  expect(deserialized.payload.amount).toBe(amount);
+  expect(deserialized.payload!.recipientAddress!.toString()).toBe(recipientAddress);
+  expect(deserialized.payload!.amount).toBe(amount);
 });
 
 test('Make STX token transfer', () => {

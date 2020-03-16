@@ -21,7 +21,7 @@ import {
 
 import {
   sha512_256
-} from './vendor/js-sha512';
+} from 'js-sha512';
 
 import {
   Payload,
@@ -49,11 +49,11 @@ import {
 } from './keys';
 
 export class StacksTransaction extends StacksMessage { 
-  version: TransactionVersion;
-  chainId: string;
-  auth: Authorization;
-  anchorMode: AnchorMode;
-  payload: TokenTransferPayload | ContractCallPayload 
+  version?: TransactionVersion;
+  chainId?: string;
+  auth?: Authorization;
+  anchorMode?: AnchorMode;
+  payload?: TokenTransferPayload | ContractCallPayload 
     | SmartContractPayload | PoisonPayload | CoinbasePayload;
   postConditionMode: PostConditionMode;
   postConditions: LengthPrefixedList<PostCondition>;
@@ -91,6 +91,9 @@ export class StacksTransaction extends StacksMessage {
   }
 
   signBegin() {
+    if (this.auth === undefined) {
+      throw new Error('"auth" is undefined');
+    }
     this.auth.intoInitialSighashAuth();
     return this.txid();
   }
@@ -100,6 +103,15 @@ export class StacksTransaction extends StacksMessage {
   }
 
   signNextOrigin(sigHash: string, privateKey: StacksPrivateKey): string {
+    if (this.auth === undefined) {
+      throw new Error('"auth" is undefined');
+    }
+    if (this.auth.spendingCondition === undefined) {
+      throw new Error('"auth.spendingCondition" is undefined');
+    }
+    if (this.auth.authType === undefined) {
+      throw new Error('"auth.authType" is undefined');
+    }
     return this.signAndAppend(
       this.auth.spendingCondition, 
       sigHash, 
@@ -114,6 +126,12 @@ export class StacksTransaction extends StacksMessage {
     authType: AuthType,
     privateKey: StacksPrivateKey
   ): string {
+    if (condition.feeRate === undefined) {
+      throw new Error('"condition.feeRate" is undefined');
+    }
+    if (condition.nonce === undefined) {
+      throw new Error('"condition.nonce" is undefined');
+    }
     let {nextSig, nextSigHash} = SpendingCondition.nextSignature(
       curSigHash, 
       authType, 
@@ -140,6 +158,22 @@ export class StacksTransaction extends StacksMessage {
   }
 
   serialize(): Buffer {
+    if (this.version === undefined) {
+      throw new Error('"version" is undefined');
+    }
+    if (this.chainId === undefined) {
+      throw new Error('"chainId" is undefined');
+    }
+    if (this.auth === undefined) {
+      throw new Error('"auth" is undefined');
+    }
+    if (this.anchorMode === undefined) {
+      throw new Error('"anchorMode" is undefined');
+    }
+    if (this.payload === undefined) {
+      throw new Error('"payload" is undefined');
+    }
+
     let bufferArray: BufferArray = new BufferArray();
 
     bufferArray.appendHexString(this.version);

@@ -4,7 +4,7 @@ import {
 
 import {
   sha512_256
-} from './vendor/js-sha512';
+} from 'js-sha512';
 
 import * as RIPEMD160 from 'ripemd160';
 
@@ -26,7 +26,7 @@ export class BufferReader {
   buffer: Buffer;
   index: number;
 
-  constructor(buffer?: Buffer) {
+  constructor(buffer: Buffer) {
     this.buffer = buffer;
     this.index = 0;
   }

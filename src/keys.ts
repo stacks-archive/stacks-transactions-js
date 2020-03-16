@@ -24,11 +24,13 @@ import {
 } from './authorization';
 
 export class StacksPublicKey extends StacksMessage {
-  data: Buffer;
+  data?: Buffer;
 
   constructor(key?: string) {
     super();
-    this.data = key && Buffer.from(key, 'hex');
+    if (key !== undefined) {
+      this.data = Buffer.from(key, 'hex');
+    }
   }
 
   static fromPrivateKey(privateKey: string): StacksPublicKey {
@@ -40,15 +42,21 @@ export class StacksPublicKey extends StacksMessage {
   }
 
   compressed(): boolean {
+    if (this.data === undefined) {
+      throw new Error('"data" is undefined');
+    }
     return !this.data.toString('hex').startsWith("04");
   }
 
   toString(): string {
-    return this.data.toString('hex');
+    return this.data?.toString('hex') ?? '';
   }
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
+    if (this.data === undefined) {
+      throw new Error('"data" is undefined');
+    }
     bufferArray.push(this.data);
     return bufferArray.concatBuffer();
   }
@@ -64,7 +72,7 @@ export class StacksPrivateKey {
   data: Buffer;
   compressed: boolean;
 
-  constructor(key?: string) {
+  constructor(key: string) {
     if (key.length === 66) {
       if (key.slice(64) !== '01') {
         throw new Error('Improperly formatted private-key hex string. 66-length hex usually '
@@ -95,6 +103,9 @@ export class StacksPrivateKey {
     let coordinateValueBytes = 32;
     let r = leftPadHexToLength(signature.r.toString('hex'), coordinateValueBytes * 2);
     let s = leftPadHexToLength(signature.s.toString('hex'), coordinateValueBytes * 2);
+    if (signature.recoveryParam === undefined || signature.recoveryParam === null) {
+      throw new Error('"signature.recoveryParam" is not set');
+    }
     let recoveryParam = intToHexString(signature.recoveryParam, 1);
     let recoverableSignatureString = recoveryParam + r + s;
     let recoverableSignature = new MessageSignature(recoverableSignatureString);

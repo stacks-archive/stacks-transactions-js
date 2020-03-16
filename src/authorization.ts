@@ -28,15 +28,15 @@ import {
 
 import {
   sha512_256
-} from './vendor/js-sha512';
+} from 'js-sha512';
 
 export class SpendingAuthorizationField {
-  fieldID: Buffer;
-  body: Buffer;
+  fieldID?: Buffer;
+  body?: Buffer;
 }
 
 export class MessageSignature extends StacksMessage {
-  signature: string;
+  signature?: string;
 
   constructor(signature?: string) {
     super();
@@ -57,11 +57,14 @@ export class MessageSignature extends StacksMessage {
   }
 
   toString(): string {
-    return this.signature;
+    return this.signature ?? '';
   }
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
+    if (this.signature === undefined) {
+      throw new Error('"signature" is undefined');
+    }
     bufferArray.appendHexString(this.signature);
     return bufferArray.concatBuffer();
   }
@@ -73,13 +76,13 @@ export class MessageSignature extends StacksMessage {
 }
 
 export class SpendingCondition extends StacksMessage {
-  addressHashMode: AddressHashMode;
-  signerAddress: Address;
-  nonce: BigInt;
-  feeRate: BigInt;
-  pubKeyEncoding: PubKeyEncoding;
+  addressHashMode?: AddressHashMode;
+  signerAddress?: Address;
+  nonce?: BigInt;
+  feeRate?: BigInt;
+  pubKeyEncoding?: PubKeyEncoding;
   signature: MessageSignature;
-  signaturesRequired: number;
+  signaturesRequired?: number;
 
   constructor(
     addressHashMode?: AddressHashMode, 
@@ -188,6 +191,21 @@ export class SpendingCondition extends StacksMessage {
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
 
+    if (this.addressHashMode === undefined) {
+      throw new Error('"addressHashMode" is undefined');
+    }
+    if (this.signerAddress === undefined) {
+      throw new Error('"signerAddress" is undefined');
+    }
+    if (this.signerAddress.data === undefined) {
+      throw new Error('"signerAddress.data" is undefined');
+    }
+    if (this.nonce === undefined) {
+      throw new Error('"nonce" is undefined');
+    }
+    if (this.feeRate === undefined) {
+      throw new Error('"feeRate" is undefined');
+    }
     bufferArray.appendHexString(this.addressHashMode);
     bufferArray.appendHexString(this.signerAddress.data);
     bufferArray.appendHexString(bigIntToHexString(this.nonce));
@@ -196,6 +214,9 @@ export class SpendingCondition extends StacksMessage {
     if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
       this.addressHashMode === AddressHashMode.SerializeP2WPKH)
     {
+      if (this.pubKeyEncoding === undefined) {
+        throw new Error('"pubKeyEncoding" is undefined');
+      }
       bufferArray.appendHexString(this.pubKeyEncoding);
       bufferArray.push(this.signature.serialize());
     } else if (this.addressHashMode === AddressHashMode.SerializeP2SH ||
@@ -248,8 +269,8 @@ export class MultiSigSpendingCondition extends SpendingCondition {
 }
 
 export class Authorization extends StacksMessage { 
-  authType: AuthType;
-  spendingCondition: SpendingCondition;
+  authType?: AuthType;
+  spendingCondition?: SpendingCondition;
 
   constructor(authType?: AuthType, spendingConditions?: SpendingCondition) {
     super();
@@ -263,10 +284,16 @@ export class Authorization extends StacksMessage {
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
+    if (this.authType === undefined) {
+      throw new Error('"authType" is undefined');
+    }
     bufferArray.appendHexString(this.authType);
 
     switch (this.authType) {
       case AuthType.Standard:
+        if (this.spendingCondition === undefined) {
+          throw new Error('"spendingCondition" is undefined');
+        }
         bufferArray.push(this.spendingCondition.serialize());
         break;
       case AuthType.Sponsored:

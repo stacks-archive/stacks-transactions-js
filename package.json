@@ -55,11 +55,13 @@
     "webpack-dev-server": "^3.8.0"
   },
   "dependencies": {
+    "@types/js-sha512": "^0.7.0",
     "@types/randombytes": "^2.0.0",
     "@types/ripemd160": "^2.0.0",
     "bn.js": "^5.1.1",
     "c32check": "^1.0.1",
     "elliptic": "^6.5.2",
+    "js-sha512": "^0.8.0",
     "randombytes": "^2.1.0",
     "ripemd160": "^2.0.2",
     "sha.js": "^2.4.11",
