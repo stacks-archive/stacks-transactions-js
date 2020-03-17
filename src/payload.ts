@@ -26,36 +26,60 @@ import {
 import { ClarityValue } from './clarity/clarityTypes';
 
 export class Payload extends StacksMessage {
-  payloadType: PayloadType;
+  payloadType?: PayloadType;
 
-  assetType: AssetType;
-  assetInfo: AssetInfo;
-  assetName: LengthPrefixedString;
-  recipientAddress: Address;
-  amount: BigInt;
-  memo: MemoString;
+  assetType?: AssetType;
+  assetInfo?: AssetInfo;
+  assetName?: LengthPrefixedString;
+  recipientAddress?: Address;
+  amount?: BigInt;
+  memo?: MemoString;
 
-  contractAddress: Address;
-  contractName: LengthPrefixedString;
-  functionName: LengthPrefixedString;
-  functionArgs: ClarityValue[];
+  contractAddress?: Address;
+  contractName?: LengthPrefixedString;
+  functionName?: LengthPrefixedString;
+  functionArgs?: ClarityValue[];
 
-  codeBody: CodeBodyString;
+  codeBody?: CodeBodyString;
 
-  coinbaseBuffer: Buffer;
+  coinbaseBuffer?: Buffer;
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
 
+    if (this.payloadType === undefined) {
+      throw new Error('"payloadType" is undefined');
+    }
     bufferArray.appendHexString(this.payloadType);
     
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
+        if (this.recipientAddress === undefined) {
+          throw new Error('"recipientAddress" is undefined');
+        }
         bufferArray.push(this.recipientAddress.serialize());
+        if (this.amount === undefined) {
+          throw new Error('"amount" is undefined');
+        }
         bufferArray.appendHexString(bigIntToHexString(this.amount));
+        if (this.memo === undefined) {
+          throw new Error('"memo" is undefined');
+        }
         bufferArray.push(this.memo.serialize());
         break;
       case PayloadType.ContractCall:
+        if (this.contractAddress === undefined) {
+          throw new Error('"contractAddress" is undefined');
+        }
+        if (this.contractName === undefined) {
+          throw new Error('"contractName" is undefined');
+        }
+        if (this.functionName === undefined) {
+          throw new Error('"functionName" is undefined');
+        }
+        if (this.functionArgs === undefined) {
+          throw new Error('"functionArgs" is undefined');
+        }
         bufferArray.push(this.contractAddress.serialize());
         bufferArray.push(this.contractName.serialize());
         bufferArray.push(this.functionName.serialize());
@@ -67,6 +91,12 @@ export class Payload extends StacksMessage {
         })
         break;
       case PayloadType.SmartContract:
+        if (this.contractName === undefined) {
+          throw new Error('"contractName" is undefined');
+        }
+        if (this.codeBody === undefined) {
+          throw new Error('"codeBody" is undefined');
+        }
         bufferArray.push(this.contractName.serialize());
         bufferArray.push(this.codeBody.serialize());
         break;
@@ -74,6 +104,9 @@ export class Payload extends StacksMessage {
         // TODO: implement
         break;
       case PayloadType.Coinbase:
+        if (this.coinbaseBuffer === undefined) {
+          throw new Error('"coinbaseBuffer" is undefined');
+        }
         if (this.coinbaseBuffer.byteLength != COINBASE_BUFFER_LENGTH_BYTES) {
           throw Error('Coinbase buffer size must be ' + COINBASE_BUFFER_LENGTH_BYTES + ' bytes');
         }

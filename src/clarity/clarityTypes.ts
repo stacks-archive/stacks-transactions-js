@@ -68,6 +68,9 @@ function readCV(bufferReader: BufferReader): ClarityValue {
         const tupleContents: { [key: string]: ClarityValue } = {};
         for (let i = 0; i < tupleLength; i++) {
           let clarityName = LengthPrefixedString.deserialize(bufferReader).content;
+          if (clarityName === undefined) {
+            throw new Error('"content" is undefined');
+          }
           tupleContents[clarityName] = readCV(bufferReader);
         }
         return new TupleCV(tupleContents);
@@ -180,7 +183,7 @@ const uintCV = (val: number | string | Buffer) => new UIntCV(val);
 
 class StandardPrincipalCV extends ClarityValue {
   readonly type = ClarityType.PrincipalStandard;
-  private address: Address;
+  private address?: Address;
 
   constructor(address?: string) {
     super();
@@ -194,6 +197,9 @@ class StandardPrincipalCV extends ClarityValue {
   }
 
   serialize() {
+    if (this.address === undefined) {
+      throw new Error('"address" is undefined');
+    }
     return prefixTypeID(this.type, this.address.serialize());
   }
 
@@ -222,8 +228,8 @@ const standardPrincipalCV = (address: string) => new StandardPrincipalCV(address
 
 class ContractPrincipalCV extends ClarityValue {
   readonly type = ClarityType.PrincipalContract;
-  private address: Address;
-  private contractName: LengthPrefixedString;
+  private address?: Address;
+  private contractName?: LengthPrefixedString;
 
   constructor(address?: string, name?: string) {
     super();
@@ -240,6 +246,12 @@ class ContractPrincipalCV extends ClarityValue {
   }
 
   serialize() {
+    if (this.address === undefined) {
+      throw new Error('"address" is undefined');
+    }
+    if (this.contractName === undefined) {
+      throw new Error('"contractName" is undefined');
+    }
     return prefixTypeID(this.type, Buffer.concat([this.address.serialize(), this.contractName.serialize()]));
   }
 

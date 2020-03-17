@@ -32,6 +32,16 @@ export class TransactionSigner {
       throw Error("Cannot sign origin after sponsor key");
     }
 
+    if (this.transaction.auth === undefined) {
+      throw new Error('"transaction.auth" is undefined');
+    }
+    if (this.transaction.auth.spendingCondition === undefined) {
+      throw new Error('"transaction.auth.spendingCondition" is undefined');
+    }
+    if (this.transaction.auth.spendingCondition.signaturesRequired === undefined) {
+      throw new Error('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
+    }
+
     if (this.checkOversign && this.transaction.auth.spendingCondition.numSignatures() 
       >= this.transaction.auth.spendingCondition.signaturesRequired) {
         throw new Error('Origin would have too many signatures');

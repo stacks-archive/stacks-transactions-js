@@ -52,7 +52,7 @@ describe('Clarity Types', () => {
     });
 
     test('BufferCV', () => {
-      const buffer = new Buffer('this is a test');
+      const buffer = Buffer.from('this is a test');
       const bufferCV = new BufferCV(buffer);
       const serializedDeserialized = serializeDeserialize(bufferCV);
       expect(serializedDeserialized).toEqual(bufferCV);

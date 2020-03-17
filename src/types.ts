@@ -31,8 +31,8 @@ import {
 } from './message'
 
 export class Address extends StacksMessage {
-  version: number;
-  data: string;
+  version?: number;
+  data?: string;
 
   constructor(c32AddressString?: string) {
     super();
@@ -56,7 +56,7 @@ export class Address extends StacksMessage {
     numSigs: number,
     publicKeys: Array<StacksPublicKey>
   ): Address {
-    if (!publicKeys && publicKeys.length === 0) {
+    if (!publicKeys || publicKeys.length === 0) {
       throw Error('Invalid number of public keys');
     }
 
@@ -87,6 +87,12 @@ export class Address extends StacksMessage {
   }
 
   toC32AddressString(): string { 
+    if (this.version === undefined) {
+      throw new Error('"version" is undefined');
+    }
+    if (this.data === undefined) {
+      throw new Error('"data" is undefined');
+    }
     return c32address(this.version, this.data).toString();
   }
 
@@ -96,6 +102,12 @@ export class Address extends StacksMessage {
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
+    if (this.version === undefined) {
+      throw new Error('"version" is undefined');
+    }
+    if (this.data === undefined) {
+      throw new Error('"data" is undefined');
+    }
     bufferArray.appendHexString(intToHexString(this.version, 1));
     bufferArray.appendHexString(this.data);
 
@@ -109,7 +121,7 @@ export class Address extends StacksMessage {
 }
 
 export class Principal extends StacksMessage {
-  principalType: PrincipalType;
+  principalType?: PrincipalType;
   address: Address;
   contractName: LengthPrefixedString;
 
@@ -122,6 +134,9 @@ export class Principal extends StacksMessage {
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
+    if (this.principalType === undefined) {
+      throw new Error('"principalType" is undefined');
+    }
     bufferArray.appendHexString(this.principalType);
     bufferArray.push(this.address.serialize());
     if (this.principalType == PrincipalType.Contract) {
@@ -159,7 +174,7 @@ export class ContractPrincipal extends Principal {
 }
 
 export class LengthPrefixedString extends StacksMessage {
-  content: string;
+  content?: string;
   lengthPrefixBytes: number;
   maxLengthBytes: number;
 
@@ -171,10 +186,13 @@ export class LengthPrefixedString extends StacksMessage {
   }
 
   toString(): string {
-    return this.content;
+    return this.content ?? '';
   }
 
   serialize(): Buffer {
+    if (this.content === undefined) {
+      throw new Error('"content" is undefined');
+    }
     if (exceedsMaxLengthBytes(this.content, this.maxLengthBytes)) {
       throw new Error('String length exceeds maximum bytes ' + this.maxLengthBytes.toString());
     }
@@ -202,7 +220,7 @@ export class CodeBodyString extends LengthPrefixedString {
 }
 
 export class MemoString extends StacksMessage {
-  content: string;
+  content?: string;
 
   constructor(content?: string) {
     super();
@@ -214,11 +232,14 @@ export class MemoString extends StacksMessage {
   }
 
   toString(): string {
-    return this.content;
+    return this.content ?? '';
   }
 
   serialize(): Buffer {
     let bufferArray: BufferArray = new BufferArray();
+    if (this.content === undefined) {
+      throw new Error('"content" is undefined');
+    }
     let contentBuffer = Buffer.from(this.content);
     let paddedContent = rightPadHexToLength(contentBuffer.toString('hex'), 
       MEMO_MAX_LENGTH_BYTES * 2);
@@ -262,9 +283,9 @@ export class AssetInfo extends StacksMessage {
 
 export class LengthPrefixedList<T extends StacksMessage> extends Array 
   implements StacksMessageCodec {
-  length: number;
+  length: number = 0;
   lengthPrefixBytes: number;
-  typeConstructor: new () => T;
+  typeConstructor?: new () => T;
 
   constructor(typeConstructor?: new () => T, lengthPrefixBytes?: number) {
     super();
@@ -283,6 +304,9 @@ export class LengthPrefixedList<T extends StacksMessage> extends Array
 
   deserialize(bufferReader: BufferReader) {
     let length = hexStringToInt(bufferReader.read(this.lengthPrefixBytes).toString("hex"));
+    if (this.typeConstructor === undefined) {
+      throw new Error('"typeConstructor" is undefined');
+    }
     for (let index = 0; index < length; index++) {
       let item = new this.typeConstructor();
       item.deserialize(bufferReader);
