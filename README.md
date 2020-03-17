@@ -15,27 +15,31 @@ This library supports the creation of the following Stacks 2.0 transaction types
 3. Smart contract function call
 
 ## Key Generation
-```
+```javascript
+const { StacksPrivateKey } = require('stacks-transactions-js');
+
 // Random key
-let privateKey = StacksPrivateKey.makeRandom();
+var privateKey = StacksPrivateKey.makeRandom();
 // Get public key from private
-let publicKey = privateKey.getPublicKey();
+var publicKey = privateKey.getPublicKey();
 
 // Private key from hex string
-let key = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
-let privateKey = new StacksPrivateKey(key);
+var key = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+var privateKey = new StacksPrivateKey(key);
 ```
 
 ## STX Token Transfer Transaction
-```
-let recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
-let amount = BigInt(12345);
-let feeRate = BigInt(0);
-let nonce = BigInt(0);
-let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
-let memo = "test memo";
+```javascript
+const { makeSTXTokenTransfer } = require('stacks-transactions-js');
 
-let transaction = makeSTXTokenTransfer(
+var recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+var amount = BigInt(12345);
+var feeRate = BigInt(0);
+var nonce = BigInt(0);
+var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+var memo = "test memo";
+
+var transaction = makeSTXTokenTransfer(
   recipientAddress,
   amount,
   feeRate,
@@ -45,39 +49,44 @@ let transaction = makeSTXTokenTransfer(
   memo
 );
 
-let serializedTx = transaction.serialize().toString('hex');
+var serializedTx = transaction.serialize().toString('hex');
 // broadcast the transaction
 ```
 
 ## Smart Contract Deploy Transaction
-```
-let contractName = 'contract_name';
-let code = fs.readFileSync('/path/to/contract.clar').toString();
-let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+```javascript
+const { makeSmartContractDeploy } = require('stacks-transactions-js');
 
-let feeRate = BigInt(0);
-let nonce = BigInt(0);
+var contractName = 'contract_name';
+var code = fs.readFileSync('/path/to/contract.clar').toString();
+var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
 
-let transaction = makeSmartContractDeploy(contractName, code, feeRate, nonce, secretKey, TransactionVersion.Mainnet);
+var feeRate = BigInt(0);
+var nonce = BigInt(0);
 
-let serializedTx = transaction.serialize().toString('hex');
+var transaction = makeSmartContractDeploy(contractName, code, feeRate, nonce, secretKey, TransactionVersion.Mainnet);
+
+var serializedTx = transaction.serialize().toString('hex');
 // broadcast the transaction
 ```
 
 ## Smart Contract Function Call
-```
-let contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
-let contractName = 'contract_name';
-let functionName = 'contract_function';
-let buffer = Buffer.from('foo');
-let bufferClarityValue = new BufferCV(buffer);
-let functionArgs = [bufferClarityValue];
-let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
 
-let feeRate = BigInt(0);
-let nonce = BigInt(0);
+```javascript
+const { makeContractCall, BufferCV } = require('stacks-transactions-js');
 
-let transaction = makeContractCall(
+var contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+var contractName = 'contract_name';
+var functionName = 'contract_function';
+var buffer = Buffer.from('foo');
+var bufferClarityValue = new BufferCV(buffer);
+var functionArgs = [bufferClarityValue];
+var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+
+var feeRate = BigInt(0);
+var nonce = BigInt(0);
+
+var transaction = makeContractCall(
   contractAddress,
   contractName,
   functionName,
@@ -88,7 +97,7 @@ let transaction = makeContractCall(
   TransactionVersion.Mainnet
 );
 
-let serializedTx = transaction.serialize().toString('hex');
+var serializedTx = transaction.serialize().toString('hex');
 // broadcast the transaction
 ```
 
