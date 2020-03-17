@@ -1,10 +1,7 @@
 import {
-  sha256
+  sha256,
+  sha512
 } from 'sha.js';
-
-import {
-  sha512_256
-} from 'js-sha512';
 
 import * as RIPEMD160 from 'ripemd160';
 
@@ -67,8 +64,26 @@ export const hexStringToInt = (hexString: string): number => parseInt(hexString,
 export const exceedsMaxLengthBytes = (string: string, maxLengthBytes: number): boolean => 
   string ? Buffer.from(string).length > maxLengthBytes : false;
 
+class sha512_256 extends sha512 {
+  constructor() {
+    super();
+    // set the "SHA-512/256" initialization vector
+    // see https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
+    Object.assign(this, {
+      _ah: 0x22312194, _al: 0xFC2BF72C,
+      _bh: 0x9F555FA3, _bl: 0xC84C64C2,
+      _ch: 0x2393B86B, _cl: 0x6F53B151,
+      _dh: 0x96387719, _dl: 0x5940EABD,
+      _eh: 0x96283EE2, _el: 0xA88EFFE3,
+      _fh: 0xBE5E1E25, _fl: 0x53863992,
+      _gh: 0x2B0199FC, _gl: 0x2C85B8AA,
+      _hh: 0x0EB72DDC, _hl: 0x81C52CA2,
+    });
+  }
+}
+
 export const txidFromData = (data: Buffer): string => {
-  return sha512_256(data);
+  return new sha512_256().update(data).digest().slice(0, 32).toString('hex');
 }
 
 export const hash160 = (input: string) => {
