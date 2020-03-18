@@ -15,7 +15,7 @@
     "start": "webpack-dev-server",
     "build:node": "shx rm -rf lib && tsc --declaration",
     "build:node:watch": "shx rm -rf lib && tsc --watch",
-    "test": "jest"
+    "test": "jest --config ./jest.config.js --coverage"
   },
   "repository": {
     "type": "git",
