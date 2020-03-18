@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+
 import {
   AuthType,
   AddressHashMode,
@@ -114,6 +116,14 @@ export class SpendingCondition extends StacksMessage {
     } else {
       return false;
     }
+  }
+
+  clear(): SpendingCondition {
+    const cleared = _.cloneDeep(this);
+    cleared.nonce = BigInt(0);
+    cleared.feeRate = BigInt(0);
+    cleared.signature = MessageSignature.empty();
+    return cleared;
   }
 
   static makeSigHashPreSign(
@@ -275,8 +285,12 @@ export class Authorization extends StacksMessage {
     this.spendingCondition = spendingConditions;
   }
 
-  intoInitialSighashAuth() {
-
+  intoInitialSighashAuth(): Authorization {
+    if (this.authType === AuthType.Standard) {
+      return new Authorization(AuthType.Standard, this.spendingCondition?.clear())
+    } else {
+      return new Authorization(AuthType.Sponsored, this.spendingCondition?.clear())
+    }
   }
 
   serialize(): Buffer {
