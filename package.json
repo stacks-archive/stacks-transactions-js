@@ -1,8 +1,9 @@
 {
-  "name": "stacks-transactions-js",
-  "version": "0.1.0",
+  "name": "@blockstack/stacks-transactions",
+  "version": "0.1.1",
   "description": "Javascript library for constructing transactions on the Stacks blockchain.",
-  "main": "lib/index",
+  "main": "lib/src/index",
+  "types": "lib/src/index.d.ts",
   "unpkg": "dist/stacks-transactions.js",
   "prettier": "@blockstack/prettier-config",
   "scripts": {
@@ -12,7 +13,7 @@
     "build:webpack:analyze": "shx rm -rf dist/* && cross-env NODE_ENV=production ANALYZE=true webpack --mode=production",
     "build:docs": "rimraf docs && cross-env typedoc --name \"stacks-transactions-js $npm_package_version Library Reference\" --tsconfig tsconfig.typedoc.json --out docs --json docs/docs.json src",
     "start": "webpack-dev-server",
-    "build:node": "shx rm -rf lib && tsc",
+    "build:node": "shx rm -rf lib && tsc --declaration",
     "build:node:watch": "shx rm -rf lib && tsc --watch",
     "test": "jest"
   },
@@ -28,6 +29,12 @@
   "contributors": [
     {
       "name": "Ken Liao"
+    },
+    {
+      "name": "Reed Rosenbluth"
+    },
+    {
+      "name": "Matthew Little"
     }
   ],
   "license": "GPL-3.0",
