@@ -16,12 +16,10 @@ import {
 import {
   BufferArray,
   BufferReader,
-  txidFromData
+  txidFromData,
+  sha512_256
 } from './utils';
 
-import {
-  sha512_256
-} from 'js-sha512';
 
 import {
   Payload,
