@@ -64,7 +64,7 @@ export const hexStringToInt = (hexString: string): number => parseInt(hexString,
 export const exceedsMaxLengthBytes = (string: string, maxLengthBytes: number): boolean => 
   string ? Buffer.from(string).length > maxLengthBytes : false;
 
-class sha512_256 extends sha512 {
+export class sha512_256 extends sha512 {
   constructor() {
     super();
     // set the "SHA-512/256" initialization vector
@@ -80,10 +80,17 @@ class sha512_256 extends sha512 {
       _hh: 0x0EB72DDC, _hl: 0x81C52CA2,
     });
   }
+  digest(): Buffer;
+  digest(encoding: import('crypto').HexBase64Latin1Encoding): string;
+  digest(encoding?: import('crypto').HexBase64Latin1Encoding): string | Buffer {
+    // "SHA-512/256" truncates the digest to 32 bytes
+    const buff = super.digest().slice(0, 32)
+    return encoding ? buff.toString(encoding) : buff;
+  }
 }
 
 export const txidFromData = (data: Buffer): string => {
-  return new sha512_256().update(data).digest().slice(0, 32).toString('hex');
+  return new sha512_256().update(data).digest('hex');
 }
 
 export const hash160 = (input: string) => {

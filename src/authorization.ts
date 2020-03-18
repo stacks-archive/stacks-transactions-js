@@ -10,7 +10,8 @@ import {
   BufferReader,
   bigIntToHexString,
   hexStringToBigInt,
-  txidFromData
+  txidFromData,
+  sha512_256
 } from './utils';
 
 import {
@@ -25,10 +26,6 @@ import {
 import {
   StacksMessage
 } from './message'
-
-import {
-  sha512_256
-} from 'js-sha512';
 
 export class SpendingAuthorizationField {
   fieldID?: Buffer;
@@ -160,7 +157,7 @@ export class SpendingCondition extends StacksMessage {
       throw Error('Invalid signature hash length');
     }
 
-    return sha512_256(sigHash);
+    return new sha512_256().update(sigHash).digest('hex');
   }
 
   static nextSignature(
