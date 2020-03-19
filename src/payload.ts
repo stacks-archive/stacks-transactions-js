@@ -23,7 +23,10 @@ import {
 import {
   StacksMessage,
 } from './message'
+
 import { ClarityValue } from './clarity/clarityTypes';
+
+import * as BigNum from 'bn.js';
 
 export class Payload extends StacksMessage {
   payloadType?: PayloadType;
@@ -32,7 +35,7 @@ export class Payload extends StacksMessage {
   assetInfo?: AssetInfo;
   assetName?: LengthPrefixedString;
   recipientAddress?: Address;
-  amount?: BigInt;
+  amount?: BigNum;
   memo?: MemoString;
 
   contractAddress?: Address;
@@ -61,7 +64,7 @@ export class Payload extends StacksMessage {
         if (this.amount === undefined) {
           throw new Error('"amount" is undefined');
         }
-        bufferArray.appendHexString(bigIntToHexString(this.amount));
+        bufferArray.push(this.amount.toBuffer('be', 8));
         if (this.memo === undefined) {
           throw new Error('"memo" is undefined');
         }
@@ -124,8 +127,7 @@ export class Payload extends StacksMessage {
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
         this.recipientAddress = Address.deserialize(bufferReader);
-        let amount = bufferReader.read(8).toString('hex');
-        this.amount = hexStringToBigInt(amount);
+        this.amount = new BigNum(bufferReader.read(8).toString('hex'), 16);
         this.memo = LengthPrefixedString.deserialize(bufferReader);
         break;
       case PayloadType.ContractCall:
@@ -158,7 +160,7 @@ export class Payload extends StacksMessage {
 export class TokenTransferPayload extends Payload {
   constructor(
     recipientAddress?: string, 
-    amount?: BigInt, 
+    amount?: BigNum, 
     memo?: string
   ) {
     super();

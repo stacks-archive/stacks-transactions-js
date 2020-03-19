@@ -1,4 +1,4 @@
-import * as BN from 'bn.js';
+import * as BigNum from 'bn.js';
 import { LengthPrefixedString, Address } from '../types';
 import { CLARITY_INT_SIZE, ClarityType } from '../constants';
 import { BufferReader, BufferArray } from '../utils';
@@ -136,12 +136,12 @@ class BufferCV extends ClarityValue {
 
 class IntCV extends ClarityValue {
   readonly type = ClarityType.Int;
-  readonly value: BN;
+  readonly value: BigNum;
 
   constructor(value: number | string | Buffer) {
     super();
 
-    const bn = new BN(value);
+    const bn = new BigNum(value);
     this.value = bn.toTwos(CLARITY_INT_SIZE);
 
     if (this.value.bitLength() > CLARITY_INT_SIZE) {
@@ -159,11 +159,11 @@ const intCV = (val: number | string | Buffer) => new IntCV(val);
 
 class UIntCV extends ClarityValue {
   readonly type = ClarityType.UInt;
-  readonly value: BN;
+  readonly value: BigNum;
 
   constructor(value: number | string | Buffer) {
     super();
-    const bn = new BN(value);
+    const bn = new BigNum(value);
     this.value = bn.toTwos(CLARITY_INT_SIZE);
 
     if (this.value.isNeg()) {

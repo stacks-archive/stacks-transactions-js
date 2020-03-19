@@ -29,6 +29,8 @@ import {
   StacksMessage
 } from './message'
 
+import * as BigNum from 'bn.js';
+
 export class SpendingAuthorizationField {
   fieldID?: Buffer;
   body?: Buffer;
@@ -77,8 +79,8 @@ export class MessageSignature extends StacksMessage {
 export class SpendingCondition extends StacksMessage {
   addressHashMode?: AddressHashMode;
   signerAddress?: Address;
-  nonce?: BigInt;
-  feeRate?: BigInt;
+  nonce?: BigNum;
+  feeRate?: BigNum;
   pubKeyEncoding?: PubKeyEncoding;
   signature: MessageSignature;
   signaturesRequired?: number;
@@ -86,8 +88,8 @@ export class SpendingCondition extends StacksMessage {
   constructor(
     addressHashMode?: AddressHashMode, 
     pubKey?: string, 
-    nonce?: BigInt, 
-    feeRate?: BigInt
+    nonce?: BigNum, 
+    feeRate?: BigNum
   ) {
     super();
     this.addressHashMode = addressHashMode;
@@ -129,8 +131,8 @@ export class SpendingCondition extends StacksMessage {
   static makeSigHashPreSign(
     curSigHash: string, 
     authType: AuthType, 
-    feeRate: BigInt, 
-    nonce: BigInt
+    feeRate: BigNum, 
+    nonce: BigNum
   ): string {
     // new hash combines the previous hash and all the new data this signature will add. This
     // includes:
@@ -140,7 +142,8 @@ export class SpendingCondition extends StacksMessage {
     // * nonce (big-endian 8-byte number)
     let hashLength = 32 + 1 + 8 + 8;
 
-    let sigHash = curSigHash + authType + bigIntToHexString(feeRate, 8) + bigIntToHexString(nonce, 8);
+    let sigHash = curSigHash + authType + feeRate.toBuffer('be', 8).toString('hex') 
+      + nonce.toBuffer('be', 8).toString('hex');
 
     if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
       throw Error('Invalid signature hash length');
@@ -173,8 +176,8 @@ export class SpendingCondition extends StacksMessage {
   static nextSignature(
     curSigHash: string, 
     authType: AuthType, 
-    feeRate: BigInt, 
-    nonce: BigInt, 
+    feeRate: BigNum, 
+    nonce: BigNum, 
     privateKey: StacksPrivateKey
   ): {
     nextSig: MessageSignature, 
@@ -215,8 +218,8 @@ export class SpendingCondition extends StacksMessage {
     }
     bufferArray.appendHexString(this.addressHashMode);
     bufferArray.appendHexString(this.signerAddress.data);
-    bufferArray.appendHexString(bigIntToHexString(this.nonce));
-    bufferArray.appendHexString(bigIntToHexString(this.feeRate));
+    bufferArray.push(this.nonce.toBuffer('be', 8));
+    bufferArray.push(this.feeRate.toBuffer('be', 8));
 
     if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
       this.addressHashMode === AddressHashMode.SerializeP2WPKH)
@@ -239,8 +242,8 @@ export class SpendingCondition extends StacksMessage {
     this.addressHashMode = bufferReader.read(1).toString('hex') as AddressHashMode;
     let signerPubKeyHash = bufferReader.read(20).toString('hex');
     this.signerAddress = Address.fromData(0, signerPubKeyHash);
-    this.nonce = hexStringToBigInt(bufferReader.read(8).toString('hex'));
-    this.feeRate = hexStringToBigInt(bufferReader.read(8).toString('hex'));
+    this.nonce = new BigNum(bufferReader.read(8).toString('hex'), 16);
+    this.feeRate = new BigNum(bufferReader.read(8).toString('hex'), 16);
 
     if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
       this.addressHashMode === AddressHashMode.SerializeP2WPKH)
@@ -259,8 +262,8 @@ export class SingleSigSpendingCondition extends SpendingCondition {
   constructor(
     addressHashMode?: AddressHashMode, 
     pubKey?: string, 
-    nonce?: BigInt, 
-    feeRate?: BigInt
+    nonce?: BigNum, 
+    feeRate?: BigNum
   ) {
     super(addressHashMode, pubKey, nonce, feeRate);
     this.signaturesRequired = 1;
