@@ -9,8 +9,8 @@ const MEMO_MAX_LENGTH_BYTES = 34;
 
 enum PayloadType {
   TokenTransfer = "00",
-  ContractCall = "01",
-  SmartContract = "02",
+  SmartContract = "01",
+  ContractCall = "02",
   PoisonMicroblock = "03",
   Coinbase = "04"
 }

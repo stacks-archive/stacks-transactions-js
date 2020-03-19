@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+
 import { 
   DEFAULT_CHAIN_ID,
   TransactionVersion,
@@ -10,7 +12,7 @@ from './constants';
 
 import {
   Authorization,
-  SpendingCondition
+  SpendingCondition,
 } from './authorization';
 
 import {
@@ -19,7 +21,6 @@ import {
   txidFromData,
   sha512_256
 } from './utils';
-
 
 import {
   Payload,
@@ -89,11 +90,12 @@ export class StacksTransaction extends StacksMessage {
   }
 
   signBegin() {
-    if (this.auth === undefined) {
+    let tx = _.cloneDeep(this);
+    if (tx.auth === undefined) {
       throw new Error('"auth" is undefined');
     }
-    this.auth.intoInitialSighashAuth();
-    return this.txid();
+    tx.auth = tx.auth.intoInitialSighashAuth();
+    return tx.txid();
   }
 
   signSingleSigStandard(privateKey: String) {
@@ -195,7 +197,6 @@ export class StacksTransaction extends StacksMessage {
     this.postConditions = LengthPrefixedList.deserialize(bufferReader, PostCondition);
     this.payload = Payload.deserialize(bufferReader);
   }
-
 }
 
 
