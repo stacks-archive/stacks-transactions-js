@@ -30,15 +30,17 @@ import {
   ClarityValue
 } from './clarity/clarityTypes';
 
+import * as BigNum from 'bn.js';
+
 /** 
  * Generates a Stacks token transfer transaction
  *
  * Returns a signed Stacks token transfer transaction.
  * 
  * @param  {String} recipientAddress - the c32check address of the recipient
- * @param  {BigInt} amount - number of tokens to transfer in microstacks
- * @param  {BigInt} feeRate - transaction fee rate in microstacks
- * @param  {BigInt} nonce - a nonce must be increased monotonically with each new transaction
+ * @param  {BigNum} amount - number of tokens to transfer in microstacks
+ * @param  {BigNum} feeRate - transaction fee rate in microstacks
+ * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
  * @param  {String} memo - an arbitrary string to include with the transaction, must be less than
@@ -48,9 +50,9 @@ import {
  */
 export function makeSTXTokenTransfer(
   recipientAddress: string,
-  amount: BigInt,
-  feeRate: BigInt,
-  nonce: BigInt,
+  amount: BigNum,
+  feeRate: BigNum,
+  nonce: BigNum,
   senderKey: string,
   version: TransactionVersion = TransactionVersion.Mainnet,
   memo?: string,
@@ -91,8 +93,8 @@ export function makeSTXTokenTransfer(
  * 
  * @param  {String} contractName - the contract name
  * @param  {String} codeBody - the code body string
- * @param  {BigInt} feeRate - transaction fee rate in microstacks
- * @param  {BigInt} nonce - a nonce must be increased monotonically with each new transaction
+ * @param  {BigNum} feeRate - transaction fee rate in microstacks
+ * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
  *
@@ -101,8 +103,8 @@ export function makeSTXTokenTransfer(
 export function makeSmartContractDeploy(
   contractName: string,
   codeBody: string,
-  feeRate: BigInt,
-  nonce: BigInt,
+  feeRate: BigNum,
+  nonce: BigNum,
   senderKey: string,
   version: TransactionVersion = TransactionVersion.Mainnet
 ): StacksTransaction {
@@ -143,8 +145,8 @@ export function makeSmartContractDeploy(
  * @param  {String} contractName - the contract name
  * @param  {String} functionName - name of the function to be called
  * @param  {[ClarityValue]} functionArgs - an array of Clarity values as arguments to the function call
- * @param  {BigInt} feeRate - transaction fee rate in microstacks
- * @param  {BigInt} nonce - a nonce must be increased monotonically with each new transaction
+ * @param  {BigNum} feeRate - transaction fee rate in microstacks
+ * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
  *
@@ -155,8 +157,8 @@ export function makeContractCall(
   contractName: string, 
   functionName: string, 
   functionArgs: ClarityValue[],
-  feeRate: BigInt,
-  nonce: BigInt,
+  feeRate: BigNum,
+  nonce: BigNum,
   senderKey: string,
   version: TransactionVersion = TransactionVersion.Mainnet
 ): StacksTransaction {

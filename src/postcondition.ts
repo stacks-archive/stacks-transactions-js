@@ -22,19 +22,21 @@ import {
   StacksMessage
 } from './message';
 
+import * as BigNum from 'bn.js';
+
 export class PostCondition extends StacksMessage {
   postConditionType?: PostConditionType;
   principal?: Principal;
   conditionCode?: FungibleConditionCode | NonFungibleConditionCode;
   assetInfo?: AssetInfo;
   assetName?: LengthPrefixedString;
-  amount?: BigInt;
+  amount?: BigNum;
 
   constructor(
     postConditionType?: PostConditionType, 
     principal?: Principal, 
     conditionCode?: FungibleConditionCode | NonFungibleConditionCode,
-    amount?: BigInt,
+    amount?: BigNum,
     assetInfo?: AssetInfo,
     assetName?: string
   ) {
@@ -85,7 +87,7 @@ export class PostCondition extends StacksMessage {
       if (this.amount === undefined) {
         throw new Error('"amount" is undefined');
       }
-      bufferArray.appendHexString(bigIntToHexString(this.amount));
+      bufferArray.push(this.amount.toBuffer('be', 8));
     }
 
     return bufferArray.concatBuffer();
@@ -111,7 +113,7 @@ export class PostCondition extends StacksMessage {
     if (this.postConditionType === PostConditionType.STX 
       || this.postConditionType === PostConditionType.Fungible
     ) {
-      this.amount = hexStringToBigInt(bufferReader.read(8).toString('hex'));
+      this.amount = new BigNum(bufferReader.read(8).toString('hex'), 16);
     }
   }
 }
@@ -120,7 +122,7 @@ export class STXPostCondition extends PostCondition {
   constructor(
     principal?: Principal, 
     conditionCode?: FungibleConditionCode,
-    amount?: BigInt
+    amount?: BigNum
   ) {
     super(
       PostConditionType.STX, 
@@ -135,7 +137,7 @@ export class FungiblePostCondition extends PostCondition {
   constructor(
     principal?: Principal, 
     conditionCode?: FungibleConditionCode,
-    amount?: BigInt,
+    amount?: BigNum,
     assetInfo?: AssetInfo
   ) {
     super(

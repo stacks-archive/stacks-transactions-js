@@ -16,7 +16,7 @@ This library supports the creation of the following Stacks 2.0 transaction types
 
 ## Key Generation
 ```javascript
-const { StacksPrivateKey } = require('stacks-transactions-js');
+const { StacksPrivateKey } = require('stacks-transactions');
 
 // Random key
 var privateKey = StacksPrivateKey.makeRandom();
@@ -30,12 +30,13 @@ var privateKey = new StacksPrivateKey(key);
 
 ## STX Token Transfer Transaction
 ```javascript
-const { makeSTXTokenTransfer } = require('stacks-transactions-js');
+const { makeSTXTokenTransfer } = require('stacks-transactions');
+const BigNum = require('bn.js');
 
 var recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
-var amount = BigInt(12345);
-var feeRate = BigInt(0);
-var nonce = BigInt(0);
+var amount = new BigNum(12345);
+var feeRate = new BigNum(0);
+var nonce = new BigNum(0);
 var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
 var memo = "test memo";
 
@@ -55,14 +56,15 @@ var serializedTx = transaction.serialize().toString('hex');
 
 ## Smart Contract Deploy Transaction
 ```javascript
-const { makeSmartContractDeploy } = require('stacks-transactions-js');
+const { makeSmartContractDeploy } = require('stacks-transactions');
+const BigNum = require('bn.js');
 
 var contractName = 'contract_name';
 var code = fs.readFileSync('/path/to/contract.clar').toString();
 var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
 
-var feeRate = BigInt(0);
-var nonce = BigInt(0);
+var feeRate = new BigNum(0);
+var nonce = new BigNum(0);
 
 var transaction = makeSmartContractDeploy(contractName, code, feeRate, nonce, secretKey, TransactionVersion.Mainnet);
 
@@ -73,7 +75,8 @@ var serializedTx = transaction.serialize().toString('hex');
 ## Smart Contract Function Call
 
 ```javascript
-const { makeContractCall, BufferCV } = require('stacks-transactions-js');
+const { makeContractCall, BufferCV } = require('stacks-transactions');
+const BigNum = require('bn.js');
 
 var contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
 var contractName = 'contract_name';
@@ -83,8 +86,8 @@ var bufferClarityValue = new BufferCV(buffer);
 var functionArgs = [bufferClarityValue];
 var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
 
-var feeRate = BigInt(0);
-var nonce = BigInt(0);
+var feeRate = new BigNum(0);
+var nonce = new BigNum(0);
 
 var transaction = makeContractCall(
   contractAddress,

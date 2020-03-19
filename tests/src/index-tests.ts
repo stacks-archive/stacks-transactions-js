@@ -76,6 +76,8 @@ import {
   FalseCV 
 } from '../../src/clarity/clarityTypes';
 
+import * as BigNum from 'bn.js';
+
 test('Stacks public key and private keys', () => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
   let pubKeyString = "04ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab" 
@@ -160,7 +162,7 @@ test('Asset info serialization and deserialization', () => {
 
 test('STX token transfer payload serialization and deserialization', () => {
   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
-  let amount = BigInt(2500000);
+  let amount = new BigNum(2500000);
 
   let payload = new TokenTransferPayload(
     recipientAddress, 
@@ -171,7 +173,7 @@ test('STX token transfer payload serialization and deserialization', () => {
   let deserialized = serializeDeserialize(payload, TokenTransferPayload);
   expect(deserialized.payloadType).toBe(payload.payloadType);
   expect(deserialized.recipientAddress!.toString()).toBe(recipientAddress);
-  expect(deserialized.amount).toBe(amount);
+  expect(deserialized.amount!.toNumber()).toBe(amount.toNumber());
 });
 
 test('Contract call payload serialization and deserialization', () => {
@@ -261,7 +263,7 @@ test('STX post condition serialization and deserialization', () => {
   );
   
   let conditionCode = FungibleConditionCode.GreaterEqual;
-  let amount = BigInt(1000000);
+  let amount = new BigNum(1000000);
 
   let postCondition = new STXPostCondition(
     standardPrincipal, 
@@ -274,7 +276,7 @@ test('STX post condition serialization and deserialization', () => {
   expect(deserialized.principal!.principalType).toBe(standardPrincipalType);
   expect(deserialized.principal!.address.toString()).toBe(address);
   expect(deserialized.conditionCode).toBe(conditionCode);
-  expect(deserialized.amount).toBe(amount);
+  expect(deserialized.amount!.toNumber()).toBe(amount.toNumber());
 });
 
 test('Fungible post condition serialization and deserialization', () => {
@@ -285,7 +287,7 @@ test('Fungible post condition serialization and deserialization', () => {
   let standardPrincipal = new StandardPrincipal(address);
   
   let conditionCode = FungibleConditionCode.GreaterEqual;
-  let amount = BigInt(1000000);
+  let amount = new BigNum(1000000);
 
   let assetAddress = "SP2ZP4GJDZJ1FDHTQ963F0292PE9J9752TZJ68F21";
   let assetContractName = "contract_name";
@@ -304,7 +306,7 @@ test('Fungible post condition serialization and deserialization', () => {
   expect(deserialized.principal!.principalType).toBe(standardPrincipalType);
   expect(deserialized.principal!.address.toString()).toBe(address);
   expect(deserialized.conditionCode).toBe(conditionCode);
-  expect(deserialized.amount).toBe(amount);
+  expect(deserialized.amount!.toNumber()).toBe(amount.toNumber());
   expect(deserialized.assetInfo!.address.toString()).toBe(assetAddress);
   expect(deserialized.assetInfo!.contractName.toString()).toBe(assetContractName);
   expect(deserialized.assetInfo!.assetName.toString()).toBe(assetName);
@@ -352,8 +354,8 @@ test('Non-fungible post condition serialization and deserialization', () => {
 
 test('Single spending condition serialization and deserialization', () => {
   let addressHashMode = AddressHashMode.SerializeP2PKH;
-  let nonce = BigInt(0);
-  let feeRate = BigInt(0);
+  let nonce = new BigNum(0);
+  let feeRate = new BigNum(0);
   let pubKey = "03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab";
   let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
   let spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
@@ -361,8 +363,8 @@ test('Single spending condition serialization and deserialization', () => {
 
   let deserialized = serializeDeserialize(spendingCondition, SingleSigSpendingCondition);
   expect(deserialized.addressHashMode).toBe(addressHashMode);
-  expect(deserialized.nonce).toBe(nonce);
-  expect(deserialized.feeRate).toBe(feeRate);
+  expect(deserialized.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(deserialized.feeRate!.toNumber()).toBe(feeRate.toNumber());
   expect(deserialized.signature.toString()).toBe(emptySignature.toString());
 });
 
@@ -375,7 +377,7 @@ test('STX token transfer transaction serialization and deserialization', () => {
   let postConditionMode = PostConditionMode.Deny;
 
   let recipientAddress = "SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159";
-  let amount = BigInt(2500000);
+  let amount = new BigNum(2500000);
   let memo = "memo (not included";
 
   let payload = new TokenTransferPayload(
@@ -385,8 +387,8 @@ test('STX token transfer transaction serialization and deserialization', () => {
   )
 
   let addressHashMode = AddressHashMode.SerializeP2PKH;
-  let nonce = BigInt(0);
-  let feeRate = BigInt(0);
+  let nonce = new BigNum(0);
+  let feeRate = new BigNum(0);
   let pubKey = "03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab";
   let pubKeyHash = hash_p2pkh(pubKey);
   let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
@@ -410,20 +412,20 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserialized.chainId).toBe(chainId);
   expect(deserialized.auth!.authType).toBe(authType);
   expect(deserialized.auth!.spendingCondition!.addressHashMode).toBe(addressHashMode);
-  expect(deserialized.auth!.spendingCondition!.nonce).toBe(nonce);
-  expect(deserialized.auth!.spendingCondition!.feeRate).toBe(feeRate);
+  expect(deserialized.auth!.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(deserialized.auth!.spendingCondition!.feeRate!.toNumber()).toBe(feeRate.toNumber());
   expect(deserialized.anchorMode).toBe(anchorMode);
   expect(deserialized.postConditionMode).toBe(postConditionMode);
   expect(deserialized.postConditions.length).toBe(0);
   expect(deserialized.payload!.recipientAddress!.toString()).toBe(recipientAddress);
-  expect(deserialized.payload!.amount).toBe(amount);
+  expect(deserialized.payload!.amount!.toNumber()).toBe(amount.toNumber());
 });
 
 test('Make STX token transfer', () => {
   let recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
-  let amount = BigInt(12345);
-  let feeRate = BigInt(0);
-  let nonce = BigInt(0);
+  let amount = new BigNum(12345);
+  let feeRate = new BigNum(0);
+  let nonce = new BigNum(0);
   let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
   let memo = "test memo";
 
@@ -461,8 +463,8 @@ test('Make smart contract deploy', () => {
     "       (map-set store ((key key)) ((value value)))" +
     "       (ok 'true)))";
 
-  let feeRate = BigInt(0);
-  let nonce = BigInt(0);
+  let feeRate = new BigNum(0);
+  let nonce = new BigNum(0);
   let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
 
   let transaction = makeSmartContractDeploy(
