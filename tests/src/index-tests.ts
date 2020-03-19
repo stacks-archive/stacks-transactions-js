@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+
 import { 
   StacksTransaction,
 } from '../../src/transaction';
@@ -64,7 +66,8 @@ import {
 
 import {
   makeSTXTokenTransfer,
-  makeSmartContractDeploy
+  makeSmartContractDeploy,
+  makeContractCall
 } from '../../src/builders';
 
 import {
@@ -73,10 +76,16 @@ import {
 
 import { 
   TrueCV, 
-  FalseCV 
+  FalseCV, 
+  BufferCV
 } from '../../src/clarity/clarityTypes';
 
+
 import * as BigNum from 'bn.js';
+
+const SECRET_KEY = "e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801";
+const PUBLIC_KEY = "02215340da140268f8a472af9c2b67952fe0a68337665482dae84886adea0945c1";
+const STACKS_ADDRESS = "ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE";
 
 test('Stacks public key and private keys', () => {
   let privKeyString = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc";
@@ -451,43 +460,44 @@ test('Make STX token transfer', () => {
 });
 
 test('Make smart contract deploy', () => {
-  let contractName = "contract_name";
-  let codeBody = 
-    "(define-map store ((key (buff 32))) ((value (buff 32))))" +
-    "(define-public (get-value (key (buff 32)))" +
-    "   (match (map-get? store ((key key)))" +
-    "       entry (ok (get value entry))" +
-    "       (err 0)))" +
-    "(define-public (set-value (key (buff 32)) (value (buff 32)))" +
-    "   (begin" +
-    "       (map-set store ((key key)) ((value value)))" +
-    "       (ok 'true)))";
+  let contractName = 'kv-store';
+  let code = fs.readFileSync('./tests/src/contracts/kv-store.clar').toString();
 
   let feeRate = new BigNum(0);
   let nonce = new BigNum(0);
-  let secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
 
-  let transaction = makeSmartContractDeploy(
-    contractName,
-    codeBody,
-    feeRate,
-    nonce,
-    secretKey
-  );
-  
+  let transaction = makeSmartContractDeploy(contractName, code, feeRate, nonce, SECRET_KEY, TransactionVersion.Testnet);
+
   let serialized = transaction.serialize().toString('hex');
 
-  let tx = '0000000000040015c31b8c1c11c515e244b75806bac48d1399c7750000000000000000000000000000' 
-    + '000000017af27712cb2a7754758f3d52479a7c31b7914257c8ac161b8c7883f7f6f8f4f8747ce8ad0949e38' 
-    + 'd8e4981c18d2352184780efe9440459e19f8d7a1ffa465db9030200000000020d636f6e74726163745f6e61' 
-    + '6d650000014528646566696e652d6d61702073746f72652028286b657920286275666620333229292920282' 
-    + '876616c75652028627566662033322929292928646566696e652d7075626c696320286765742d76616c7565' 
-    + '20286b6579202862756666203332292929202020286d6174636820286d61702d6765743f2073746f7265202' 
-    + '8286b6579206b657929292920202020202020656e74727920286f6b20286765742076616c756520656e7472' 
-    + '7929292020202020202028657272203029292928646566696e652d7075626c696320287365742d76616c756' 
-    + '520286b65792028627566662033322929202876616c75652028627566662033322929292020202862656769' 
-    + '6e20202020202020286d61702d7365742073746f72652028286b6579206b6579292920282876616c7565207' 
-    + '6616c756529292920202020202020286f6b202774727565292929'
+  let tx = '80000000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000000000000000000000000073d449aa44ede1bc30c757ccf6cf6119f19567728be8a7d160c188c101e4ad79654f5f2345723c962f5a465ad0e22a4237c456da46194945ae553d366eee9c4b03020000000001086b762d73746f72650000015628646566696e652d6d61702073746f72652028286b657920286275666620333229292920282876616c7565202862756666203332292929290a0a28646566696e652d7075626c696320286765742d76616c756520286b65792028627566662033322929290a20202020286d6174636820286d61702d6765743f2073746f72652028286b6579206b65792929290a2020202020202020656e74727920286f6b20286765742076616c756520656e74727929290a20202020202020202865727220302929290a0a28646566696e652d7075626c696320287365742d76616c756520286b65792028627566662033322929202876616c75652028627566662033322929290a2020202028626567696e0a2020202020202020286d61702d7365742073746f72652028286b6579206b6579292920282876616c75652076616c75652929290a2020202020202020286f6b2027747275652929290a';
+
+  expect(serialized).toBe(tx);
+});
+
+test('Make contract-call', () => {
+  let contractName = 'kv-store';
+  let functionName = 'get-value';
+  let buffer = Buffer.from('foo');
+  let bufferCV = new BufferCV(buffer);
+
+  let feeRate = BigInt(0);
+  let nonce = BigInt(1);
+
+  let transaction = makeContractCall(
+    STACKS_ADDRESS,
+    contractName,
+    functionName,
+    [bufferCV],
+    feeRate,
+    nonce,
+    SECRET_KEY,
+    TransactionVersion.Testnet
+  );
+
+  let serialized = transaction.serialize().toString('hex');
+
+  let tx = '80000000000400e6c05355e0c990ffad19a5e9bda394a9c50034290000000000000001000000000000000000000847ecd645be0141ccbfe7ec25ff9ef1a00cb133623327e351dfb9adb7e09e8f304b0925a3be18f5b1984b2d929f425e5849955abde10f1634501a4e31ba3586030200000000021ae6c05355e0c990ffad19a5e9bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
 
   expect(serialized).toBe(tx);
 });

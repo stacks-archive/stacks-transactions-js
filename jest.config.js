@@ -1,5 +1,4 @@
 module.exports = {
   preset: 'ts-jest',
-  testRegex: '(/tests/src/.*-tests.ts$)',
-  collectCoverage: true,
+  testRegex: '(/tests/src/.*-tests.ts$)'
 };
