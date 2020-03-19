@@ -18,6 +18,25 @@ export {
 } from './payload';
 
 export {
+  UIntCV,
+  IntCV,
+  BufferCV,
+  StandardPrincipalCV,
+  ContractPrincipalCV,
+  TrueCV,
+  FalseCV,
+  BooleanCV,
+  NoneCV,
+  SomeCV,
+  OptionalCV,
+  ResponseOkCV,
+  ResponseErrorCV,
+  ListCV,
+  TupleCV,
+  ClarityValue,
+} from './clarity/clarityTypes';
+
+export {
   StacksPrivateKey,
   StacksPublicKey
 } from './keys'
