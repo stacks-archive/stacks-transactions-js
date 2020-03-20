@@ -7,9 +7,7 @@ from './constants';
 
 import {
   BufferArray,
-  BufferReader,
-  bigIntToHexString,
-  hexStringToBigInt,
+  BufferReader
 } from './utils';
 
 import {

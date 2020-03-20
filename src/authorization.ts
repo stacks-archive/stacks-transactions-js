@@ -10,8 +10,6 @@ import {
 import {
   BufferArray,
   BufferReader,
-  bigIntToHexString,
-  hexStringToBigInt,
   txidFromData,
   sha512_256
 } from './utils';
@@ -122,8 +120,8 @@ export class SpendingCondition extends StacksMessage {
 
   clear(): SpendingCondition {
     const cleared = _.cloneDeep(this);
-    cleared.nonce = BigInt(0);
-    cleared.feeRate = BigInt(0);
+    cleared.nonce = new BigNum(0);
+    cleared.feeRate = new BigNum(0);
     cleared.signature = MessageSignature.empty();
     return cleared;
   }
