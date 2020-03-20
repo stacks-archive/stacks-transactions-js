@@ -481,8 +481,8 @@ test('Make contract-call', () => {
   let buffer = Buffer.from('foo');
   let bufferCV = new BufferCV(buffer);
 
-  let feeRate = BigInt(0);
-  let nonce = BigInt(1);
+  let feeRate = new BigNum(0);
+  let nonce = new BigNum(1);
 
   let transaction = makeContractCall(
     STACKS_ADDRESS,
