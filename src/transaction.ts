@@ -1,26 +1,17 @@
 import * as _ from 'lodash';
 
-import { 
+import {
   DEFAULT_CHAIN_ID,
   TransactionVersion,
   PayloadType,
   AnchorMode,
   PostConditionMode,
-  AuthType
-} 
-from './constants';
+  AuthType,
+} from './constants';
 
-import {
-  Authorization,
-  SpendingCondition,
-} from './authorization';
+import { Authorization, SpendingCondition } from './authorization';
 
-import {
-  BufferArray,
-  BufferReader,
-  txidFromData,
-  sha512_256
-} from './utils';
+import { BufferArray, BufferReader, txidFromData, sha512_256 } from './utils';
 
 import {
   Payload,
@@ -28,40 +19,40 @@ import {
   ContractCallPayload,
   SmartContractPayload,
   PoisonPayload,
-  CoinbasePayload
+  CoinbasePayload,
 } from './payload';
 
-import {
-  LengthPrefixedList
-} from './types';
+import { LengthPrefixedList } from './types';
 
-import {
-  StacksMessage
-} from './message';
+import { StacksMessage } from './message';
 
-import {
-  PostCondition
-} from './postcondition';
+import { PostCondition } from './postcondition';
 
-import {
-  StacksPrivateKey
-} from './keys';
+import { StacksPrivateKey } from './keys';
 
-export class StacksTransaction extends StacksMessage { 
+export class StacksTransaction extends StacksMessage {
   version?: TransactionVersion;
   chainId?: string;
   auth?: Authorization;
   anchorMode?: AnchorMode;
-  payload?: TokenTransferPayload | ContractCallPayload 
-    | SmartContractPayload | PoisonPayload | CoinbasePayload;
+  payload?:
+    | TokenTransferPayload
+    | ContractCallPayload
+    | SmartContractPayload
+    | PoisonPayload
+    | CoinbasePayload;
   postConditionMode: PostConditionMode;
   postConditions: LengthPrefixedList<PostCondition>;
 
   constructor(
-    version?: TransactionVersion, 
-    auth?: Authorization, 
-    payload?: TokenTransferPayload | ContractCallPayload 
-    | SmartContractPayload | PoisonPayload | CoinbasePayload
+    version?: TransactionVersion,
+    auth?: Authorization,
+    payload?:
+      | TokenTransferPayload
+      | ContractCallPayload
+      | SmartContractPayload
+      | PoisonPayload
+      | CoinbasePayload
   ) {
     super();
     this.version = version;
@@ -90,7 +81,7 @@ export class StacksTransaction extends StacksMessage {
   }
 
   signBegin() {
-    let tx = _.cloneDeep(this);
+    const tx = _.cloneDeep(this);
     if (tx.auth === undefined) {
       throw new Error('"auth" is undefined');
     }
@@ -98,9 +89,8 @@ export class StacksTransaction extends StacksMessage {
     return tx.txid();
   }
 
-  signSingleSigStandard(privateKey: String) {
-
-  }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  signSingleSigStandard(privateKey: string) {}
 
   signNextOrigin(sigHash: string, privateKey: StacksPrivateKey): string {
     if (this.auth === undefined) {
@@ -112,17 +102,12 @@ export class StacksTransaction extends StacksMessage {
     if (this.auth.authType === undefined) {
       throw new Error('"auth.authType" is undefined');
     }
-    return this.signAndAppend(
-      this.auth.spendingCondition, 
-      sigHash, 
-      this.auth.authType, 
-      privateKey
-    );
+    return this.signAndAppend(this.auth.spendingCondition, sigHash, this.auth.authType, privateKey);
   }
 
   signAndAppend(
-    condition: SpendingCondition, 
-    curSigHash: string, 
+    condition: SpendingCondition,
+    curSigHash: string,
     authType: AuthType,
     privateKey: StacksPrivateKey
   ): string {
@@ -132,11 +117,11 @@ export class StacksTransaction extends StacksMessage {
     if (condition.nonce === undefined) {
       throw new Error('"condition.nonce" is undefined');
     }
-    let {nextSig, nextSigHash} = SpendingCondition.nextSignature(
-      curSigHash, 
-      authType, 
-      condition.feeRate, 
-      condition.nonce, 
+    const { nextSig, nextSigHash } = SpendingCondition.nextSignature(
+      curSigHash,
+      authType,
+      condition.feeRate,
+      condition.nonce,
       privateKey
     );
     if (condition.singleSig()) {
@@ -153,7 +138,7 @@ export class StacksTransaction extends StacksMessage {
   }
 
   txid(): string {
-    let serialized = this.serialize();
+    const serialized = this.serialize();
     return txidFromData(serialized);
   }
 
@@ -174,7 +159,7 @@ export class StacksTransaction extends StacksMessage {
       throw new Error('"payload" is undefined');
     }
 
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
 
     bufferArray.appendHexString(this.version);
     bufferArray.appendHexString(this.chainId);
@@ -188,15 +173,15 @@ export class StacksTransaction extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.version = bufferReader.read(1).toString("hex") === TransactionVersion.Mainnet
-      ? TransactionVersion.Mainnet : TransactionVersion.Testnet;
-    this.chainId = bufferReader.read(4).toString("hex");
+    this.version =
+      bufferReader.read(1).toString('hex') === TransactionVersion.Mainnet
+        ? TransactionVersion.Mainnet
+        : TransactionVersion.Testnet;
+    this.chainId = bufferReader.read(4).toString('hex');
     this.auth = Authorization.deserialize(bufferReader);
-    this.anchorMode = bufferReader.read(1).toString("hex") as AnchorMode;
-    this.postConditionMode = bufferReader.read(1).toString("hex") as PostConditionMode;
+    this.anchorMode = bufferReader.read(1).toString('hex') as AnchorMode;
+    this.postConditionMode = bufferReader.read(1).toString('hex') as PostConditionMode;
     this.postConditions = LengthPrefixedList.deserialize(bufferReader, PostCondition);
     this.payload = Payload.deserialize(bufferReader);
   }
 }
-
-

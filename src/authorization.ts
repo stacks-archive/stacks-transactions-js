@@ -4,28 +4,16 @@ import {
   AuthType,
   AddressHashMode,
   PubKeyEncoding,
-  RECOVERABLE_ECDSA_SIG_LENGTH_BYTES
-} from './constants'
+  RECOVERABLE_ECDSA_SIG_LENGTH_BYTES,
+} from './constants';
 
-import {
-  BufferArray,
-  BufferReader,
-  txidFromData,
-  sha512_256
-} from './utils';
+import { BufferArray, BufferReader, txidFromData, sha512_256 } from './utils';
 
-import {
-  Address
-} from './types';
+import { Address } from './types';
 
-import {
-  StacksPublicKey,
-  StacksPrivateKey
-} from './keys';
+import { StacksPublicKey, StacksPrivateKey } from './keys';
 
-import {
-  StacksMessage
-} from './message'
+import { StacksMessage } from './message';
 
 import * as BigNum from 'bn.js';
 
@@ -40,18 +28,19 @@ export class MessageSignature extends StacksMessage {
   constructor(signature?: string) {
     super();
     if (signature) {
-      let length = Buffer.from(signature, 'hex').byteLength;
+      const length = Buffer.from(signature, 'hex').byteLength;
       if (length != RECOVERABLE_ECDSA_SIG_LENGTH_BYTES) {
         throw Error('Invalid signature');
       }
     }
     this.signature = signature;
   }
-  
+
   static empty(): MessageSignature {
-    let messageSignature = new this();
-    messageSignature.signature = 
-      Buffer.alloc(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES, 0x00).toString('hex');
+    const messageSignature = new this();
+    messageSignature.signature = Buffer.alloc(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES, 0x00).toString(
+      'hex'
+    );
     return messageSignature;
   }
 
@@ -60,7 +49,7 @@ export class MessageSignature extends StacksMessage {
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
     if (this.signature === undefined) {
       throw new Error('"signature" is undefined');
     }
@@ -71,7 +60,6 @@ export class MessageSignature extends StacksMessage {
   deserialize(bufferReader: BufferReader) {
     this.signature = bufferReader.read(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES).toString('hex');
   }
-
 }
 
 export class SpendingCondition extends StacksMessage {
@@ -84,34 +72,33 @@ export class SpendingCondition extends StacksMessage {
   signaturesRequired?: number;
 
   constructor(
-    addressHashMode?: AddressHashMode, 
-    pubKey?: string, 
-    nonce?: BigNum, 
+    addressHashMode?: AddressHashMode,
+    pubKey?: string,
+    nonce?: BigNum,
     feeRate?: BigNum
   ) {
     super();
     this.addressHashMode = addressHashMode;
     if (addressHashMode && pubKey) {
-      this.signerAddress = Address.fromPublicKeys(
-        0, 
-        addressHashMode, 
-        1, 
-        [new StacksPublicKey(pubKey)]
-      );
+      this.signerAddress = Address.fromPublicKeys(0, addressHashMode, 1, [
+        new StacksPublicKey(pubKey),
+      ]);
     }
     this.nonce = nonce;
     this.feeRate = feeRate;
     if (pubKey) {
-      this.pubKeyEncoding = new StacksPublicKey(pubKey).compressed() 
-        ? PubKeyEncoding.Compressed : PubKeyEncoding.Uncompressed;
+      this.pubKeyEncoding = new StacksPublicKey(pubKey).compressed()
+        ? PubKeyEncoding.Compressed
+        : PubKeyEncoding.Uncompressed;
     }
     this.signature = MessageSignature.empty();
   }
 
   singleSig(): boolean {
-    if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
-      this.addressHashMode === AddressHashMode.SerializeP2WPKH)
-    {
+    if (
+      this.addressHashMode === AddressHashMode.SerializeP2PKH ||
+      this.addressHashMode === AddressHashMode.SerializeP2WPKH
+    ) {
       return true;
     } else {
       return false;
@@ -127,9 +114,9 @@ export class SpendingCondition extends StacksMessage {
   }
 
   static makeSigHashPreSign(
-    curSigHash: string, 
-    authType: AuthType, 
-    feeRate: BigNum, 
+    curSigHash: string,
+    authType: AuthType,
+    feeRate: BigNum,
     nonce: BigNum
   ): string {
     // new hash combines the previous hash and all the new data this signature will add. This
@@ -138,10 +125,13 @@ export class SpendingCondition extends StacksMessage {
     // * the auth flag
     // * the fee rate (big-endian 8-byte number)
     // * nonce (big-endian 8-byte number)
-    let hashLength = 32 + 1 + 8 + 8;
+    const hashLength = 32 + 1 + 8 + 8;
 
-    let sigHash = curSigHash + authType + feeRate.toArrayLike(Buffer, 'be', 8).toString('hex') 
-      + nonce.toArrayLike(Buffer, 'be', 8).toString('hex');
+    const sigHash =
+      curSigHash +
+      authType +
+      feeRate.toArrayLike(Buffer, 'be', 8).toString('hex') +
+      nonce.toArrayLike(Buffer, 'be', 8).toString('hex');
 
     if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
       throw Error('Invalid signature hash length');
@@ -151,18 +141,20 @@ export class SpendingCondition extends StacksMessage {
   }
 
   static makeSigHashPostSign(
-    curSigHash: string, 
-    publicKey: StacksPublicKey, 
+    curSigHash: string,
+    publicKey: StacksPublicKey,
     signature: MessageSignature
   ): string {
     // new hash combines the previous hash and all the new data this signature will add.  This
     // includes:
     // * the public key compression flag
     // * the signature
-    let hashLength = 32 + 1 + RECOVERABLE_ECDSA_SIG_LENGTH_BYTES;
-    let pubKeyEncoding = publicKey.compressed() ? PubKeyEncoding.Compressed : PubKeyEncoding.Uncompressed;
+    const hashLength = 32 + 1 + RECOVERABLE_ECDSA_SIG_LENGTH_BYTES;
+    const pubKeyEncoding = publicKey.compressed()
+      ? PubKeyEncoding.Compressed
+      : PubKeyEncoding.Uncompressed;
 
-    let sigHash = curSigHash + pubKeyEncoding + signature.toString();
+    const sigHash = curSigHash + pubKeyEncoding + signature.toString();
 
     if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
       throw Error('Invalid signature hash length');
@@ -172,24 +164,24 @@ export class SpendingCondition extends StacksMessage {
   }
 
   static nextSignature(
-    curSigHash: string, 
-    authType: AuthType, 
-    feeRate: BigNum, 
-    nonce: BigNum, 
+    curSigHash: string,
+    authType: AuthType,
+    feeRate: BigNum,
+    nonce: BigNum,
     privateKey: StacksPrivateKey
   ): {
-    nextSig: MessageSignature, 
-    nextSigHash: string
+    nextSig: MessageSignature;
+    nextSigHash: string;
   } {
-    let sigHashPreSign = this.makeSigHashPreSign(curSigHash, authType, feeRate, nonce);
-    let signature = privateKey.sign(sigHashPreSign);
-    let publicKey = privateKey.getPublicKey();
-    let nextSigHash = this.makeSigHashPostSign(sigHashPreSign, publicKey, signature);
+    const sigHashPreSign = this.makeSigHashPreSign(curSigHash, authType, feeRate, nonce);
+    const signature = privateKey.sign(sigHashPreSign);
+    const publicKey = privateKey.getPublicKey();
+    const nextSigHash = this.makeSigHashPostSign(sigHashPreSign, publicKey, signature);
 
     return {
       nextSig: signature,
-      nextSigHash: nextSigHash,
-    }
+      nextSigHash,
+    };
   }
 
   numSignatures(): number {
@@ -197,7 +189,7 @@ export class SpendingCondition extends StacksMessage {
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
 
     if (this.addressHashMode === undefined) {
       throw new Error('"addressHashMode" is undefined');
@@ -219,17 +211,19 @@ export class SpendingCondition extends StacksMessage {
     bufferArray.push(this.nonce.toArrayLike(Buffer, 'be', 8));
     bufferArray.push(this.feeRate.toArrayLike(Buffer, 'be', 8));
 
-    if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
-      this.addressHashMode === AddressHashMode.SerializeP2WPKH)
-    {
+    if (
+      this.addressHashMode === AddressHashMode.SerializeP2PKH ||
+      this.addressHashMode === AddressHashMode.SerializeP2WPKH
+    ) {
       if (this.pubKeyEncoding === undefined) {
         throw new Error('"pubKeyEncoding" is undefined');
       }
       bufferArray.appendHexString(this.pubKeyEncoding);
       bufferArray.push(this.signature.serialize());
-    } else if (this.addressHashMode === AddressHashMode.SerializeP2SH ||
-      this.addressHashMode === AddressHashMode.SerializeP2WSH)
-    {
+    } else if (
+      this.addressHashMode === AddressHashMode.SerializeP2SH ||
+      this.addressHashMode === AddressHashMode.SerializeP2WSH
+    ) {
       // TODO
     }
 
@@ -238,19 +232,21 @@ export class SpendingCondition extends StacksMessage {
 
   deserialize(bufferReader: BufferReader) {
     this.addressHashMode = bufferReader.read(1).toString('hex') as AddressHashMode;
-    let signerPubKeyHash = bufferReader.read(20).toString('hex');
+    const signerPubKeyHash = bufferReader.read(20).toString('hex');
     this.signerAddress = Address.fromData(0, signerPubKeyHash);
     this.nonce = new BigNum(bufferReader.read(8).toString('hex'), 16);
     this.feeRate = new BigNum(bufferReader.read(8).toString('hex'), 16);
 
-    if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
-      this.addressHashMode === AddressHashMode.SerializeP2WPKH)
-    {
+    if (
+      this.addressHashMode === AddressHashMode.SerializeP2PKH ||
+      this.addressHashMode === AddressHashMode.SerializeP2WPKH
+    ) {
       this.pubKeyEncoding = bufferReader.read(1).toString('hex') as PubKeyEncoding;
       this.signature = MessageSignature.deserialize(bufferReader);
-    } else if (this.addressHashMode === AddressHashMode.SerializeP2SH ||
-      this.addressHashMode === AddressHashMode.SerializeP2WSH)
-    {
+    } else if (
+      this.addressHashMode === AddressHashMode.SerializeP2SH ||
+      this.addressHashMode === AddressHashMode.SerializeP2WSH
+    ) {
       // TODO
     }
   }
@@ -258,9 +254,9 @@ export class SpendingCondition extends StacksMessage {
 
 export class SingleSigSpendingCondition extends SpendingCondition {
   constructor(
-    addressHashMode?: AddressHashMode, 
-    pubKey?: string, 
-    nonce?: BigNum, 
+    addressHashMode?: AddressHashMode,
+    pubKey?: string,
+    nonce?: BigNum,
     feeRate?: BigNum
   ) {
     super(addressHashMode, pubKey, nonce, feeRate);
@@ -276,7 +272,7 @@ export class MultiSigSpendingCondition extends SpendingCondition {
   // TODO
 }
 
-export class Authorization extends StacksMessage { 
+export class Authorization extends StacksMessage {
   authType?: AuthType;
   spendingCondition?: SpendingCondition;
 
@@ -288,14 +284,14 @@ export class Authorization extends StacksMessage {
 
   intoInitialSighashAuth(): Authorization {
     if (this.authType === AuthType.Standard) {
-      return new Authorization(AuthType.Standard, this.spendingCondition?.clear())
+      return new Authorization(AuthType.Standard, this.spendingCondition?.clear());
     } else {
-      return new Authorization(AuthType.Sponsored, this.spendingCondition?.clear())
+      return new Authorization(AuthType.Sponsored, this.spendingCondition?.clear());
     }
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
     if (this.authType === undefined) {
       throw new Error('"authType" is undefined');
     }
@@ -312,12 +308,12 @@ export class Authorization extends StacksMessage {
         // TODO
         break;
     }
-    
+
     return bufferArray.concatBuffer();
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.authType = bufferReader.read(1).toString("hex") as AuthType;
+    this.authType = bufferReader.read(1).toString('hex') as AuthType;
 
     switch (this.authType) {
       case AuthType.Standard:
@@ -331,19 +327,13 @@ export class Authorization extends StacksMessage {
 }
 
 export class StandardAuthorization extends Authorization {
-    constructor(spendingCondition: SpendingCondition) {
-      super(
-        AuthType.Standard,
-        spendingCondition
-      );
-    }
+  constructor(spendingCondition: SpendingCondition) {
+    super(AuthType.Standard, spendingCondition);
+  }
 }
 
 export class SponsoredAuthorization extends Authorization {
-    constructor(spendingCondition: SpendingCondition) {
-      super(
-        AuthType.Sponsored,
-        spendingCondition
-      );
-    }
+  constructor(spendingCondition: SpendingCondition) {
+    super(AuthType.Sponsored, spendingCondition);
+  }
 }

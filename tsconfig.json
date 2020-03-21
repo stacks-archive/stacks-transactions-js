@@ -10,6 +10,7 @@
     "allowSyntheticDefaultImports": false,
   },
   "include": [
+    "src/index.ts",
     "src/**/*",
     "tests/**/*"
   ]

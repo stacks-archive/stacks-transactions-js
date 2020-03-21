@@ -1,26 +1,10 @@
-import { 
-  COINBASE_BUFFER_LENGTH_BYTES,
-  PayloadType,
-  AssetType
-} 
-from './constants';
+import { COINBASE_BUFFER_LENGTH_BYTES, PayloadType, AssetType } from './constants';
 
-import {
-  BufferArray,
-  BufferReader
-} from './utils';
+import { BufferArray, BufferReader } from './utils';
 
-import {
-  Address,
-  LengthPrefixedString,
-  CodeBodyString,
-  AssetInfo,
-  MemoString
-} from './types';
+import { Address, LengthPrefixedString, CodeBodyString, AssetInfo, MemoString } from './types';
 
-import {
-  StacksMessage,
-} from './message'
+import { StacksMessage } from './message';
 
 import { ClarityValue } from './clarity/clarityTypes';
 
@@ -46,13 +30,13 @@ export class Payload extends StacksMessage {
   coinbaseBuffer?: Buffer;
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
 
     if (this.payloadType === undefined) {
       throw new Error('"payloadType" is undefined');
     }
     bufferArray.appendHexString(this.payloadType);
-    
+
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
         if (this.recipientAddress === undefined) {
@@ -86,10 +70,10 @@ export class Payload extends StacksMessage {
         bufferArray.push(this.functionName.serialize());
         const numArgs = Buffer.alloc(4);
         numArgs.writeUInt32BE(this.functionArgs.length, 0);
-        bufferArray.push(numArgs)
+        bufferArray.push(numArgs);
         this.functionArgs.forEach(arg => {
           bufferArray.push(arg.serialize());
-        })
+        });
         break;
       case PayloadType.SmartContract:
         if (this.contractName === undefined) {
@@ -109,7 +93,7 @@ export class Payload extends StacksMessage {
           throw new Error('"coinbaseBuffer" is undefined');
         }
         if (this.coinbaseBuffer.byteLength != COINBASE_BUFFER_LENGTH_BYTES) {
-          throw Error('Coinbase buffer size must be ' + COINBASE_BUFFER_LENGTH_BYTES + ' bytes');
+          throw Error(`Coinbase buffer size must be ${COINBASE_BUFFER_LENGTH_BYTES} bytes`);
         }
         bufferArray.push(this.coinbaseBuffer);
         break;
@@ -121,7 +105,7 @@ export class Payload extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.payloadType = bufferReader.read(1).toString("hex") as PayloadType;
+    this.payloadType = bufferReader.read(1).toString('hex') as PayloadType;
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
         this.recipientAddress = Address.deserialize(bufferReader);
@@ -131,7 +115,7 @@ export class Payload extends StacksMessage {
       case PayloadType.ContractCall:
         this.contractAddress = Address.deserialize(bufferReader);
         this.contractName = LengthPrefixedString.deserialize(bufferReader);
-        this.functionName = LengthPrefixedString.deserialize(bufferReader); 
+        this.functionName = LengthPrefixedString.deserialize(bufferReader);
         this.functionArgs = [];
         const numberOfArgs = bufferReader.read(4).readUInt32BE(0);
         for (let i = 0; i < numberOfArgs; i++) {
@@ -152,30 +136,26 @@ export class Payload extends StacksMessage {
       default:
         break;
     }
-  };
+  }
 }
 
 export class TokenTransferPayload extends Payload {
-  constructor(
-    recipientAddress?: string, 
-    amount?: BigNum, 
-    memo?: string
-  ) {
+  constructor(recipientAddress?: string, amount?: BigNum, memo?: string) {
     super();
     this.payloadType = PayloadType.TokenTransfer;
 
     this.recipientAddress = new Address(recipientAddress);
     this.amount = amount;
-    this.memo = memo ? new MemoString(memo) : new MemoString("");
+    this.memo = memo ? new MemoString(memo) : new MemoString('');
   }
 }
 
 export class ContractCallPayload extends Payload {
   constructor(
-    contractAddress?: string, 
-    contractName?: string, 
-    functionName?: string, 
-    functionArgs?: ClarityValue[],
+    contractAddress?: string,
+    contractName?: string,
+    functionName?: string,
+    functionArgs?: ClarityValue[]
   ) {
     super();
     this.payloadType = PayloadType.ContractCall;
@@ -187,10 +167,7 @@ export class ContractCallPayload extends Payload {
 }
 
 export class SmartContractPayload extends Payload {
-  constructor(
-    contractName?: string, 
-    codeBody?: string
-  ) {
+  constructor(contractName?: string, codeBody?: string) {
     super();
     this.payloadType = PayloadType.SmartContract;
     this.contractName = new LengthPrefixedString(contractName);
