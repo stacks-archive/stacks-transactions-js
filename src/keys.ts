@@ -1,27 +1,18 @@
-import {
-  COMPRESSED_PUBKEY_LENGTH_BYTES,
-  UNCOMPRESSED_PUBKEY_LENGTH_BYTES
-} from './constants'
+import { COMPRESSED_PUBKEY_LENGTH_BYTES, UNCOMPRESSED_PUBKEY_LENGTH_BYTES } from './constants';
 
 import {
   BufferArray,
   BufferReader,
   leftPadHexToLength,
   intToHexString,
-  randomBytes
+  randomBytes,
 } from './utils';
 
-import { 
-  ec as EC
-} from 'elliptic';
+import { ec as EC } from 'elliptic';
 
-import {
-  StacksMessage
-} from './message'
+import { StacksMessage } from './message';
 
-import {
-  MessageSignature
-} from './authorization';
+import { MessageSignature } from './authorization';
 
 export class StacksPublicKey extends StacksMessage {
   data?: Buffer;
@@ -34,10 +25,10 @@ export class StacksPublicKey extends StacksMessage {
   }
 
   static fromPrivateKey(privateKey: string): StacksPublicKey {
-    let privKey = new StacksPrivateKey(privateKey);
-    let ec = new EC('secp256k1');
-    let keyPair = ec.keyFromPrivate(privKey.data.toString('hex').slice(0, 64), 'hex');
-    let pubKey = keyPair.getPublic(privKey.compressed, 'hex');
+    const privKey = new StacksPrivateKey(privateKey);
+    const ec = new EC('secp256k1');
+    const keyPair = ec.keyFromPrivate(privKey.data.toString('hex').slice(0, 64), 'hex');
+    const pubKey = keyPair.getPublic(privKey.compressed, 'hex');
     return new StacksPublicKey(pubKey);
   }
 
@@ -45,7 +36,7 @@ export class StacksPublicKey extends StacksMessage {
     if (this.data === undefined) {
       throw new Error('"data" is undefined');
     }
-    return !this.data.toString('hex').startsWith("04");
+    return !this.data.toString('hex').startsWith('04');
   }
 
   toString(): string {
@@ -53,7 +44,7 @@ export class StacksPublicKey extends StacksMessage {
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
     if (this.data === undefined) {
       throw new Error('"data" is undefined');
     }
@@ -62,8 +53,10 @@ export class StacksPublicKey extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    let compressed = !(bufferReader.read(1, false).toString('hex') === "04");
-    let keyLength = compressed ? COMPRESSED_PUBKEY_LENGTH_BYTES : UNCOMPRESSED_PUBKEY_LENGTH_BYTES
+    const compressed = !(bufferReader.read(1, false).toString('hex') === '04');
+    const keyLength = compressed
+      ? COMPRESSED_PUBKEY_LENGTH_BYTES
+      : UNCOMPRESSED_PUBKEY_LENGTH_BYTES;
     this.data = bufferReader.read(keyLength + 1);
   }
 }
@@ -74,41 +67,43 @@ export class StacksPrivateKey {
 
   constructor(key: string) {
     if (key.length === 66) {
-      if (key.slice(64) !== '01') {
-        throw new Error('Improperly formatted private-key hex string. 66-length hex usually '
-                        + 'indicates compressed key, but last byte must be == 1')
+      if (!key.endsWith('01')) {
+        throw new Error(
+          'Improperly formatted private-key hex string. 66-length hex usually ' +
+            'indicates compressed key, but last byte must be == 1'
+        );
       }
-      this.compressed = true;  
+      this.compressed = true;
     } else if (key.length === 64) {
       this.compressed = false;
     } else {
-      throw new Error('Improperly formatted private-key hex string: length should be 64 or 66.')
+      throw new Error('Improperly formatted private-key hex string: length should be 64 or 66.');
     }
 
     this.data = Buffer.from(key, 'hex');
   }
 
   static makeRandom(): StacksPrivateKey {
-    let ec = new EC('secp256k1');
-    let options = { entropy: randomBytes(32) };
-    let keyPair = ec.genKeyPair(options);
-    let privateKey = keyPair.getPrivate().toString('hex');
+    const ec = new EC('secp256k1');
+    const options = { entropy: randomBytes(32) };
+    const keyPair = ec.genKeyPair(options);
+    const privateKey = keyPair.getPrivate().toString('hex');
     return new StacksPrivateKey(privateKey);
   }
 
   sign(input: string): MessageSignature {
-    let ec = new EC('secp256k1');
-    let key = ec.keyFromPrivate(this.data.toString('hex').slice(0, 64), 'hex');
-    let signature = key.sign(input, 'hex', { canonical: true });
-    let coordinateValueBytes = 32;
-    let r = leftPadHexToLength(signature.r.toString('hex'), coordinateValueBytes * 2);
-    let s = leftPadHexToLength(signature.s.toString('hex'), coordinateValueBytes * 2);
+    const ec = new EC('secp256k1');
+    const key = ec.keyFromPrivate(this.data.toString('hex').slice(0, 64), 'hex');
+    const signature = key.sign(input, 'hex', { canonical: true });
+    const coordinateValueBytes = 32;
+    const r = leftPadHexToLength(signature.r.toString('hex'), coordinateValueBytes * 2);
+    const s = leftPadHexToLength(signature.s.toString('hex'), coordinateValueBytes * 2);
     if (signature.recoveryParam === undefined || signature.recoveryParam === null) {
       throw new Error('"signature.recoveryParam" is not set');
     }
-    let recoveryParam = intToHexString(signature.recoveryParam, 1);
-    let recoverableSignatureString = recoveryParam + r + s;
-    let recoverableSignature = new MessageSignature(recoverableSignatureString);
+    const recoveryParam = intToHexString(signature.recoveryParam, 1);
+    const recoverableSignatureString = recoveryParam + r + s;
+    const recoverableSignature = new MessageSignature(recoverableSignatureString);
     return recoverableSignature;
   }
 
@@ -117,6 +112,6 @@ export class StacksPrivateKey {
   }
 
   toString(): string {
-    return this.data.toString("hex");
+    return this.data.toString('hex');
   }
 }

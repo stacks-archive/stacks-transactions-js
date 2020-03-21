@@ -1,6 +1,4 @@
-import {
-  BufferReader
-} from './utils';
+import { BufferReader } from './utils';
 
 export interface StacksMessageCodec {
   serialize(): Buffer;
@@ -11,7 +9,7 @@ export abstract class StacksMessage {
   abstract serialize(): Buffer;
   abstract deserialize(bufferReader: BufferReader): void;
   static deserialize<T extends StacksMessage>(this: new () => T, bufferReader: BufferReader): T {
-    let message = new this();
+    const message = new this();
     message.deserialize(bufferReader);
     return message;
   }

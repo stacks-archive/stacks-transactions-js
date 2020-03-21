@@ -1,14 +1,8 @@
-import {
-  StacksTransaction
-} from './transaction';
+import { StacksTransaction } from './transaction';
 
-import {
-  AuthType
-} from './constants';
+import { AuthType } from './constants';
 
-import {
-  StacksPrivateKey
-} from './keys';
+import { StacksPrivateKey } from './keys';
 
 export class TransactionSigner {
   transaction: StacksTransaction;
@@ -17,9 +11,7 @@ export class TransactionSigner {
   checkOversign: boolean;
   checkOverlap: boolean;
 
-  constructor(
-    transaction: StacksTransaction
-  ) {
+  constructor(transaction: StacksTransaction) {
     this.transaction = transaction;
     this.sigHash = transaction.signBegin();
     this.originDone = false;
@@ -29,7 +21,7 @@ export class TransactionSigner {
 
   signOrigin(privateKey: StacksPrivateKey) {
     if (this.checkOverlap && this.originDone) {
-      throw Error("Cannot sign origin after sponsor key");
+      throw Error('Cannot sign origin after sponsor key');
     }
 
     if (this.transaction.auth === undefined) {
@@ -42,12 +34,15 @@ export class TransactionSigner {
       throw new Error('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
     }
 
-    if (this.checkOversign && this.transaction.auth.spendingCondition.numSignatures() 
-      >= this.transaction.auth.spendingCondition.signaturesRequired) {
-        throw new Error('Origin would have too many signatures');
+    if (
+      this.checkOversign &&
+      this.transaction.auth.spendingCondition.numSignatures() >=
+        this.transaction.auth.spendingCondition.signaturesRequired
+    ) {
+      throw new Error('Origin would have too many signatures');
     }
 
-    let nextSighash = this.transaction.signNextOrigin(this.sigHash, privateKey);
+    const nextSighash = this.transaction.signNextOrigin(this.sigHash, privateKey);
     this.sigHash = nextSighash;
   }
 }

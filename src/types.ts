@@ -1,14 +1,12 @@
-import { 
+import {
   MAX_STRING_LENGTH_BYTES,
   MEMO_MAX_LENGTH_BYTES,
   PrincipalType,
   TransactionVersion,
-  AddressHashMode
+  AddressHashMode,
 } from './constants';
 
-import {
-  StacksPublicKey
-} from './keys';
+import { StacksPublicKey } from './keys';
 
 import {
   BufferArray,
@@ -17,18 +15,12 @@ import {
   hexStringToInt,
   exceedsMaxLengthBytes,
   hash_p2pkh,
-  rightPadHexToLength
+  rightPadHexToLength,
 } from './utils';
 
-import {
-  c32addressDecode,
-  c32address
-} from 'c32check';
+import { c32addressDecode, c32address } from 'c32check';
 
-import {
-  StacksMessageCodec,
-  StacksMessage
-} from './message'
+import { StacksMessageCodec, StacksMessage } from './message';
 
 export class Address extends StacksMessage {
   version?: number;
@@ -37,21 +29,21 @@ export class Address extends StacksMessage {
   constructor(c32AddressString?: string) {
     super();
     if (c32AddressString) {
-      let addressData = c32addressDecode(c32AddressString);
+      const addressData = c32addressDecode(c32AddressString);
       this.version = addressData[0];
       this.data = addressData[1];
     }
   }
 
   static fromData(version: number, data: string): Address {
-    let address = new Address();
+    const address = new Address();
     address.version = version;
     address.data = data;
     return address;
   }
 
   static fromPublicKeys(
-    version: number, 
+    version: number,
     hashMode: AddressHashMode,
     numSigs: number,
     publicKeys: Array<StacksPublicKey>
@@ -60,33 +52,35 @@ export class Address extends StacksMessage {
       throw Error('Invalid number of public keys');
     }
 
-    if (hashMode === AddressHashMode.SerializeP2PKH || 
-      hashMode === AddressHashMode.SerializeP2WPKH) 
-    {
+    if (
+      hashMode === AddressHashMode.SerializeP2PKH ||
+      hashMode === AddressHashMode.SerializeP2WPKH
+    ) {
       if (publicKeys.length != 1 || numSigs != 1) {
         throw Error('Invalid number of public keys or signatures');
       }
     }
-    
-    if (hashMode === AddressHashMode.SerializeP2WPKH ||
-      hashMode === AddressHashMode.SerializeP2WSH)
-    {
+
+    if (
+      hashMode === AddressHashMode.SerializeP2WPKH ||
+      hashMode === AddressHashMode.SerializeP2WSH
+    ) {
       for (let i = 0; i < publicKeys.length; i++) {
-        if (!publicKeys[i].compressed()){
+        if (!publicKeys[i].compressed()) {
           throw Error('Public keys must be compressed for segwit');
-        }        
+        }
       }
     }
 
     switch (hashMode) {
-      case AddressHashMode.SerializeP2PKH: 
-        return Address.fromData(version, (hash_p2pkh(publicKeys[0].toString())));
+      case AddressHashMode.SerializeP2PKH:
+        return Address.fromData(version, hash_p2pkh(publicKeys[0].toString()));
       default:
-        return new Address(""); 
+        return new Address('');
     }
   }
 
-  toC32AddressString(): string { 
+  toC32AddressString(): string {
     if (this.version === undefined) {
       throw new Error('"version" is undefined');
     }
@@ -101,7 +95,7 @@ export class Address extends StacksMessage {
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
     if (this.version === undefined) {
       throw new Error('"version" is undefined');
     }
@@ -133,7 +127,7 @@ export class Principal extends StacksMessage {
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
     if (this.principalType === undefined) {
       throw new Error('"principalType" is undefined');
     }
@@ -146,7 +140,7 @@ export class Principal extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.principalType = bufferReader.read(1).toString("hex") as PrincipalType;
+    this.principalType = bufferReader.read(1).toString('hex') as PrincipalType;
     this.address = Address.deserialize(bufferReader);
     if (this.principalType == PrincipalType.Contract) {
       this.contractName = LengthPrefixedString.deserialize(bufferReader);
@@ -156,20 +150,13 @@ export class Principal extends StacksMessage {
 
 export class StandardPrincipal extends Principal {
   constructor(address?: string) {
-    super(
-      PrincipalType.Standard,
-      address
-    );
+    super(PrincipalType.Standard, address);
   }
 }
 
 export class ContractPrincipal extends Principal {
   constructor(address?: string, contractName?: string) {
-    super(
-      PrincipalType.Contract,
-      address,
-      contractName
-    );
+    super(PrincipalType.Contract, address, contractName);
   }
 }
 
@@ -194,27 +181,27 @@ export class LengthPrefixedString extends StacksMessage {
       throw new Error('"content" is undefined');
     }
     if (exceedsMaxLengthBytes(this.content, this.maxLengthBytes)) {
-      throw new Error('String length exceeds maximum bytes ' + this.maxLengthBytes.toString());
+      throw new Error(`String length exceeds maximum bytes ${this.maxLengthBytes.toString()}`);
     }
 
-    let bufferArray: BufferArray = new BufferArray();
-    let contentBuffer = Buffer.from(this.content);
-    let length = contentBuffer.byteLength;
+    const bufferArray: BufferArray = new BufferArray();
+    const contentBuffer = Buffer.from(this.content);
+    const length = contentBuffer.byteLength;
     bufferArray.appendHexString(intToHexString(length, this.lengthPrefixBytes));
     bufferArray.push(Buffer.from(this.content));
     return bufferArray.concatBuffer();
   }
 
   deserialize(bufferReader: BufferReader) {
-    let length = bufferReader.read(this.lengthPrefixBytes).toString("hex");
+    const length = bufferReader.read(this.lengthPrefixBytes).toString('hex');
     this.content = bufferReader.read(hexStringToInt(length)).toString();
   }
 }
 
 export class CodeBodyString extends LengthPrefixedString {
   constructor(content?: string) {
-    let lengthPrefixBytes = 4;
-    let maxLengthBytes = 100000;
+    const lengthPrefixBytes = 4;
+    const maxLengthBytes = 100000;
     super(content, lengthPrefixBytes, maxLengthBytes);
   }
 }
@@ -225,8 +212,7 @@ export class MemoString extends StacksMessage {
   constructor(content?: string) {
     super();
     if (content && exceedsMaxLengthBytes(content, MEMO_MAX_LENGTH_BYTES)) {
-      throw new Error('Memo exceeds maximum length of ' 
-        + MEMO_MAX_LENGTH_BYTES.toString() + ' bytes');
+      throw new Error(`Memo exceeds maximum length of ${MEMO_MAX_LENGTH_BYTES.toString()} bytes`);
     }
     this.content = content;
   }
@@ -236,13 +222,15 @@ export class MemoString extends StacksMessage {
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
     if (this.content === undefined) {
       throw new Error('"content" is undefined');
     }
-    let contentBuffer = Buffer.from(this.content);
-    let paddedContent = rightPadHexToLength(contentBuffer.toString('hex'), 
-      MEMO_MAX_LENGTH_BYTES * 2);
+    const contentBuffer = Buffer.from(this.content);
+    const paddedContent = rightPadHexToLength(
+      contentBuffer.toString('hex'),
+      MEMO_MAX_LENGTH_BYTES * 2
+    );
     bufferArray.push(Buffer.from(paddedContent, 'hex'));
     return bufferArray.concatBuffer();
   }
@@ -265,7 +253,7 @@ export class AssetInfo extends StacksMessage {
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
 
     bufferArray.push(this.address.serialize());
     bufferArray.push(this.contractName.serialize());
@@ -281,9 +269,9 @@ export class AssetInfo extends StacksMessage {
   }
 }
 
-export class LengthPrefixedList<T extends StacksMessage> extends Array 
+export class LengthPrefixedList<T extends StacksMessage> extends Array
   implements StacksMessageCodec {
-  length: number = 0;
+  length = 0;
   lengthPrefixBytes: number;
   typeConstructor?: new () => T;
 
@@ -294,7 +282,7 @@ export class LengthPrefixedList<T extends StacksMessage> extends Array
   }
 
   serialize(): Buffer {
-    let bufferArray: BufferArray = new BufferArray();
+    const bufferArray: BufferArray = new BufferArray();
     bufferArray.appendHexString(intToHexString(this.length, this.lengthPrefixBytes));
     for (let index = 0; index < this.length; index++) {
       bufferArray.push(this[index].serialize());
@@ -303,19 +291,19 @@ export class LengthPrefixedList<T extends StacksMessage> extends Array
   }
 
   deserialize(bufferReader: BufferReader) {
-    let length = hexStringToInt(bufferReader.read(this.lengthPrefixBytes).toString("hex"));
+    const length = hexStringToInt(bufferReader.read(this.lengthPrefixBytes).toString('hex'));
     if (this.typeConstructor === undefined) {
       throw new Error('"typeConstructor" is undefined');
     }
     for (let index = 0; index < length; index++) {
-      let item = new this.typeConstructor();
+      const item = new this.typeConstructor();
       item.deserialize(bufferReader);
       this.push(item);
     }
-  } 
+  }
 
   static fromArray<T extends StacksMessage>(array: Array<T>): LengthPrefixedList<T> {
-    let list = new LengthPrefixedList<T>();
+    const list = new LengthPrefixedList<T>();
     if (array) {
       for (let index = 0; index < array.length; index++) {
         list.push(array[index]);
@@ -325,10 +313,10 @@ export class LengthPrefixedList<T extends StacksMessage> extends Array
   }
 
   static deserialize<T extends StacksMessage>(
-    bufferReader: BufferReader, 
-    typeConstructor: new () => T): LengthPrefixedList<T> 
-  {
-    let list = new LengthPrefixedList<T>(typeConstructor);
+    bufferReader: BufferReader,
+    typeConstructor: new () => T
+  ): LengthPrefixedList<T> {
+    const list = new LengthPrefixedList<T>(typeConstructor);
     list.deserialize(bufferReader);
     return list;
   }

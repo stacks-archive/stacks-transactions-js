@@ -169,58 +169,103 @@ describe('Clarity Types', () => {
     });
 
     test('Standard Principal Vector', () => {
-      const addressBuffer = Buffer.from([0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff, 0xff,
-        0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff, 0xff]);
+      const addressBuffer = Buffer.from([
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+      ]);
       const standardPrincipal = StandardPrincipalCV.fromBuffer(0x00, addressBuffer);
       const serialized = standardPrincipal.serialize().toString('hex');
       expect(serialized).toEqual('050011deadbeef11ababffff11deadbeef11ababffff');
     });
 
     test('Contract Principal Vector', () => {
-      const addressBuffer = Buffer.from([0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff, 0xff,
-        0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff, 0xff]);
-      const contractName = "abcd";
+      const addressBuffer = Buffer.from([
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+      ]);
+      const contractName = 'abcd';
       const standardPrincipal = StandardPrincipalCV.fromBuffer(0x00, addressBuffer);
-      const contractPrincipal = ContractPrincipalCV.fromStandardPrincipal(contractName, standardPrincipal);
+      const contractPrincipal = ContractPrincipalCV.fromStandardPrincipal(
+        contractName,
+        standardPrincipal
+      );
       const serialized = contractPrincipal.serialize().toString('hex');
       expect(serialized).toEqual('060011deadbeef11ababffff11deadbeef11ababffff0461626364');
     });
 
     test('Response Ok Vector', () => {
-      const ok = new ResponseOkCV(new IntCV(-1))
+      const ok = new ResponseOkCV(new IntCV(-1));
       const serialized = ok.serialize().toString('hex');
       expect(serialized).toEqual('0700ffffffffffffffffffffffffffffffff');
     });
 
     test('Response Err Vector', () => {
-      const err = new ResponseErrorCV(new IntCV(-1))
+      const err = new ResponseErrorCV(new IntCV(-1));
       const serialized = err.serialize().toString('hex');
       expect(serialized).toEqual('0800ffffffffffffffffffffffffffffffff');
     });
 
     test('None Vector', () => {
-      const none = new NoneCV()
+      const none = new NoneCV();
       const serialized = none.serialize().toString('hex');
       expect(serialized).toEqual('09');
     });
 
     test('Some Vector', () => {
-      const some = new SomeCV(new IntCV(-1))
+      const some = new SomeCV(new IntCV(-1));
       const serialized = some.serialize().toString('hex');
       expect(serialized).toEqual('0a00ffffffffffffffffffffffffffffffff');
     });
 
     test('List Vector', () => {
-      const list = new ListCV([new IntCV(1), new IntCV(2), new IntCV(3), new IntCV(-4)])
+      const list = new ListCV([new IntCV(1), new IntCV(2), new IntCV(3), new IntCV(-4)]);
       const serialized = list.serialize().toString('hex');
-      expect(serialized).toEqual('0b0000000400000000000000000000000000000000010000000000000000000000000000000002000000000000000000000000000000000300fffffffffffffffffffffffffffffffc');
+      expect(serialized).toEqual(
+        '0b0000000400000000000000000000000000000000010000000000000000000000000000000002000000000000000000000000000000000300fffffffffffffffffffffffffffffffc'
+      );
     });
 
     test('Tuple Vector', () => {
       const tuple = new TupleCV({
-        "baz": new NoneCV(),
-        "foobar": new TrueCV()
-      })
+        baz: new NoneCV(),
+        foobar: new TrueCV(),
+      });
       const serialized = tuple.serialize().toString('hex');
       expect(serialized).toEqual('0c000000020362617a0906666f6f62617203');
     });

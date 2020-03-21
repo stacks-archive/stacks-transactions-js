@@ -18,73 +18,77 @@ abstract class ClarityValue {
 }
 
 function readCV(bufferReader: BufferReader): ClarityValue {
-    const type = bufferReader.read(1).toString('hex') as ClarityType;
+  const type = bufferReader.read(1).toString('hex') as ClarityType;
 
-    switch (type) {
-      case ClarityType.Int:
-        return new IntCV(bufferReader.read(16));
+  switch (type) {
+    case ClarityType.Int:
+      return new IntCV(bufferReader.read(16));
 
-      case ClarityType.UInt:
-        return new UIntCV(bufferReader.read(16));
+    case ClarityType.UInt:
+      return new UIntCV(bufferReader.read(16));
 
-      case ClarityType.Buffer:
-        const bufferLength = bufferReader.read(4).readUInt32BE(0);
-        return new BufferCV(bufferReader.read(bufferLength));
+    case ClarityType.Buffer:
+      const bufferLength = bufferReader.read(4).readUInt32BE(0);
+      return new BufferCV(bufferReader.read(bufferLength));
 
-      case ClarityType.BoolTrue:
-        return new TrueCV();
+    case ClarityType.BoolTrue:
+      return new TrueCV();
 
-      case ClarityType.BoolFalse:
-        return new FalseCV();
+    case ClarityType.BoolFalse:
+      return new FalseCV();
 
-      case ClarityType.PrincipalStandard:
-        return StandardPrincipalCV.deserialize(bufferReader);
+    case ClarityType.PrincipalStandard:
+      return StandardPrincipalCV.deserialize(bufferReader);
 
-      case ClarityType.PrincipalContract:
-        return ContractPrincipalCV.deserialize(bufferReader);
+    case ClarityType.PrincipalContract:
+      return ContractPrincipalCV.deserialize(bufferReader);
 
-      case ClarityType.ResponseOk:
-        return new ResponseOkCV(readCV(bufferReader));
+    case ClarityType.ResponseOk:
+      return new ResponseOkCV(readCV(bufferReader));
 
-      case ClarityType.ResponseErr:
-        return new ResponseErrorCV(readCV(bufferReader));
+    case ClarityType.ResponseErr:
+      return new ResponseErrorCV(readCV(bufferReader));
 
-      case ClarityType.OptionalNone:
-        return new NoneCV();
+    case ClarityType.OptionalNone:
+      return new NoneCV();
 
-      case ClarityType.OptionalSome:
-        return new SomeCV(readCV(bufferReader));
+    case ClarityType.OptionalSome:
+      return new SomeCV(readCV(bufferReader));
 
-      case ClarityType.List:
-        const listLength = bufferReader.read(4).readUInt32BE(0);
-        const listContents: ClarityValue[] = [];
-        for (let i = 0; i < listLength; i++) {
-          listContents.push(readCV(bufferReader));
+    case ClarityType.List:
+      const listLength = bufferReader.read(4).readUInt32BE(0);
+      const listContents: ClarityValue[] = [];
+      for (let i = 0; i < listLength; i++) {
+        listContents.push(readCV(bufferReader));
+      }
+      return new ListCV(listContents);
+
+    case ClarityType.Tuple:
+      const tupleLength = bufferReader.read(4).readUInt32BE(0);
+      const tupleContents: { [key: string]: ClarityValue } = {};
+      for (let i = 0; i < tupleLength; i++) {
+        const clarityName = LengthPrefixedString.deserialize(bufferReader).content;
+        if (clarityName === undefined) {
+          throw new Error('"content" is undefined');
         }
-        return new ListCV(listContents);
-
-      case ClarityType.Tuple:
-        const tupleLength = bufferReader.read(4).readUInt32BE(0);
-        const tupleContents: { [key: string]: ClarityValue } = {};
-        for (let i = 0; i < tupleLength; i++) {
-          let clarityName = LengthPrefixedString.deserialize(bufferReader).content;
-          if (clarityName === undefined) {
-            throw new Error('"content" is undefined');
-          }
-          tupleContents[clarityName] = readCV(bufferReader);
-        }
-        return new TupleCV(tupleContents);
-    }
+        tupleContents[clarityName] = readCV(bufferReader);
+      }
+      return new TupleCV(tupleContents);
+  }
 }
 
 class TrueCV extends ClarityValue {
   readonly type = ClarityType.BoolTrue;
-  serialize() { return Buffer.from(this.type, 'hex') };
+  serialize() {
+    return Buffer.from(this.type, 'hex');
+  }
 }
 
 class FalseCV implements ClarityValue {
   readonly type = ClarityType.BoolFalse;
-  serialize() { return Buffer.from(this.type, 'hex') };
+  serialize() {
+    return Buffer.from(this.type, 'hex');
+  }
 }
 
 type BooleanCV = TrueCV | FalseCV;
@@ -94,7 +98,9 @@ const falseCV = () => new FalseCV() as BooleanCV;
 
 class NoneCV extends ClarityValue {
   readonly type = ClarityType.OptionalNone;
-  serialize() { return Buffer.from(this.type, 'hex') };
+  serialize() {
+    return Buffer.from(this.type, 'hex');
+  }
 }
 
 class SomeCV<T extends ClarityValue> extends ClarityValue {
@@ -106,7 +112,9 @@ class SomeCV<T extends ClarityValue> extends ClarityValue {
     this.value = v;
   }
 
-  serialize() { return prefixTypeID(this.type, this.value.serialize()) };
+  serialize() {
+    return prefixTypeID(this.type, this.value.serialize());
+  }
 }
 
 type OptionalCV<T extends ClarityValue> = NoneCV | SomeCV<T>;
@@ -130,7 +138,7 @@ class BufferCV extends ClarityValue {
   serialize() {
     const length = Buffer.alloc(4);
     length.writeUInt32BE(this.buffer.length, 0);
-    return prefixTypeID(this.type, Buffer.concat([length, this.buffer]))
+    return prefixTypeID(this.type, Buffer.concat([length, this.buffer]));
   }
 }
 
@@ -192,7 +200,7 @@ class StandardPrincipalCV extends ClarityValue {
     }
   }
 
-  getAddress() { 
+  getAddress() {
     return this.address;
   }
 
@@ -209,19 +217,18 @@ class StandardPrincipalCV extends ClarityValue {
   }
 
   fromBuffer(version: number, buffer: Buffer) {
-    const bufferReader = new BufferReader(Buffer.concat([Buffer.from([version]), buffer]))
+    const bufferReader = new BufferReader(Buffer.concat([Buffer.from([version]), buffer]));
     this.address = Address.deserialize(bufferReader);
     return this;
   }
 
   static deserialize(bufferReader: BufferReader) {
-    return (new this()).deserialize(bufferReader);
+    return new this().deserialize(bufferReader);
   }
 
   static fromBuffer(version: number, buffer: Buffer) {
-    return (new this()).fromBuffer(version, buffer);
+    return new this().fromBuffer(version, buffer);
   }
-
 }
 
 const standardPrincipalCV = (address: string) => new StandardPrincipalCV(address);
@@ -233,8 +240,7 @@ class ContractPrincipalCV extends ClarityValue {
 
   constructor(address?: string, name?: string) {
     super();
-    if (address)
-      this.address = new Address(address);
+    if (address) this.address = new Address(address);
 
     if (name) {
       if (Buffer.byteLength(name) >= 128) {
@@ -252,7 +258,10 @@ class ContractPrincipalCV extends ClarityValue {
     if (this.contractName === undefined) {
       throw new Error('"contractName" is undefined');
     }
-    return prefixTypeID(this.type, Buffer.concat([this.address.serialize(), this.contractName.serialize()]));
+    return prefixTypeID(
+      this.type,
+      Buffer.concat([this.address.serialize(), this.contractName.serialize()])
+    );
   }
 
   deserialize(bufferReader: BufferReader) {
@@ -268,15 +277,16 @@ class ContractPrincipalCV extends ClarityValue {
   }
 
   static deserialize(bufferReader: BufferReader) {
-    return (new this()).deserialize(bufferReader);
+    return new this().deserialize(bufferReader);
   }
 
   static fromStandardPrincipal(name: string, standardPrincipal: StandardPrincipalCV) {
-    return (new this()).fromStandardPrincipal(name, standardPrincipal);
+    return new this().fromStandardPrincipal(name, standardPrincipal);
   }
 }
 
-const contractPrincipalCV = (address: string, name: string) => new ContractPrincipalCV(address, name);
+const contractPrincipalCV = (address: string, name: string) =>
+  new ContractPrincipalCV(address, name);
 
 class ResponseErrorCV<T extends ClarityValue> extends ClarityValue {
   readonly type = ClarityType.ResponseErr;
@@ -287,7 +297,9 @@ class ResponseErrorCV<T extends ClarityValue> extends ClarityValue {
     this.value = v;
   }
 
-  serialize() { return prefixTypeID(this.type, this.value.serialize()) };
+  serialize() {
+    return prefixTypeID(this.type, this.value.serialize());
+  }
 }
 
 class ResponseOkCV<T extends ClarityValue> extends ClarityValue {
@@ -299,7 +311,9 @@ class ResponseOkCV<T extends ClarityValue> extends ClarityValue {
     this.value = v;
   }
 
-  serialize() { return prefixTypeID(this.type, this.value.serialize()) };
+  serialize() {
+    return prefixTypeID(this.type, this.value.serialize());
+  }
 }
 
 function isClarityName(name: string) {
@@ -340,9 +354,9 @@ class TupleCV<T extends { [key: string]: ClarityValue }> extends ClarityValue {
       const bufA = Buffer.from(a);
       const bufB = Buffer.from(b);
       return bufA.compare(bufB);
-    })
+    });
 
-    for (let key of lexicographicOrder) {
+    for (const key of lexicographicOrder) {
       const nameWithLength = new LengthPrefixedString(key);
       buffers.push(nameWithLength.serialize());
 
@@ -377,7 +391,7 @@ class ListCV<T extends ClarityValue> extends ClarityValue {
     length.writeUInt32BE(this.list.length, 0);
     buffers.push(length);
 
-    for (let value of this.list) {
+    for (const value of this.list) {
       const serializedValue = value.serialize();
       buffers.push(serializedValue);
     }
@@ -409,4 +423,15 @@ export {
 };
 
 // Export helper functions
-export { uintCV, intCV, standardPrincipalCV, contractPrincipalCV, trueCV, falseCV, noneCV, someCV, listCV, tupleCV };
+export {
+  uintCV,
+  intCV,
+  standardPrincipalCV,
+  contractPrincipalCV,
+  trueCV,
+  falseCV,
+  noneCV,
+  someCV,
+  listCV,
+  tupleCV,
+};

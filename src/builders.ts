@@ -1,42 +1,24 @@
-import {
-  StacksTransaction
-} from './transaction';
+import { StacksTransaction } from './transaction';
 
-import {
-  TokenTransferPayload,
-  SmartContractPayload,
-  ContractCallPayload
-} from './payload';
+import { TokenTransferPayload, SmartContractPayload, ContractCallPayload } from './payload';
 
-import {
-  SingleSigSpendingCondition,
-  StandardAuthorization
-} from './authorization';
+import { SingleSigSpendingCondition, StandardAuthorization } from './authorization';
 
-import {
-  StacksPrivateKey
-} from './keys';
+import { StacksPrivateKey } from './keys';
 
-import {
-  TransactionSigner
-} from './signer';
+import { TransactionSigner } from './signer';
 
-import {
-  TransactionVersion,
-  AddressHashMode,
-} from './constants'
+import { TransactionVersion, AddressHashMode } from './constants';
 
-import {
-  ClarityValue
-} from './clarity/clarityTypes';
+import { ClarityValue } from './clarity/clarityTypes';
 
 import * as BigNum from 'bn.js';
 
-/** 
+/**
  * Generates a Stacks token transfer transaction
  *
  * Returns a signed Stacks token transfer transaction.
- * 
+ *
  * @param  {String} recipientAddress - the c32check address of the recipient
  * @param  {BigNum} amount - number of tokens to transfer in microstacks
  * @param  {BigNum} feeRate - transaction fee rate in microstacks
@@ -55,42 +37,34 @@ export function makeSTXTokenTransfer(
   nonce: BigNum,
   senderKey: string,
   version: TransactionVersion = TransactionVersion.Mainnet,
-  memo?: string,
+  memo?: string
 ): StacksTransaction {
-  let payload = new TokenTransferPayload(
-    recipientAddress,
-    amount,
-    memo
-  )
+  const payload = new TokenTransferPayload(recipientAddress, amount, memo);
 
-  let addressHashMode = AddressHashMode.SerializeP2PKH;
-  let privKey = new StacksPrivateKey(senderKey);
-  let pubKey = privKey.getPublicKey();
-  let spendingCondition = new SingleSigSpendingCondition(
-    addressHashMode, 
-    pubKey.toString(), 
-    nonce, 
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+  const privKey = new StacksPrivateKey(senderKey);
+  const pubKey = privKey.getPublicKey();
+  const spendingCondition = new SingleSigSpendingCondition(
+    addressHashMode,
+    pubKey.toString(),
+    nonce,
     feeRate
   );
-  let authorization = new StandardAuthorization(spendingCondition);
+  const authorization = new StandardAuthorization(spendingCondition);
 
-  let transaction = new StacksTransaction(
-    version,
-    authorization,
-    payload
-  );
+  const transaction = new StacksTransaction(version, authorization, payload);
 
-  let signer = new TransactionSigner(transaction);
+  const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
   return transaction;
 }
 
-/** 
+/**
  * Generates a Clarity smart contract deploy transaction
  *
  * Returns a signed Stacks smart contract deploy transaction.
- * 
+ *
  * @param  {String} contractName - the contract name
  * @param  {String} codeBody - the code body string
  * @param  {BigNum} feeRate - transaction fee rate in microstacks
@@ -108,35 +82,28 @@ export function makeSmartContractDeploy(
   senderKey: string,
   version: TransactionVersion = TransactionVersion.Mainnet
 ): StacksTransaction {
-  let payload = new SmartContractPayload(
-    contractName,
-    codeBody
-  );
+  const payload = new SmartContractPayload(contractName, codeBody);
 
-  let addressHashMode = AddressHashMode.SerializeP2PKH;
-  let privKey = new StacksPrivateKey(senderKey);
-  let pubKey = privKey.getPublicKey();
-  let spendingCondition = new SingleSigSpendingCondition(
-    addressHashMode, 
-    pubKey.toString(), 
-    nonce, 
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+  const privKey = new StacksPrivateKey(senderKey);
+  const pubKey = privKey.getPublicKey();
+  const spendingCondition = new SingleSigSpendingCondition(
+    addressHashMode,
+    pubKey.toString(),
+    nonce,
     feeRate
   );
-  let authorization = new StandardAuthorization(spendingCondition);
+  const authorization = new StandardAuthorization(spendingCondition);
 
-  let transaction = new StacksTransaction(
-    version,
-    authorization,
-    payload
-  );
+  const transaction = new StacksTransaction(version, authorization, payload);
 
-  let signer = new TransactionSigner(transaction);
+  const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
   return transaction;
 }
 
-/** 
+/**
  * Generates a Clarity smart contract function call transaction
  *
  * Returns a signed Stacks smart contract deploy transaction.
@@ -153,40 +120,36 @@ export function makeSmartContractDeploy(
  * @return {StacksTransaction}
  */
 export function makeContractCall(
-  contractAddress: string, 
-  contractName: string, 
-  functionName: string, 
+  contractAddress: string,
+  contractName: string,
+  functionName: string,
   functionArgs: ClarityValue[],
   feeRate: BigNum,
   nonce: BigNum,
   senderKey: string,
   version: TransactionVersion = TransactionVersion.Mainnet
 ): StacksTransaction {
-  let payload = new ContractCallPayload(
+  const payload = new ContractCallPayload(
     contractAddress,
     contractName,
     functionName,
     functionArgs
   );
 
-  let addressHashMode = AddressHashMode.SerializeP2PKH;
-  let privKey = new StacksPrivateKey(senderKey);
-  let pubKey = privKey.getPublicKey();
-  let spendingCondition = new SingleSigSpendingCondition(
-    addressHashMode, 
-    pubKey.toString(), 
-    nonce, 
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+  const privKey = new StacksPrivateKey(senderKey);
+  const pubKey = privKey.getPublicKey();
+  const spendingCondition = new SingleSigSpendingCondition(
+    addressHashMode,
+    pubKey.toString(),
+    nonce,
     feeRate
   );
-  let authorization = new StandardAuthorization(spendingCondition);
+  const authorization = new StandardAuthorization(spendingCondition);
 
-  let transaction = new StacksTransaction(
-    version,
-    authorization,
-    payload
-  );
+  const transaction = new StacksTransaction(version, authorization, payload);
 
-  let signer = new TransactionSigner(transaction);
+  const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
   return transaction;
