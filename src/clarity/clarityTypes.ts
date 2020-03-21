@@ -150,7 +150,7 @@ class IntCV extends ClarityValue {
   }
 
   serialize() {
-    const buffer = this.value.toBuffer('be', 16);
+    const buffer = this.value.toArrayLike(Buffer, 'be', 16);
     return prefixTypeID(this.type, buffer);
   }
 }
@@ -174,7 +174,7 @@ class UIntCV extends ClarityValue {
   }
 
   serialize() {
-    const buffer = this.value.toBuffer('be', 16);
+    const buffer = this.value.toArrayLike(Buffer, 'be', 16);
     return prefixTypeID(this.type, buffer);
   }
 }
