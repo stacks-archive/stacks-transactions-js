@@ -140,8 +140,8 @@ export class SpendingCondition extends StacksMessage {
     // * nonce (big-endian 8-byte number)
     let hashLength = 32 + 1 + 8 + 8;
 
-    let sigHash = curSigHash + authType + feeRate.toBuffer('be', 8).toString('hex') 
-      + nonce.toBuffer('be', 8).toString('hex');
+    let sigHash = curSigHash + authType + feeRate.toArrayLike(Buffer, 'be', 8).toString('hex') 
+      + nonce.toArrayLike(Buffer, 'be', 8).toString('hex');
 
     if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
       throw Error('Invalid signature hash length');
@@ -216,8 +216,8 @@ export class SpendingCondition extends StacksMessage {
     }
     bufferArray.appendHexString(this.addressHashMode);
     bufferArray.appendHexString(this.signerAddress.data);
-    bufferArray.push(this.nonce.toBuffer('be', 8));
-    bufferArray.push(this.feeRate.toBuffer('be', 8));
+    bufferArray.push(this.nonce.toArrayLike(Buffer, 'be', 8));
+    bufferArray.push(this.feeRate.toArrayLike(Buffer, 'be', 8));
 
     if (this.addressHashMode === AddressHashMode.SerializeP2PKH ||
       this.addressHashMode === AddressHashMode.SerializeP2WPKH)

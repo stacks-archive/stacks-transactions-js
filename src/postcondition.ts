@@ -85,7 +85,7 @@ export class PostCondition extends StacksMessage {
       if (this.amount === undefined) {
         throw new Error('"amount" is undefined');
       }
-      bufferArray.push(this.amount.toBuffer('be', 8));
+      bufferArray.push(this.amount.toArrayLike(Buffer, 'be', 8));
     }
 
     return bufferArray.concatBuffer();
