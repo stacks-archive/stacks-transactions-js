@@ -8,7 +8,12 @@ import { StacksPrivateKey } from './keys';
 
 import { TransactionSigner } from './signer';
 
-import { TransactionVersion, AddressHashMode } from './constants';
+import { PostCondition, STXPostCondition } from './postcondition';
+
+import { TransactionVersion, AddressHashMode, FungibleConditionCode, PrincipalType } 
+from './constants';
+
+import { Principal } from './types';
 
 import { ClarityValue } from './clarity';
 
@@ -37,7 +42,8 @@ export function makeSTXTokenTransfer(
   nonce: BigNum,
   senderKey: string,
   version: TransactionVersion = TransactionVersion.Mainnet,
-  memo?: string
+  memo?: string,
+  postConditions?: Array<PostCondition>
 ): StacksTransaction {
   const payload = new TokenTransferPayload(recipientAddress, amount, memo);
 
@@ -54,6 +60,12 @@ export function makeSTXTokenTransfer(
 
   const transaction = new StacksTransaction(version, authorization, payload);
 
+  if (postConditions && postConditions.length > 0) {
+    postConditions.forEach((postCondition) => {
+      transaction.addPostCondition(postCondition);
+    })
+  }
+  
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
@@ -80,7 +92,8 @@ export function makeSmartContractDeploy(
   feeRate: BigNum,
   nonce: BigNum,
   senderKey: string,
-  version: TransactionVersion = TransactionVersion.Mainnet
+  version: TransactionVersion = TransactionVersion.Mainnet,
+  postConditions?: Array<PostCondition>
 ): StacksTransaction {
   const payload = new SmartContractPayload(contractName, codeBody);
 
@@ -127,7 +140,8 @@ export function makeContractCall(
   feeRate: BigNum,
   nonce: BigNum,
   senderKey: string,
-  version: TransactionVersion = TransactionVersion.Mainnet
+  version: TransactionVersion = TransactionVersion.Mainnet,
+  postConditions?: Array<PostCondition>
 ): StacksTransaction {
   const payload = new ContractCallPayload(
     contractAddress,
@@ -153,4 +167,16 @@ export function makeContractCall(
   signer.signOrigin(privKey);
 
   return transaction;
+}
+
+export function makeSTXPostCondition(
+  address: string,
+  conditionCode: FungibleConditionCode,
+  amount: BigNum
+): STXPostCondition {
+  return new STXPostCondition(
+    new Principal(PrincipalType.Standard, address),
+    conditionCode,
+    amount
+  )
 }
