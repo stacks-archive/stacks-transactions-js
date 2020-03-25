@@ -64,6 +64,7 @@ import { serializeDeserialize } from './macros';
 import { TrueCV, FalseCV, BufferCV } from '../../src/clarity/clarityTypes';
 
 import * as BigNum from 'bn.js';
+import { trueCV, falseCV, bufferCV } from '../../src/clarity';
 
 const SECRET_KEY = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 const PUBLIC_KEY = '02215340da140268f8a472af9c2b67952fe0a68337665482dae84886adea0945c1';
@@ -169,7 +170,7 @@ test('Contract call payload serialization and deserialization', () => {
   const contractAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
   const contractName = 'contract_name';
   const functionName = 'function_name';
-  const args = [new TrueCV(), new FalseCV()];
+  const args = [trueCV(), falseCV()];
 
   const payload = new ContractCallPayload(contractAddress, contractName, functionName, args);
 
@@ -433,10 +434,10 @@ test('Make smart contract deploy', () => {
 });
 
 test('Make contract-call', () => {
-  const contractName = 'kv-store';
-  const functionName = 'get-value';
-  const buffer = Buffer.from('foo');
-  const bufferCV = new BufferCV(buffer);
+  let contractName = 'kv-store';
+  let functionName = 'get-value';
+  let buffer = Buffer.from('foo');
+  let buf = bufferCV(buffer);
 
   const feeRate = new BigNum(0);
   const nonce = new BigNum(1);
@@ -445,7 +446,7 @@ test('Make contract-call', () => {
     STACKS_ADDRESS,
     contractName,
     functionName,
-    [bufferCV],
+    [buf],
     feeRate,
     nonce,
     SECRET_KEY,
