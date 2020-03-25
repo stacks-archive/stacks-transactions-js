@@ -89,9 +89,6 @@ export class StacksTransaction extends StacksMessage {
     return tx.txid();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  signSingleSigStandard(privateKey: string) {}
-
   signNextOrigin(sigHash: string, privateKey: StacksPrivateKey): string {
     if (this.auth === undefined) {
       throw new Error('"auth" is undefined');
