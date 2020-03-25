@@ -102,4 +102,11 @@ export const hash160 = (input: string) => {
   return new RIPEMD160().update(Buffer.from(sha256Result, 'hex')).digest('hex');
 };
 
-export const hash_p2pkh = (input: string) => hash160(input);
+export const hash_p2pkh = (input: string) => {
+  return hash160(input);
+}
+
+export function isClarityName(name: string) {
+  const regex = /^[a-zA-Z]([a-zA-Z0-9]|[-_!?+<>=/*])*$|^[-+=/*]$|^[<>]=?$/;
+  return regex.test(name) && name.length < 128;
+}

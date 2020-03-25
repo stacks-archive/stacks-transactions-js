@@ -10,7 +10,7 @@ import { TransactionSigner } from './signer';
 
 import { TransactionVersion, AddressHashMode } from './constants';
 
-import { ClarityValue } from './clarity/clarityTypes';
+import { ClarityValue } from './clarity';
 
 import * as BigNum from 'bn.js';
 

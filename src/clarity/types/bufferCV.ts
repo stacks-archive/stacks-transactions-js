@@ -1,0 +1,16 @@
+import { ClarityType } from '../clarityValue';
+
+interface BufferCV {
+  readonly type: ClarityType.Buffer;
+  readonly buffer: Buffer;
+}
+
+const bufferCV = (buffer: Buffer): BufferCV => {
+  if (buffer.length > 1000000) {
+    throw new Error('Cannot construct clarity buffer that is greater than 1MB');
+  }
+
+  return { type: ClarityType.Buffer, buffer };
+};
+
+export { BufferCV, bufferCV };
