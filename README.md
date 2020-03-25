@@ -1,10 +1,10 @@
 # Stacks Transactions JS
-The Javascript library for generating Stacks 2.0 transactions. 
+The JavaScript library for generating Stacks 2.0 transactions. 
 
 ## Installation
 
 ```
-$ npm install stacks-transaction-js
+npm install @blockstack/stacks-transactions
 ```
 
 ## Overview
@@ -16,7 +16,7 @@ This library supports the creation of the following Stacks 2.0 transaction types
 
 ## Key Generation
 ```javascript
-const { StacksPrivateKey } = require('stacks-transactions');
+import { StacksPrivateKey } from '@blockstack/stacks-transactions';
 
 // Random key
 var privateKey = StacksPrivateKey.makeRandom();
@@ -30,7 +30,7 @@ var privateKey = new StacksPrivateKey(key);
 
 ## STX Token Transfer Transaction
 ```javascript
-const { makeSTXTokenTransfer } = require('stacks-transactions');
+import { makeSTXTokenTransfer } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
 var recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
@@ -57,7 +57,7 @@ var serializedTx = transaction.serialize().toString('hex');
 ## Smart Contract Deploy Transaction
 
 ```javascript
-const { makeSmartContractDeploy } = require('stacks-transactions');
+import { makeSmartContractDeploy } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
 var contractName = 'contract_name';
@@ -76,7 +76,7 @@ var serializedTx = transaction.serialize().toString('hex');
 ## Smart Contract Function Call
 
 ```javascript
-const { makeContractCall, BufferCV } = require('stacks-transactions');
+import { makeContractCall, BufferCV } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
 var contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
