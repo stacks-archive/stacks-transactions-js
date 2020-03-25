@@ -1,0 +1,82 @@
+import { BufferReader } from '../utils';
+import { LengthPrefixedString, Address } from '..';
+import {
+  ClarityType,
+  ClarityValue,
+  intCV,
+  uintCV,
+  bufferCV,
+  trueCV,
+  falseCV,
+  standardPrincipalCVFromAddress,
+  contractPrincipalCVFromAddress,
+  responseOkCV,
+  responseErrorCV,
+  noneCV,
+  someCV,
+  listCV,
+  tupleCV,
+} from '.';
+
+export default function deserializeCV(bufferReader: BufferReader): ClarityValue {
+  const type = bufferReader.read(1).toString('hex') as ClarityType;
+
+  switch (type) {
+    case ClarityType.Int:
+      return intCV(bufferReader.read(16));
+
+    case ClarityType.UInt:
+      return uintCV(bufferReader.read(16));
+
+    case ClarityType.Buffer:
+      const bufferLength = bufferReader.read(4).readUInt32BE(0);
+      return bufferCV(bufferReader.read(bufferLength));
+
+    case ClarityType.BoolTrue:
+      return trueCV();
+
+    case ClarityType.BoolFalse:
+      return falseCV();
+
+    case ClarityType.PrincipalStandard:
+      const sAddress = Address.deserialize(bufferReader);
+      return standardPrincipalCVFromAddress(sAddress);
+
+    case ClarityType.PrincipalContract:
+      const cAddress = Address.deserialize(bufferReader);
+      let contractName = LengthPrefixedString.deserialize(bufferReader);
+      return contractPrincipalCVFromAddress(cAddress, contractName);
+
+    case ClarityType.ResponseOk:
+      return responseOkCV(deserializeCV(bufferReader));
+
+    case ClarityType.ResponseErr:
+      return responseErrorCV(deserializeCV(bufferReader));
+
+    case ClarityType.OptionalNone:
+      return noneCV();
+
+    case ClarityType.OptionalSome:
+      return someCV(deserializeCV(bufferReader));
+
+    case ClarityType.List:
+      const listLength = bufferReader.read(4).readUInt32BE(0);
+      const listContents: ClarityValue[] = [];
+      for (let i = 0; i < listLength; i++) {
+        listContents.push(deserializeCV(bufferReader));
+      }
+      return listCV(listContents);
+
+    case ClarityType.Tuple:
+      const tupleLength = bufferReader.read(4).readUInt32BE(0);
+      const tupleContents: { [key: string]: ClarityValue } = {};
+      for (let i = 0; i < tupleLength; i++) {
+        let clarityName = LengthPrefixedString.deserialize(bufferReader).content;
+        if (clarityName === undefined) {
+          throw new Error('"content" is undefined');
+        }
+        tupleContents[clarityName] = deserializeCV(bufferReader);
+      }
+      return tupleCV(tupleContents);
+  }
+}
