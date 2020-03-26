@@ -359,12 +359,14 @@ export function makeContractFungiblePostCondition(
 export function makeStandardNonFungiblePostCondition(
   address: string,
   conditionCode: NonFungibleConditionCode,
-  assetInfo: AssetInfo
+  assetInfo: AssetInfo,
+  assetName: string
 ): NonFungiblePostCondition {
   return new NonFungiblePostCondition(
     new StandardPrincipal(address),
     conditionCode,
-    assetInfo
+    assetInfo,
+    assetName
   );
 }
 
@@ -384,11 +386,13 @@ export function makeContractNonFungiblePostCondition(
   address: string,
   contractName: string,
   conditionCode: NonFungibleConditionCode,
-  assetInfo: AssetInfo
+  assetInfo: AssetInfo,
+  assetName: string
 ): NonFungiblePostCondition {
   return new NonFungiblePostCondition(
     new ContractPrincipal(address, contractName),
     conditionCode,
-    assetInfo
+    assetInfo,
+    assetName
   );
 }

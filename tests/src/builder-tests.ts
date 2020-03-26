@@ -173,6 +173,15 @@ test('Make contract-call with post conditions', () => {
   const bufferCV = new BufferCV(buffer);
   const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
   const postConditionAddress = 'ST1EXHZSN8MJSJ9DSG994G1V8CNKYXGMK7Z4SA6DH';
+  const assetAddress = 'ST34RKEJKQES7MXQFBT29KSJZD73QK3YNT5N56C6X';
+  const assetContractName = 'test-asset-contract';
+  const assetName = 'test-asset-name';
+  const assetInfo = new AssetInfo(
+    assetAddress,
+    assetContractName,
+    assetName
+  );
+  const tokenAssetName = 'token-asset-name';
 
   const feeRate = new BigNum(0);
 
@@ -187,6 +196,32 @@ test('Make contract-call with post conditions', () => {
       contractName, 
       FungibleConditionCode.GreaterEqual, 
       new BigNum(12345)
+    ),
+    makeStandardFungiblePostCondition(
+      postConditionAddress, 
+      FungibleConditionCode.Less, 
+      new BigNum(1000), 
+      assetInfo
+    ),
+    makeContractFungiblePostCondition(
+      postConditionAddress,
+      contractName,
+      FungibleConditionCode.Equal,
+      new BigNum(1),
+      assetInfo
+    ),
+    makeStandardNonFungiblePostCondition(
+      postConditionAddress,
+      NonFungibleConditionCode.Owns,
+      assetInfo,
+      tokenAssetName
+    ),
+    makeContractNonFungiblePostCondition(
+      postConditionAddress,
+      contractName,
+      NonFungibleConditionCode.DoesNotOwn,
+      assetInfo,
+      tokenAssetName
     )
   ]
 
@@ -210,11 +245,20 @@ test('Make contract-call with post conditions', () => {
 
   const tx =
     '80000000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000010000000000000000' + 
-    '00007833701802a82d7ea05c65d5c1c34d2ddd379b72fa2a6362da3c2addaf840e4c080e078d3eeb9514c2' + 
-    '0f2d6c04d10a6f44efbe538f3a527feecaa3707fe66a0303020000000200021a5dd8ff3545259925b98252' + 
+    '00000861bcaec8651116ee64b3d228db5c91ad0438659176cc5b719b3aef4fe271ab5ccb437070c3a407a0' + 
+    '57a91757f0335a70aee7932219934daceba022ac5983ab03020000000600021a5dd8ff3545259925b98252' + 
     '4807686567eec2933f03000000000000000a00031ae6c05355e0c990ffad19a5e9bda394a9c5003429086b' + 
-    '762d73746f7265030000000000003039021ae6c05355e0c990ffad19a5e9bda394a9c5003429086b762d73' + 
-    '746f7265096765742d76616c7565000000010200000003666f6f';
+    '762d73746f726503000000000000303901021a5dd8ff3545259925b982524807686567eec2933f1ac989ba' + 
+    '53bbb27a76ef5e8499e65f69c7798fd5d113746573742d61737365742d636f6e74726163740f746573742d' + 
+    '61737365742d6e616d650400000000000003e801031a5dd8ff3545259925b982524807686567eec2933f08' + 
+    '6b762d73746f72651ac989ba53bbb27a76ef5e8499e65f69c7798fd5d113746573742d61737365742d636f' + 
+    '6e74726163740f746573742d61737365742d6e616d6501000000000000000102021a5dd8ff3545259925b9' + 
+    '82524807686567eec2933f1ac989ba53bbb27a76ef5e8499e65f69c7798fd5d113746573742d6173736574' + 
+    '2d636f6e74726163740f746573742d61737365742d6e616d6510746f6b656e2d61737365742d6e616d6511' + 
+    '02031a5dd8ff3545259925b982524807686567eec2933f086b762d73746f72651ac989ba53bbb27a76ef5e' + 
+    '8499e65f69c7798fd5d113746573742d61737365742d636f6e74726163740f746573742d61737365742d6e' + 
+    '616d6510746f6b656e2d61737365742d6e616d6510021ae6c05355e0c990ffad19a5e9bda394a9c5003429' + 
+    '086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
 
   expect(serialized).toBe(tx);
 });
