@@ -19,39 +19,43 @@ This library supports the creation of the following Stacks 2.0 transaction types
 import { StacksPrivateKey } from '@blockstack/stacks-transactions';
 
 // Random key
-var privateKey = StacksPrivateKey.makeRandom();
+const privateKey = StacksPrivateKey.makeRandom();
 // Get public key from private
-var publicKey = privateKey.getPublicKey();
+const publicKey = privateKey.getPublicKey();
 
 // Private key from hex string
-var key = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
-var privateKey = new StacksPrivateKey(key);
+const key = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
+const privateKey = new StacksPrivateKey(key);
 ```
 
 ## STX Token Transfer Transaction
+
 ```javascript
-import { makeSTXTokenTransfer } from '@blockstack/stacks-transactions';
+import { 
+  makeSTXTokenTransfer, makeStandardSTXPostCondition 
+} from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
-var recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
-var amount = new BigNum(12345);
-var feeRate = new BigNum(0);
-var nonce = new BigNum(0);
-var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
-var memo = "test memo";
+const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+const amount = new BigNum(12345);
+const feeRate = new BigNum(0); // Fee estimation to be implemented
+const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
 
-var transaction = makeSTXTokenTransfer(
+const options = {
+  memo: "test memo",
+  nonce: new BigNum(0) // The nonce needs to be manually specified for now
+};
+
+const transaction = makeSTXTokenTransfer(
   recipientAddress,
   amount,
   feeRate,
-  nonce,
   secretKey,
-  TransactionVersion.Mainnet,
-  memo
+  options
 );
 
-var serializedTx = transaction.serialize().toString('hex');
-// broadcast the transaction
+const serializedTx = transaction.serialize().toString('hex');
+transaction.broadcast(); // Not yet implemented
 ```
 
 ## Smart Contract Deploy Transaction
@@ -60,17 +64,25 @@ var serializedTx = transaction.serialize().toString('hex');
 import { makeSmartContractDeploy } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
-var contractName = 'contract_name';
-var code = fs.readFileSync('/path/to/contract.clar').toString();
-var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+const contractName = 'contract_name';
+const code = fs.readFileSync('/path/to/contract.clar').toString();
+const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
+const feeRate = new BigNum(0); // Fee estimation to be implemented
 
-var feeRate = new BigNum(0);
-var nonce = new BigNum(0);
+const options = {
+  nonce: new BigNum(0) // The nonce needs to be manually specified for now
+};
 
-var transaction = makeSmartContractDeploy(contractName, code, feeRate, nonce, secretKey, TransactionVersion.Mainnet);
+const transaction = makeSmartContractDeploy(
+  contractName, 
+  code, 
+  feeRate, 
+  secretKey
+  options
+);
 
-var serializedTx = transaction.serialize().toString('hex');
-// broadcast the transaction
+const serializedTx = transaction.serialize().toString('hex');
+transaction.broadcast(); // Not yet implemented
 ```
 
 ## Smart Contract Function Call
@@ -79,33 +91,48 @@ var serializedTx = transaction.serialize().toString('hex');
 import { makeContractCall, BufferCV } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
-var contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
-var contractName = 'contract_name';
-var functionName = 'contract_function';
-var buffer = Buffer.from('foo');
-var bufferClarityValue = new BufferCV(buffer);
-var functionArgs = [bufferClarityValue];
-var secretKey = "edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01";
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'contract_name';
+const functionName = 'contract_function';
+const buffer = Buffer.from('foo');
+const bufferClarityValue = new BufferCV(buffer);
+const functionArgs = [bufferClarityValue];
+const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
+const feeRate = new BigNum(0); // Fee estimation to be implemented
 
-var feeRate = new BigNum(0);
-var nonce = new BigNum(0);
+// Add an optional post condition
+// See below for details on constructing post conditions
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = FungibleConditionCode.GreaterEqual;
+const postConditionAmount = new BigNum(1000000);
+const postConditions = [
+  makeStandardSTXPostCondition(
+    postConditionAddress, 
+    postConditionCode, 
+    postConditionAmount
+  )
+];
 
-var transaction = makeContractCall(
+const options = {
+  postConditions,
+  nonce: new BigNum(0) // The nonce needs to be manually specified for now
+};
+
+const transaction = makeContractCall(
   contractAddress,
   contractName,
   functionName,
   functionArgs,
   feeRate,
-  nonce,
   secretKey,
-  TransactionVersion.Mainnet
+  options
 );
 
-var serializedTx = transaction.serialize().toString('hex');
-// broadcast the transaction
+const serializedTx = transaction.serialize().toString('hex');
+transaction.broadcast(); // Not yet implemented
 ```
 
-### Constructing Clarity Values
+## Constructing Clarity Values
 
 Building transactions that call functions in deployed clarity contracts requires you to construct valid Clarity Values to pass to the function as arguments. The [Clarity type system](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-002-smart-contract-language.md#clarity-type-system) contains the following types:
 
@@ -171,4 +198,107 @@ If you develop in Typescript, the type checker will help prevent you from creati
 
 ```typescript
 const listCV = new ListCV([new TrueCV, new IntCV(1)]);
+```
+
+## Post Conditions
+Three types of post conditions can be added to transactions:
+
+1. STX post condition
+2. Fungible token post condition
+3. Non-Fungible token post condition
+
+### STX post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = FungibleConditionCode.GreaterEqual;
+const postConditionAmount = new BigNum(12345);
+
+const standardSTXPostCondition = makeStandardSTXPostCondition(
+  postConditionAddress,
+  postConditionCode,
+  postConditionAmount
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+
+const contractSTXPostCondition = makeContractSTXPostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  postConditionAmount
+);
+```
+
+### Fungible token post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = FungibleConditionCode.GreaterEqual;
+const postConditionAmount = new BigNum(12345);
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const fungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName
+)
+
+const standardFungiblePostCondition = makeStandardFungiblePostCondition(
+  postConditionAddress,
+  postConditionCode,
+  postConditionAmount,
+  fungibleAssetInfo 
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const fungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName
+)
+
+const contractFungiblePostCondition = makeContractFungiblePostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  postConditionAmount,
+  fungibleAssetInfo
+);
+```
+
+### Non-fungible token post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = NonFungibleConditionCode.Owns;
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const assetName = 'test-asset';
+const nonFungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName,
+  assetName
+)
+
+const standardNonFungiblePostCondition = makeStandardNonFungiblePostCondition(
+  postConditionAddress,
+  postConditionCode,
+  nonFungibleAssetInfo
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+
+const contractNonFungiblePostCondition = makeContractNonFungiblePostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  nonFungibleAssetInfo
+);
 ```
