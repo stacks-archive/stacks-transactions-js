@@ -356,7 +356,7 @@ test('STX token transfer transaction serialization and deserialization', () => {
     new StandardPrincipal(recipientAddress),
     FungibleConditionCode.GreaterEqual,
     new BigNum(0)
-  )
+  );
 
   const transaction = new StacksTransaction(transactionVersion, authorization, payload);
 

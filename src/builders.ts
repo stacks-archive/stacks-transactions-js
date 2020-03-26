@@ -8,11 +8,19 @@ import { StacksPrivateKey } from './keys';
 
 import { TransactionSigner } from './signer';
 
-import { PostCondition, STXPostCondition, FungiblePostCondition, NonFungiblePostCondition } 
-from './postcondition';
+import {
+  PostCondition,
+  STXPostCondition,
+  FungiblePostCondition,
+  NonFungiblePostCondition,
+} from './postcondition';
 
-import { TransactionVersion, AddressHashMode, FungibleConditionCode, NonFungibleConditionCode } 
-from './constants';
+import {
+  TransactionVersion,
+  AddressHashMode,
+  FungibleConditionCode,
+  NonFungibleConditionCode,
+} from './constants';
 
 import { StandardPrincipal, ContractPrincipal, AssetInfo } from './types';
 
@@ -27,16 +35,16 @@ import * as BigNum from 'bn.js';
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
  * @param  {String} memo - an arbitrary string to include with the transaction, must be less than
  *                          34 bytes
- * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the 
+ * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the
  *                                                  transaction
  *
  * @return {StacksTransaction}
  */
 export interface TokenTransferOptions {
-  nonce?: BigNum,
-  version?: TransactionVersion,
-  memo?: string,
-  postConditions?: Array<PostCondition>
+  nonce?: BigNum;
+  version?: TransactionVersion;
+  memo?: string;
+  postConditions?: Array<PostCondition>;
 }
 
 /**
@@ -59,13 +67,13 @@ export function makeSTXTokenTransfer(
   senderKey: string,
   options?: TokenTransferOptions
 ): StacksTransaction {
-  let defaultOptions = {
+  const defaultOptions = {
     nonce: new BigNum(0),
     version: TransactionVersion.Mainnet,
-    memo: "",
+    memo: '',
   };
 
-  let normalizedOptions = Object.assign(defaultOptions, options);
+  const normalizedOptions = Object.assign(defaultOptions, options);
 
   const payload = new TokenTransferPayload(recipientAddress, amount, normalizedOptions.memo);
 
@@ -83,11 +91,11 @@ export function makeSTXTokenTransfer(
   const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
 
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
-    normalizedOptions.postConditions.forEach((postCondition) => {
+    normalizedOptions.postConditions.forEach(postCondition => {
       transaction.addPostCondition(postCondition);
-    })
+    });
   }
-  
+
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
@@ -99,15 +107,15 @@ export function makeSTXTokenTransfer(
  *
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
- * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the 
+ * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the
  *                                                  transaction
  *
  * @return {StacksTransaction}
  */
 export interface ContractDeployOptions {
-  nonce?: BigNum,
-  version?: TransactionVersion,
-  postConditions?: Array<PostCondition>
+  nonce?: BigNum;
+  version?: TransactionVersion;
+  postConditions?: Array<PostCondition>;
 }
 
 /**
@@ -129,12 +137,12 @@ export function makeSmartContractDeploy(
   senderKey: string,
   options?: ContractDeployOptions
 ): StacksTransaction {
-  let defaultOptions = {
+  const defaultOptions = {
     nonce: new BigNum(0),
     version: TransactionVersion.Mainnet,
   };
 
-  let normalizedOptions = Object.assign(defaultOptions, options);
+  const normalizedOptions = Object.assign(defaultOptions, options);
 
   const payload = new SmartContractPayload(contractName, codeBody);
 
@@ -152,9 +160,9 @@ export function makeSmartContractDeploy(
   const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
 
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
-    normalizedOptions.postConditions.forEach((postCondition) => {
+    normalizedOptions.postConditions.forEach(postCondition => {
       transaction.addPostCondition(postCondition);
-    })
+    });
   }
 
   const signer = new TransactionSigner(transaction);
@@ -168,15 +176,15 @@ export function makeSmartContractDeploy(
  *
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
- * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the 
+ * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the
  *                                                  transaction
  *
  * @return {StacksTransaction}
  */
 export interface ContractCallOptions {
-  nonce?: BigNum,
-  version?: TransactionVersion,
-  postConditions?: Array<PostCondition>
+  nonce?: BigNum;
+  version?: TransactionVersion;
+  postConditions?: Array<PostCondition>;
 }
 
 /**
@@ -204,12 +212,12 @@ export function makeContractCall(
   senderKey: string,
   options?: ContractCallOptions
 ): StacksTransaction {
-  let defaultOptions = {
+  const defaultOptions = {
     nonce: new BigNum(0),
     version: TransactionVersion.Mainnet,
   };
 
-  let normalizedOptions = Object.assign(defaultOptions, options);
+  const normalizedOptions = Object.assign(defaultOptions, options);
 
   const payload = new ContractCallPayload(
     contractAddress,
@@ -232,9 +240,9 @@ export function makeContractCall(
   const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
 
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
-    normalizedOptions.postConditions.forEach((postCondition) => {
+    normalizedOptions.postConditions.forEach(postCondition => {
       transaction.addPostCondition(postCondition);
-    })
+    });
   }
 
   const signer = new TransactionSigner(transaction);
@@ -259,11 +267,7 @@ export function makeStandardSTXPostCondition(
   conditionCode: FungibleConditionCode,
   amount: BigNum
 ): STXPostCondition {
-  return new STXPostCondition(
-    new StandardPrincipal(address),
-    conditionCode,
-    amount
-  );
+  return new STXPostCondition(new StandardPrincipal(address), conditionCode, amount);
 }
 
 /**
@@ -284,11 +288,7 @@ export function makeContractSTXPostCondition(
   conditionCode: FungibleConditionCode,
   amount: BigNum
 ): STXPostCondition {
-  return new STXPostCondition(
-    new ContractPrincipal(address, contractName),
-    conditionCode,
-    amount
-  );
+  return new STXPostCondition(new ContractPrincipal(address, contractName), conditionCode, amount);
 }
 
 /**
