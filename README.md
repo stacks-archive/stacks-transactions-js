@@ -133,42 +133,44 @@ This library contains Typescript types and classes that map to the Clarity types
 ```javascript
 
 // construct boolean clarity values
-const trueCV = new TrueCV();
-const falseCV = new FalseCV();
+const t = trueCV();
+const f = falseCV();
 
 // construct optional clarity values
-const noneCV = NoneCV();
-const someCV = SomeCV(trueCV);
+const nothing = noneCV();
+const something = someCV(t);
 
 // construct a buffer clarity value from an existing Buffer
 const buffer = Buffer.from('foo');
-const bufferCV = new BufferCV(buffer);
+const bufCV = bufferCV(buffer);
 
 // construct signed and unsigned integer clarity values
-const intCV = new IntCV(-10);
-const uintCV = new UIntCV(10);
+const i = intCV(-10);
+const u = uintCV(10);
 
 // construct principal clarity values
 const address = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
-const standardPrincipalCV = new StandardPrincipalCV(address);
-const contractPrincipalCV = new ContractPrincipalCV(address, 'contract-name');
+const contractName = 'contract-name';
+const spCV = standardPrincipalCV(address);
+const cpCV = contractPrincipalCV(address, contractName);
 
 // construct response clarity values
-const responseErrorCV = new ResponseErrorCV(trueCV);
-const responseOkCV = new ResponseOkCV(falseCV);
+const errCV = responseErrorCV(trueCV());
+const okCV = responseOkCV(falseCV());
 
 // construct tuple clarity values
-const tupleCV = new TupleCV({
-  'property1': new IntCV(1),
-  'property2': new TrueCV()
+const tupCV = tupleCV({
+  'a': intCV(1),
+  'b': trueCV(),
+  'c': falseCV()
 })
 
 // construct list clarity values
-const listCV = new ListCV([trueCV, falseCV])
+const l = listCV([trueCV(), falseCV()])
 ```
 
-If you develop in Typescript, the type checker will help prevent you from creating wrongly-typed Clarity values. For example, the following code won't compile since in Clarity lists are homogeneous, meaning they can only contain values of a single type.
+If you develop in Typescript, the type checker can help prevent you from creating wrongly-typed Clarity values. For example, the following code won't compile since in Clarity lists are homogeneous, meaning they can only contain values of a single type. It is important to include the type variable `BooleanCV` in this example, otherwise the typescript type checker won't know which type the list is of and won't enforce homogeneity.
 
 ```typescript
-const listCV = new ListCV([new TrueCV, new IntCV(1)]);
+const l = listCV<BooleanCV>([trueCV(), intCV(1)]);
 ```
