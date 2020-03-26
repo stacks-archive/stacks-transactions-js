@@ -101,5 +101,5 @@ export {
   FungibleConditionCode,
   NonFungibleConditionCode,
   PrincipalType,
-  AssetType
-}
+  AssetType,
+};

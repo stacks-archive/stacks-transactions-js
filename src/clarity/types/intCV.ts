@@ -8,15 +8,15 @@ interface IntCV {
 }
 
 const intCV = (value: number | string | Buffer): IntCV => {
-    const bn = new BigNum(value);
-    const twos = bn.toTwos(CLARITY_INT_SIZE);
+  const bn = new BigNum(value);
+  const twos = bn.toTwos(CLARITY_INT_SIZE);
 
-    if (twos.bitLength() > CLARITY_INT_SIZE) {
-      throw new Error('Cannot construct clarity integer from value greater than INT_SIZE bits');
-    }
+  if (twos.bitLength() > CLARITY_INT_SIZE) {
+    throw new Error('Cannot construct clarity integer from value greater than INT_SIZE bits');
+  }
 
-    return { type: ClarityType.Int, value: twos };
-}
+  return { type: ClarityType.Int, value: twos };
+};
 
 interface UIntCV {
   readonly type: ClarityType.UInt;
@@ -24,16 +24,16 @@ interface UIntCV {
 }
 
 const uintCV = (value: number | string | Buffer): UIntCV => {
-    const bn = new BigNum(value);
-    const twos = bn.toTwos(CLARITY_INT_SIZE);
+  const bn = new BigNum(value);
+  const twos = bn.toTwos(CLARITY_INT_SIZE);
 
-    if (twos.isNeg()) {
-      throw new Error('Cannot construct unsigned clarity integer from negative value');
-    } else if (twos.bitLength() > CLARITY_INT_SIZE) {
-      throw new Error('Cannot construct unsigned clarity integer from value greater than 128 bits');
-    }
+  if (twos.isNeg()) {
+    throw new Error('Cannot construct unsigned clarity integer from negative value');
+  } else if (twos.bitLength() > CLARITY_INT_SIZE) {
+    throw new Error('Cannot construct unsigned clarity integer from value greater than 128 bits');
+  }
 
-    return { type: ClarityType.UInt, value: twos }
-}
+  return { type: ClarityType.UInt, value: twos };
+};
 
 export { IntCV, UIntCV, intCV, uintCV };

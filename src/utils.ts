@@ -104,7 +104,7 @@ export const hash160 = (input: string) => {
 
 export const hash_p2pkh = (input: string) => {
   return hash160(input);
-}
+};
 
 export function isClarityName(name: string) {
   const regex = /^[a-zA-Z]([a-zA-Z0-9]|[-_!?+<>=/*])*$|^[-+=/*]$|^[<>]=?$/;

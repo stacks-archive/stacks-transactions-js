@@ -32,8 +32,8 @@ export {
   StandardPrincipalCV,
   ContractPrincipalCV,
   ListCV,
-  TupleCV
-} from './clarity'
+  TupleCV,
+} from './clarity';
 
 // Clarity Value Construction Functions
 export {
@@ -51,14 +51,11 @@ export {
   contractPrincipalCV,
   contractPrincipalCVFromAddress,
   listCV,
-  tupleCV
-} from './clarity'
+  tupleCV,
+} from './clarity';
 
 // Clarity Value Serialization/Deserialization
-export {
-  serializeCV,
-  deserializeCV
-} from './clarity'
+export { serializeCV, deserializeCV } from './clarity';
 
 export { StacksPrivateKey, StacksPublicKey } from './keys';
 

@@ -3,7 +3,7 @@ import { ClarityType, ClarityValue } from '../clarityValue';
 type OptionalCV = NoneCV | SomeCV;
 
 interface NoneCV {
-  readonly type: ClarityType.OptionalNone
+  readonly type: ClarityType.OptionalNone;
 }
 
 interface SomeCV {

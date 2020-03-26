@@ -13,11 +13,11 @@ interface ResponseOkCV {
 }
 
 function responseErrorCV(value: ClarityValue): ResponseErrorCV {
-  return { type: ClarityType.ResponseErr, value }
+  return { type: ClarityType.ResponseErr, value };
 }
 
 function responseOkCV(value: ClarityValue): ResponseOkCV {
-  return { type: ClarityType.ResponseOk, value }
+  return { type: ClarityType.ResponseOk, value };
 }
 
 export { ResponseCV, ResponseErrorCV, ResponseOkCV, responseErrorCV, responseOkCV };

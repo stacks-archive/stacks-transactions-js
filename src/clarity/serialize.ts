@@ -48,7 +48,10 @@ function serializeStandardPrincipalCV(cv: StandardPrincipalCV): Buffer {
 }
 
 function serializeContractPrincipalCV(cv: ContractPrincipalCV): Buffer {
-  return bufferWithTypeID(cv.type, Buffer.concat([cv.address.serialize(), cv.contractName.serialize()]));
+  return bufferWithTypeID(
+    cv.type,
+    Buffer.concat([cv.address.serialize(), cv.contractName.serialize()])
+  );
 }
 
 function serializeResponseCV(cv: ResponseCV) {
@@ -62,7 +65,7 @@ function serializeListCV(cv: ListCV) {
   length.writeUInt32BE(cv.list.length, 0);
   buffers.push(length);
 
-  for (let value of cv.list) {
+  for (const value of cv.list) {
     const serializedValue = serializeCV(value);
     buffers.push(serializedValue);
   }
@@ -83,7 +86,7 @@ function serializeTupleCV(cv: TupleCV) {
     return bufA.compare(bufB);
   });
 
-  for (let key of lexicographicOrder) {
+  for (const key of lexicographicOrder) {
     const nameWithLength = new LengthPrefixedString(key);
     buffers.push(nameWithLength.serialize());
 

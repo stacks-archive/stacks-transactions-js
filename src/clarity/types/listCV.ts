@@ -1,4 +1,4 @@
-import { ClarityValue, ClarityType } from "../clarityValue";
+import { ClarityValue, ClarityType } from '../clarityValue';
 
 interface ListCV {
   type: ClarityType.List;
@@ -6,7 +6,7 @@ interface ListCV {
 }
 
 function listCV<T extends ClarityValue>(values: T[]): ListCV {
-  return { type: ClarityType.List, list: values};
+  return { type: ClarityType.List, list: values };
 }
 
 export { ListCV, listCV };

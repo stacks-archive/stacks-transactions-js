@@ -44,7 +44,7 @@ export default function deserializeCV(bufferReader: BufferReader): ClarityValue 
 
     case ClarityType.PrincipalContract:
       const cAddress = Address.deserialize(bufferReader);
-      let contractName = LengthPrefixedString.deserialize(bufferReader);
+      const contractName = LengthPrefixedString.deserialize(bufferReader);
       return contractPrincipalCVFromAddress(cAddress, contractName);
 
     case ClarityType.ResponseOk:
@@ -71,7 +71,7 @@ export default function deserializeCV(bufferReader: BufferReader): ClarityValue 
       const tupleLength = bufferReader.read(4).readUInt32BE(0);
       const tupleContents: { [key: string]: ClarityValue } = {};
       for (let i = 0; i < tupleLength; i++) {
-        let clarityName = LengthPrefixedString.deserialize(bufferReader).content;
+        const clarityName = LengthPrefixedString.deserialize(bufferReader).content;
         if (clarityName === undefined) {
           throw new Error('"content" is undefined');
         }
