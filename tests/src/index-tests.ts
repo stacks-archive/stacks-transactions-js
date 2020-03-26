@@ -4,7 +4,6 @@ import { StacksTransaction } from '../../src/transaction';
 
 import {
   StandardAuthorization,
-  SponsoredAuthorization,
   SingleSigSpendingCondition,
   MessageSignature,
 } from '../../src/authorization';
@@ -13,7 +12,6 @@ import {
   TokenTransferPayload,
   ContractCallPayload,
   SmartContractPayload,
-  PoisonPayload,
   CoinbasePayload,
 } from '../../src/payload';
 
@@ -39,7 +37,6 @@ import {
   AnchorMode,
   PostConditionMode,
   AuthType,
-  PayloadType,
   PrincipalType,
   PostConditionType,
   FungibleConditionCode,
@@ -432,10 +429,10 @@ test('Make smart contract deploy', () => {
 });
 
 test('Make contract-call', () => {
-  let contractName = 'kv-store';
-  let functionName = 'get-value';
-  let buffer = Buffer.from('foo');
-  let buf = bufferCV(buffer);
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const buffer = Buffer.from('foo');
+  const buf = bufferCV(buffer);
 
   const feeRate = new BigNum(0);
   const nonce = new BigNum(1);

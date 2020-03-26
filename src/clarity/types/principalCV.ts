@@ -27,16 +27,26 @@ function contractPrincipalCV(addr: string, contractName: string): ContractPrinci
   return contractPrincipalCVFromAddress(address, lengthPrefixedContractName);
 }
 
-function contractPrincipalCVFromAddress(address: Address, contractName: LengthPrefixedString): ContractPrincipalCV {
+function contractPrincipalCVFromAddress(
+  address: Address,
+  contractName: LengthPrefixedString
+): ContractPrincipalCV {
   if (Buffer.byteLength(contractName.content!) >= 128) {
     throw new Error('Contract name must be less than 128 bytes');
   }
   return { type: ClarityType.PrincipalContract, address, contractName };
 }
 
-function contractPrincipalCVFromStandard(sp: StandardPrincipalCV, contractName: string): ContractPrincipalCV {
+function contractPrincipalCVFromStandard(
+  sp: StandardPrincipalCV,
+  contractName: string
+): ContractPrincipalCV {
   const lengthPrefixedContractName = new LengthPrefixedString(contractName);
-  return { type: ClarityType.PrincipalContract, address: sp.address, contractName: lengthPrefixedContractName };
+  return {
+    type: ClarityType.PrincipalContract,
+    address: sp.address,
+    contractName: lengthPrefixedContractName,
+  };
 }
 
 export {

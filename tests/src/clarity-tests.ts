@@ -164,8 +164,28 @@ describe('Clarity Types', () => {
     });
 
     test('Standard Principal Vector', () => {
-      const addressBuffer = Buffer.from([0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff,
-        0xff, 0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff, 0xff]);
+      const addressBuffer = Buffer.from([
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+      ]);
       const bufferReader = new BufferReader(Buffer.concat([Buffer.from([0x00]), addressBuffer]));
       const standardPrincipal = standardPrincipalCVFromAddress(Address.deserialize(bufferReader));
       const serialized = serializeCV(standardPrincipal).toString('hex');
@@ -173,8 +193,28 @@ describe('Clarity Types', () => {
     });
 
     test('Contract Principal Vector', () => {
-      const addressBuffer = Buffer.from([0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff,
-         0xff, 0x11, 0xde, 0xad, 0xbe, 0xef, 0x11, 0xab, 0xab, 0xff, 0xff]);
+      const addressBuffer = Buffer.from([
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+        0x11,
+        0xde,
+        0xad,
+        0xbe,
+        0xef,
+        0x11,
+        0xab,
+        0xab,
+        0xff,
+        0xff,
+      ]);
       const contractName = 'abcd';
       const bufferReader = new BufferReader(Buffer.concat([Buffer.from([0x00]), addressBuffer]));
       const standardPrincipal = standardPrincipalCVFromAddress(Address.deserialize(bufferReader));

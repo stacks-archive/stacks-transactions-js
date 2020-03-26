@@ -73,7 +73,7 @@ export class Payload extends StacksMessage {
         bufferArray.push(numArgs);
         this.functionArgs.forEach(arg => {
           bufferArray.push(serializeCV(arg));
-        })
+        });
         break;
       case PayloadType.SmartContract:
         if (this.contractName === undefined) {
