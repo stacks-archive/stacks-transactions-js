@@ -352,7 +352,15 @@ test('STX token transfer transaction serialization and deserialization', () => {
   const authType = AuthType.Standard;
   const authorization = new StandardAuthorization(spendingCondition);
 
+  const postCondition = new STXPostCondition(
+    new StandardPrincipal(recipientAddress),
+    FungibleConditionCode.GreaterEqual,
+    new BigNum(0)
+  )
+
   const transaction = new StacksTransaction(transactionVersion, authorization, payload);
+
+  transaction.addPostCondition(postCondition);
 
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(new StacksPrivateKey(secretKey));
@@ -369,10 +377,14 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserialized.auth!.spendingCondition!.feeRate!.toNumber()).toBe(feeRate.toNumber());
   expect(deserialized.anchorMode).toBe(anchorMode);
   expect(deserialized.postConditionMode).toBe(postConditionMode);
-  expect(deserialized.postConditions.length).toBe(0);
+  expect(deserialized.postConditions.length).toBe(1);
+  expect(deserialized.postConditions[0].principal.address!.toString()).toBe(recipientAddress);
+  expect(deserialized.postConditions[0].conditionCode).toBe(FungibleConditionCode.GreaterEqual);
+  expect(deserialized.postConditions[0].amount.toNumber()).toBe(0);
   expect(deserialized.payload!.recipientAddress!.toString()).toBe(recipientAddress);
   expect(deserialized.payload!.amount!.toNumber()).toBe(amount.toNumber());
 });
+<<<<<<< HEAD
 
 test('Make STX token transfer', () => {
   const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
@@ -455,3 +467,5 @@ test('Make contract-call', () => {
 
   expect(serialized).toBe(tx);
 });
+=======
+>>>>>>> feat: add post conditions to transaction builder functions and refactor builder API
