@@ -121,5 +121,7 @@ export function serializeCV(value: ClarityValue): Buffer {
       return serializeListCV(value);
     case ClarityType.Tuple:
       return serializeTupleCV(value);
+    default:
+      throw new Error('Unable to serialize. Invalid Clarity Value.');
   }
 }
