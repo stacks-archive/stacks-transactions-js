@@ -18,7 +18,8 @@ import {
   tupleCV,
 } from '.';
 
-export default function deserializeCV(bufferReader: BufferReader): ClarityValue {
+export default function deserializeCV(buffer: BufferReader | Buffer): ClarityValue {
+  const bufferReader = Buffer.isBuffer(buffer) ? new BufferReader(buffer) : buffer;
   const type = bufferReader.read(1).toString('hex') as ClarityType;
 
   switch (type) {
@@ -78,5 +79,10 @@ export default function deserializeCV(bufferReader: BufferReader): ClarityValue 
         tupleContents[clarityName] = deserializeCV(bufferReader);
       }
       return tupleCV(tupleContents);
+
+    default:
+      throw new Error(
+        'Unable to deserialize Clarity Value from buffer. Could not find valid Clarity Type.'
+      );
   }
 }
