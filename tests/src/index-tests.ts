@@ -61,8 +61,6 @@ import {
 
 import { serializeDeserialize } from './macros';
 
-import { TrueCV, FalseCV, BufferCV } from '../../src/clarity/clarityTypes';
-
 import * as BigNum from 'bn.js';
 import { trueCV, falseCV, bufferCV } from '../../src/clarity';
 
