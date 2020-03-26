@@ -90,7 +90,6 @@ function serializeTupleCV(cv: TupleCV) {
     const nameWithLength = new LengthPrefixedString(key);
     buffers.push(nameWithLength.serialize());
 
-    // Serialized value
     const serializedValue = serializeCV(cv.data[key]);
     buffers.push(serializedValue);
   }
