@@ -45,10 +45,14 @@ enum AuthType {
 enum AddressHashMode {
   // serialization modes for public keys to addresses.
   // We support four different modes due to legacy compatibility with Stacks v1 addresses:
-  SerializeP2PKH = '00', // hash160(public-key), same as bitcoin's p2pkh
-  SerializeP2SH = '01', // hash160(multisig-redeem-script), same as bitcoin's multisig p2sh
-  SerializeP2WPKH = '02', // hash160(segwit-program-00(p2pkh)), same as bitcoin's p2sh-p2wpkh
-  SerializeP2WSH = '03', // hash160(segwit-program-00(public-keys)), same as bitcoin's p2sh-p2wsh
+  /** SingleSigHashMode - hash160(public-key), same as bitcoin's p2pkh */
+  SerializeP2PKH = '00',
+  /** SingleSigHashMode - hash160(multisig-redeem-script), same as bitcoin's multisig p2sh */
+  SerializeP2SH = '01',
+  /** MultiSigHashMode - hash160(segwit-program-00(p2pkh)), same as bitcoin's p2sh-p2wpkh */
+  SerializeP2WPKH = '02',
+  /** MultiSigHashMode - hash160(segwit-program-00(public-keys)), same as bitcoin's p2sh-p2wsh */
+  SerializeP2WSH = '03',
 }
 
 enum PubKeyEncoding {

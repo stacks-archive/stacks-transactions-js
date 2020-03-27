@@ -59,7 +59,7 @@ import {
 import { serializeDeserialize } from './macros';
 
 import * as BigNum from 'bn.js';
-import { trueCV, falseCV, bufferCV } from '../../src/clarity';
+import { c32addressDecode } from 'c32check';
 
 const SECRET_KEY = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 const PUBLIC_KEY = '02215340da140268f8a472af9c2b67952fe0a68337665482dae84886adea0945c1';
@@ -129,6 +129,46 @@ test('Length prefixed list serialization and deserialization', () => {
   for (let index = 0; index < addressList.length; index++) {
     expect(deserialized[index].toString()).toBe(addressList[index].toString());
   }
+});
+
+test('C32 address hash mode - testnet P2PKH', () => {
+  const address = Address.fromHashMode(
+    AddressHashMode.SerializeP2PKH,
+    TransactionVersion.Testnet,
+    'c22d24fec5d06e539c551e732a5ba88997761ba0'
+  ).toString();
+  const expected = 'ST312T97YRQ86WMWWAMF76AJVN24SEXGVM1Z5EH0F';
+  expect(address).toBe(expected);
+});
+
+test('C32 address hash mode - mainnet P2PKH', () => {
+  const address = Address.fromHashMode(
+    AddressHashMode.SerializeP2PKH,
+    TransactionVersion.Mainnet,
+    'b976e9f5d6181e40bed7fa589142dfcf2fb28d8e'
+  ).toString();
+  const expected = 'SP2WQDTFNTRC1WG5YTZX5H4A2VZ7JZCMDHV3PQATJ';
+  expect(address).toBe(expected);
+});
+
+test('C32 address hash mode - mainnet P2SH', () => {
+  const address = Address.fromHashMode(
+    AddressHashMode.SerializeP2SH,
+    TransactionVersion.Mainnet,
+    '55011fc38a7e12f7d00496aef7a1c4b6dfeba81b'
+  ).toString();
+  const expected = 'SM1AG27Y3H9Z15XYG0JBAXXX1RJVDZTX83FA1DDSJ';
+  expect(address).toBe(expected);
+});
+
+test('C32 address hash mode - testnet P2SH', () => {
+  const address = Address.fromHashMode(
+    AddressHashMode.SerializeP2SH,
+    TransactionVersion.Testnet,
+    '55011fc38a7e12f7d00496aef7a1c4b6dfeba81b'
+  ).toString();
+  const expected = 'SN1AG27Y3H9Z15XYG0JBAXXX1RJVDZTX83DE2F6ME';
+  expect(address).toBe(expected);
 });
 
 test('C32check addresses serialization and deserialization', () => {
@@ -384,88 +424,3 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserialized.payload!.recipientAddress!.toString()).toBe(recipientAddress);
   expect(deserialized.payload!.amount!.toNumber()).toBe(amount.toNumber());
 });
-<<<<<<< HEAD
-
-test('Make STX token transfer', () => {
-  const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
-  const amount = new BigNum(12345);
-  const feeRate = new BigNum(0);
-  const nonce = new BigNum(0);
-  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
-  const memo = 'test memo';
-
-  const transaction = makeSTXTokenTransfer(
-    recipientAddress,
-    amount,
-    feeRate,
-    nonce,
-    secretKey,
-    TransactionVersion.Mainnet,
-    memo
-  );
-
-  const serialized = transaction.serialize().toString('hex');
-
-  const tx =
-    '0000000000040015c31b8c1c11c515e244b75806bac48d1399c775000000000000000000000000000' +
-    '00000000004ae1e7a04089e596377ab4a0f74dfbae05c615a8223f1896df0f28fc334dc794f6faed38abdb' +
-    'c611a0f1816738016afa25b4478e607b4d2a58c3d07925f8e040302000000000016df0ba3e79792be7be5e' +
-    '50a370289accfc8c9e032000000000000303974657374206d656d6f0000000000000000000000000000000' +
-    '0000000000000000000';
-
-  expect(serialized).toBe(tx);
-});
-
-test('Make smart contract deploy', () => {
-  const contractName = 'kv-store';
-  const code = fs.readFileSync('./tests/src/contracts/kv-store.clar').toString();
-
-  const feeRate = new BigNum(0);
-  const nonce = new BigNum(0);
-
-  const transaction = makeSmartContractDeploy(
-    contractName,
-    code,
-    feeRate,
-    nonce,
-    SECRET_KEY,
-    TransactionVersion.Testnet
-  );
-
-  const serialized = transaction.serialize().toString('hex');
-
-  const tx =
-    '80000000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000000000000000000000000073d449aa44ede1bc30c757ccf6cf6119f19567728be8a7d160c188c101e4ad79654f5f2345723c962f5a465ad0e22a4237c456da46194945ae553d366eee9c4b03020000000001086b762d73746f72650000015628646566696e652d6d61702073746f72652028286b657920286275666620333229292920282876616c7565202862756666203332292929290a0a28646566696e652d7075626c696320286765742d76616c756520286b65792028627566662033322929290a20202020286d6174636820286d61702d6765743f2073746f72652028286b6579206b65792929290a2020202020202020656e74727920286f6b20286765742076616c756520656e74727929290a20202020202020202865727220302929290a0a28646566696e652d7075626c696320287365742d76616c756520286b65792028627566662033322929202876616c75652028627566662033322929290a2020202028626567696e0a2020202020202020286d61702d7365742073746f72652028286b6579206b6579292920282876616c75652076616c75652929290a2020202020202020286f6b2027747275652929290a';
-
-  expect(serialized).toBe(tx);
-});
-
-test('Make contract-call', () => {
-  const contractName = 'kv-store';
-  const functionName = 'get-value';
-  const buffer = Buffer.from('foo');
-  const buf = bufferCV(buffer);
-
-  const feeRate = new BigNum(0);
-  const nonce = new BigNum(1);
-
-  const transaction = makeContractCall(
-    STACKS_ADDRESS,
-    contractName,
-    functionName,
-    [buf],
-    feeRate,
-    nonce,
-    SECRET_KEY,
-    TransactionVersion.Testnet
-  );
-
-  const serialized = transaction.serialize().toString('hex');
-
-  const tx =
-    '80000000000400e6c05355e0c990ffad19a5e9bda394a9c50034290000000000000001000000000000000000000847ecd645be0141ccbfe7ec25ff9ef1a00cb133623327e351dfb9adb7e09e8f304b0925a3be18f5b1984b2d929f425e5849955abde10f1634501a4e31ba3586030200000000021ae6c05355e0c990ffad19a5e9bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
-
-  expect(serialized).toBe(tx);
-});
-=======
->>>>>>> feat: add post conditions to transaction builder functions and refactor builder API

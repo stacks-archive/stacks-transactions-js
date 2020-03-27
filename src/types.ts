@@ -22,8 +22,49 @@ import { c32addressDecode, c32address } from 'c32check';
 
 import { StacksMessageCodec, StacksMessage } from './message';
 
+export enum AddressVersion {
+  MainnetSingleSig = 22,
+  MainnetMultiSig = 20,
+  TestnetSingleSig = 26,
+  TestnetMultiSig = 21,
+}
+
+/**
+ * Translates the tx auth hash mode to the corresponding address version.
+ * @see https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-005-blocks-and-transactions.md#transaction-authorization
+ */
+export function addressHashModeToVersion(
+  hashMode: AddressHashMode,
+  txVersion: TransactionVersion
+): AddressVersion {
+  switch (hashMode) {
+    case AddressHashMode.SerializeP2PKH:
+      switch (txVersion) {
+        case TransactionVersion.Mainnet:
+          return AddressVersion.MainnetSingleSig;
+        case TransactionVersion.Testnet:
+          return AddressVersion.TestnetSingleSig;
+        default:
+          throw new Error(`Unexpected txVersion ${txVersion} for hashMode ${hashMode}`);
+      }
+    case AddressHashMode.SerializeP2SH:
+    case AddressHashMode.SerializeP2WPKH:
+    case AddressHashMode.SerializeP2WSH:
+      switch (txVersion) {
+        case TransactionVersion.Mainnet:
+          return AddressVersion.MainnetMultiSig;
+        case TransactionVersion.Testnet:
+          return AddressVersion.TestnetMultiSig;
+        default:
+          throw new Error(`Unexpected txVersion ${txVersion} for hashMode ${hashMode}`);
+      }
+    default:
+      throw new Error(`Unexpected hashMode ${hashMode}`);
+  }
+}
+
 export class Address extends StacksMessage {
-  version?: number;
+  version?: AddressVersion;
   data?: string;
 
   constructor(c32AddressString?: string) {
@@ -35,15 +76,24 @@ export class Address extends StacksMessage {
     }
   }
 
-  static fromData(version: number, data: string): Address {
+  static fromData(version: AddressVersion, data: string): Address {
     const address = new Address();
     address.version = version;
     address.data = data;
     return address;
   }
 
+  static fromHashMode(
+    hashMode: AddressHashMode,
+    txVersion: TransactionVersion,
+    data: string
+  ): Address {
+    const version = addressHashModeToVersion(hashMode, txVersion);
+    return this.fromData(version, data);
+  }
+
   static fromPublicKeys(
-    version: number,
+    version: AddressVersion,
     hashMode: AddressHashMode,
     numSigs: number,
     publicKeys: Array<StacksPublicKey>
