@@ -38,7 +38,7 @@ export class PostCondition extends StacksMessage {
     if (this.postConditionType === undefined) {
       throw new Error('"postConditionType" is undefined');
     }
-    bufferArray.appendHexString(this.postConditionType);
+    bufferArray.appendByte(this.postConditionType);
     if (this.principal === undefined) {
       throw new Error('"principal" is undefined');
     }
@@ -64,7 +64,7 @@ export class PostCondition extends StacksMessage {
     if (this.conditionCode === undefined) {
       throw new Error('"conditionCode" is undefined');
     }
-    bufferArray.appendHexString(this.conditionCode);
+    bufferArray.appendByte(this.conditionCode);
 
     if (
       this.postConditionType === PostConditionType.STX ||
@@ -80,7 +80,7 @@ export class PostCondition extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.postConditionType = bufferReader.read(1).toString('hex') as PostConditionType;
+    this.postConditionType = bufferReader.readByte() as PostConditionType;
     this.principal = Principal.deserialize(bufferReader);
 
     if (
@@ -94,7 +94,7 @@ export class PostCondition extends StacksMessage {
       this.assetName = LengthPrefixedString.deserialize(bufferReader);
     }
 
-    this.conditionCode = bufferReader.read(1).toString('hex') as
+    this.conditionCode = bufferReader.readByte() as
       | FungibleConditionCode
       | NonFungibleConditionCode;
 

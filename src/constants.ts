@@ -8,81 +8,101 @@ const UNCOMPRESSED_PUBKEY_LENGTH_BYTES = 64;
 const MEMO_MAX_LENGTH_BYTES = 34;
 
 enum PayloadType {
-  TokenTransfer = '00',
-  SmartContract = '01',
-  ContractCall = '02',
-  PoisonMicroblock = '03',
-  Coinbase = '04',
+  TokenTransfer = 0x00,
+  SmartContract = 0x01,
+  ContractCall = 0x02,
+  PoisonMicroblock = 0x03,
+  Coinbase = 0x04,
 }
 
 enum AnchorMode {
-  OnChainOnly = '01',
-  OffChainOnly = '02',
-  Any = '03',
+  OnChainOnly = 0x01,
+  OffChainOnly = 0x02,
+  Any = 0x03,
 }
 
 enum TransactionVersion {
-  Mainnet = '00',
-  Testnet = '80',
+  Mainnet = 0x00,
+  Testnet = 0x80,
 }
 
 enum PostConditionMode {
-  Allow = '01',
-  Deny = '02',
+  Allow = 0x01,
+  Deny = 0x02,
 }
 
 enum PostConditionType {
-  STX = '00',
-  Fungible = '01',
-  NonFungible = '02',
+  STX = 0x00,
+  Fungible = 0x01,
+  NonFungible = 0x02,
 }
 
 enum AuthType {
-  Standard = '04',
-  Sponsored = '05',
+  Standard = 0x04,
+  Sponsored = 0x05,
 }
 
 enum AddressHashMode {
   // serialization modes for public keys to addresses.
   // We support four different modes due to legacy compatibility with Stacks v1 addresses:
   /** SingleSigHashMode - hash160(public-key), same as bitcoin's p2pkh */
-  SerializeP2PKH = '00',
+  SerializeP2PKH = 0x00,
   /** SingleSigHashMode - hash160(multisig-redeem-script), same as bitcoin's multisig p2sh */
-  SerializeP2SH = '01',
+  SerializeP2SH = 0x01,
   /** MultiSigHashMode - hash160(segwit-program-00(p2pkh)), same as bitcoin's p2sh-p2wpkh */
-  SerializeP2WPKH = '02',
+  SerializeP2WPKH = 0x02,
   /** MultiSigHashMode - hash160(segwit-program-00(public-keys)), same as bitcoin's p2sh-p2wsh */
-  SerializeP2WSH = '03',
+  SerializeP2WSH = 0x03,
 }
 
 enum PubKeyEncoding {
-  Compressed = '00',
-  Uncompressed = '01',
+  Compressed = 0x00,
+  Uncompressed = 0x01,
 }
 
 enum FungibleConditionCode {
-  Equal = '01',
-  Greater = '02',
-  GreaterEqual = '03',
-  Less = '04',
-  LessEqual = '05',
+  Equal = 0x01,
+  Greater = 0x02,
+  GreaterEqual = 0x03,
+  Less = 0x04,
+  LessEqual = 0x05,
 }
 
 enum NonFungibleConditionCode {
-  DoesNotOwn = '10',
-  Owns = '11',
+  DoesNotOwn = 0x10,
+  Owns = 0x11,
 }
 
 enum PrincipalType {
-  Origin = '01',
-  Standard = '02',
-  Contract = '03',
+  Origin = 0x01,
+  Standard = 0x02,
+  Contract = 0x03,
 }
 
 enum AssetType {
-  STX = '00',
-  Fungible = '01',
-  NonFungible = '02',
+  STX = 0x00,
+  Fungible = 0x01,
+  NonFungible = 0x02,
+}
+
+/**
+ * Type IDs corresponding to each of the Clarity value types as described here:
+ * {@link https://github.com/blockstack/blockstack-core/blob/sip/sip-005/sip/sip-005-blocks-and-transactions.md#clarity-value-representation}
+ */
+enum ClarityType {
+  Int = 0x00,
+  UInt = 0x01,
+  Buffer = 0x02,
+  BoolTrue = 0x03,
+  BoolFalse = 0x04,
+  PrincipalStandard = 0x05,
+  PrincipalContract = 0x06,
+  ResponseOk = 0x07,
+  ResponseErr = 0x08,
+  OptionalNone = 0x09,
+  OptionalSome = 0x0a,
+  List = 0x0b,
+  Tuple = 0x0c,
 }
 
 export {
