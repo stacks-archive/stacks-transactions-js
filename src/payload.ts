@@ -35,7 +35,7 @@ export class Payload extends StacksMessage {
     if (this.payloadType === undefined) {
       throw new Error('"payloadType" is undefined');
     }
-    bufferArray.appendHexString(this.payloadType);
+    bufferArray.appendByte(this.payloadType);
 
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
@@ -105,7 +105,7 @@ export class Payload extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.payloadType = bufferReader.read(1).toString('hex') as PayloadType;
+    this.payloadType = bufferReader.readByte() as PayloadType;
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
         this.recipientAddress = Address.deserialize(bufferReader);
