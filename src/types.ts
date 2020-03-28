@@ -152,14 +152,14 @@ export class Address extends StacksMessage {
     if (this.data === undefined) {
       throw new Error('"data" is undefined');
     }
-    bufferArray.appendHexString(intToHexString(this.version, 1));
+    bufferArray.appendByte(this.version);
     bufferArray.appendHexString(this.data);
 
     return bufferArray.concatBuffer();
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.version = hexStringToInt(bufferReader.read(1).toString('hex'));
+    this.version = bufferReader.readByte();
     this.data = bufferReader.read(20).toString('hex');
   }
 }
@@ -181,7 +181,7 @@ export class Principal extends StacksMessage {
     if (this.principalType === undefined) {
       throw new Error('"principalType" is undefined');
     }
-    bufferArray.appendHexString(this.principalType);
+    bufferArray.appendByte(this.principalType);
     bufferArray.push(this.address.serialize());
     if (this.principalType == PrincipalType.Contract) {
       bufferArray.push(this.contractName.serialize());
@@ -190,7 +190,7 @@ export class Principal extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.principalType = bufferReader.read(1).toString('hex') as PrincipalType;
+    this.principalType = bufferReader.readByte() as PrincipalType;
     this.address = Address.deserialize(bufferReader);
     if (this.principalType == PrincipalType.Contract) {
       this.contractName = LengthPrefixedString.deserialize(bufferReader);
