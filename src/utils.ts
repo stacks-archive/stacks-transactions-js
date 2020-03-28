@@ -11,6 +11,13 @@ export class BufferArray extends Array<Buffer> {
     this.push(Buffer.from(hexString, 'hex'));
   }
 
+  appendByte(octet: number) {
+    if (!Number.isInteger(octet) || octet < 0 || octet > 255) {
+      throw new Error(`Value ${octet} is not a valid byte`);
+    }
+    this.push(Buffer.from([octet]));
+  }
+
   concatBuffer(): Buffer {
     return Buffer.concat(this);
   }
@@ -32,6 +39,14 @@ export class BufferReader {
       this.index += bytes;
     }
     return readBuffer;
+  }
+
+  readByte(incrementIndex = true): number {
+    const val = this.buffer[this.index];
+    if (incrementIndex) {
+      this.index += 1;
+    }
+    return val;
   }
 
   setIndex(index: number) {

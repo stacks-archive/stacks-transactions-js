@@ -4,7 +4,7 @@ import { CLARITY_INT_SIZE, ClarityType } from '../constants';
 import { BufferReader, BufferArray } from '../utils';
 
 const prefixTypeID = (typeId: ClarityType, buffer: Buffer): Buffer => {
-  const id = Buffer.from(typeId, 'hex');
+  const id = Buffer.from([typeId]);
   return Buffer.concat([id, buffer]);
 };
 
@@ -18,7 +18,7 @@ abstract class ClarityValue {
 }
 
 function readCV(bufferReader: BufferReader): ClarityValue {
-  const type = bufferReader.read(1).toString('hex') as ClarityType;
+  const type = bufferReader.readByte() as ClarityType;
 
   switch (type) {
     case ClarityType.Int:
@@ -80,14 +80,14 @@ function readCV(bufferReader: BufferReader): ClarityValue {
 class TrueCV extends ClarityValue {
   readonly type = ClarityType.BoolTrue;
   serialize() {
-    return Buffer.from(this.type, 'hex');
+    return Buffer.from([this.type]);
   }
 }
 
 class FalseCV implements ClarityValue {
   readonly type = ClarityType.BoolFalse;
   serialize() {
-    return Buffer.from(this.type, 'hex');
+    return Buffer.from([this.type]);
   }
 }
 
@@ -99,7 +99,7 @@ const falseCV = () => new FalseCV() as BooleanCV;
 class NoneCV extends ClarityValue {
   readonly type = ClarityType.OptionalNone;
   serialize() {
-    return Buffer.from(this.type, 'hex');
+    return Buffer.from([this.type]);
   }
 }
 

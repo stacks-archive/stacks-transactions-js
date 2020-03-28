@@ -79,7 +79,7 @@ export class SpendingCondition extends StacksMessage {
   ) {
     super();
     this.addressHashMode = addressHashMode;
-    if (addressHashMode && pubKey) {
+    if (addressHashMode !== undefined && pubKey) {
       this.signerAddress = Address.fromPublicKeys(0, addressHashMode, 1, [
         new StacksPublicKey(pubKey),
       ]);
@@ -129,11 +129,11 @@ export class SpendingCondition extends StacksMessage {
 
     const sigHash =
       curSigHash +
-      authType +
+      Buffer.from([authType]).toString('hex') +
       feeRate.toArrayLike(Buffer, 'be', 8).toString('hex') +
       nonce.toArrayLike(Buffer, 'be', 8).toString('hex');
 
-    if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
+    if (Buffer.from(sigHash, 'hex').byteLength !== hashLength) {
       throw Error('Invalid signature hash length');
     }
 
@@ -206,7 +206,7 @@ export class SpendingCondition extends StacksMessage {
     if (this.feeRate === undefined) {
       throw new Error('"feeRate" is undefined');
     }
-    bufferArray.appendHexString(this.addressHashMode);
+    bufferArray.appendByte(this.addressHashMode);
     bufferArray.appendHexString(this.signerAddress.data);
     bufferArray.push(this.nonce.toArrayLike(Buffer, 'be', 8));
     bufferArray.push(this.feeRate.toArrayLike(Buffer, 'be', 8));
@@ -218,7 +218,7 @@ export class SpendingCondition extends StacksMessage {
       if (this.pubKeyEncoding === undefined) {
         throw new Error('"pubKeyEncoding" is undefined');
       }
-      bufferArray.appendHexString(this.pubKeyEncoding);
+      bufferArray.appendByte(this.pubKeyEncoding);
       bufferArray.push(this.signature.serialize());
     } else if (
       this.addressHashMode === AddressHashMode.SerializeP2SH ||
@@ -231,7 +231,7 @@ export class SpendingCondition extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.addressHashMode = bufferReader.read(1).toString('hex') as AddressHashMode;
+    this.addressHashMode = bufferReader.readByte() as AddressHashMode;
     const signerPubKeyHash = bufferReader.read(20).toString('hex');
     this.signerAddress = Address.fromData(0, signerPubKeyHash);
     this.nonce = new BigNum(bufferReader.read(8).toString('hex'), 16);
@@ -241,12 +241,13 @@ export class SpendingCondition extends StacksMessage {
       this.addressHashMode === AddressHashMode.SerializeP2PKH ||
       this.addressHashMode === AddressHashMode.SerializeP2WPKH
     ) {
-      this.pubKeyEncoding = bufferReader.read(1).toString('hex') as PubKeyEncoding;
+      this.pubKeyEncoding = bufferReader.readByte() as PubKeyEncoding;
       this.signature = MessageSignature.deserialize(bufferReader);
     } else if (
       this.addressHashMode === AddressHashMode.SerializeP2SH ||
       this.addressHashMode === AddressHashMode.SerializeP2WSH
     ) {
+      throw new Error('not implemented');
       // TODO
     }
   }
@@ -295,7 +296,7 @@ export class Authorization extends StacksMessage {
     if (this.authType === undefined) {
       throw new Error('"authType" is undefined');
     }
-    bufferArray.appendHexString(this.authType);
+    bufferArray.appendByte(this.authType);
 
     switch (this.authType) {
       case AuthType.Standard:
@@ -313,7 +314,7 @@ export class Authorization extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.authType = bufferReader.read(1).toString('hex') as AuthType;
+    this.authType = bufferReader.readByte() as AuthType;
 
     switch (this.authType) {
       case AuthType.Standard:

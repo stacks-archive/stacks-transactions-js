@@ -62,7 +62,7 @@ export class StacksTransaction extends StacksMessage {
     this.postConditionMode = PostConditionMode.Deny;
     this.postConditions = new LengthPrefixedList<PostCondition>();
 
-    if (payload) {
+    if (payload !== undefined) {
       switch (payload.payloadType) {
         case PayloadType.Coinbase: {
           this.anchorMode = AnchorMode.OnChainOnly;
@@ -158,11 +158,11 @@ export class StacksTransaction extends StacksMessage {
 
     const bufferArray: BufferArray = new BufferArray();
 
-    bufferArray.appendHexString(this.version);
+    bufferArray.appendByte(this.version);
     bufferArray.appendHexString(this.chainId);
     bufferArray.push(this.auth.serialize());
-    bufferArray.appendHexString(this.anchorMode);
-    bufferArray.appendHexString(this.postConditionMode);
+    bufferArray.appendByte(this.anchorMode);
+    bufferArray.appendByte(this.postConditionMode);
     bufferArray.push(this.postConditions.serialize());
     bufferArray.push(this.payload.serialize());
 
@@ -171,13 +171,13 @@ export class StacksTransaction extends StacksMessage {
 
   deserialize(bufferReader: BufferReader) {
     this.version =
-      bufferReader.read(1).toString('hex') === TransactionVersion.Mainnet
+      bufferReader.readByte() === TransactionVersion.Mainnet
         ? TransactionVersion.Mainnet
         : TransactionVersion.Testnet;
     this.chainId = bufferReader.read(4).toString('hex');
     this.auth = Authorization.deserialize(bufferReader);
-    this.anchorMode = bufferReader.read(1).toString('hex') as AnchorMode;
-    this.postConditionMode = bufferReader.read(1).toString('hex') as PostConditionMode;
+    this.anchorMode = bufferReader.readByte() as AnchorMode;
+    this.postConditionMode = bufferReader.readByte() as PostConditionMode;
     this.postConditions = LengthPrefixedList.deserialize(bufferReader, PostCondition);
     this.payload = Payload.deserialize(bufferReader);
   }
