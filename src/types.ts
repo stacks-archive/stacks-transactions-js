@@ -22,8 +22,49 @@ import { c32addressDecode, c32address } from 'c32check';
 
 import { StacksMessageCodec, StacksMessage } from './message';
 
+export enum AddressVersion {
+  MainnetSingleSig = 22,
+  MainnetMultiSig = 20,
+  TestnetSingleSig = 26,
+  TestnetMultiSig = 21,
+}
+
+/**
+ * Translates the tx auth hash mode to the corresponding address version.
+ * @see https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-005-blocks-and-transactions.md#transaction-authorization
+ */
+export function addressHashModeToVersion(
+  hashMode: AddressHashMode,
+  txVersion: TransactionVersion
+): AddressVersion {
+  switch (hashMode) {
+    case AddressHashMode.SerializeP2PKH:
+      switch (txVersion) {
+        case TransactionVersion.Mainnet:
+          return AddressVersion.MainnetSingleSig;
+        case TransactionVersion.Testnet:
+          return AddressVersion.TestnetSingleSig;
+        default:
+          throw new Error(`Unexpected txVersion ${txVersion} for hashMode ${hashMode}`);
+      }
+    case AddressHashMode.SerializeP2SH:
+    case AddressHashMode.SerializeP2WPKH:
+    case AddressHashMode.SerializeP2WSH:
+      switch (txVersion) {
+        case TransactionVersion.Mainnet:
+          return AddressVersion.MainnetMultiSig;
+        case TransactionVersion.Testnet:
+          return AddressVersion.TestnetMultiSig;
+        default:
+          throw new Error(`Unexpected txVersion ${txVersion} for hashMode ${hashMode}`);
+      }
+    default:
+      throw new Error(`Unexpected hashMode ${hashMode}`);
+  }
+}
+
 export class Address extends StacksMessage {
-  version?: number;
+  version?: AddressVersion;
   data?: string;
 
   constructor(c32AddressString?: string) {
@@ -35,15 +76,24 @@ export class Address extends StacksMessage {
     }
   }
 
-  static fromData(version: number, data: string): Address {
+  static fromData(version: AddressVersion, data: string): Address {
     const address = new Address();
     address.version = version;
     address.data = data;
     return address;
   }
 
+  static fromHashMode(
+    hashMode: AddressHashMode,
+    txVersion: TransactionVersion,
+    data: string
+  ): Address {
+    const version = addressHashModeToVersion(hashMode, txVersion);
+    return this.fromData(version, data);
+  }
+
   static fromPublicKeys(
-    version: number,
+    version: AddressVersion,
     hashMode: AddressHashMode,
     numSigs: number,
     publicKeys: Array<StacksPublicKey>
@@ -102,14 +152,14 @@ export class Address extends StacksMessage {
     if (this.data === undefined) {
       throw new Error('"data" is undefined');
     }
-    bufferArray.appendHexString(intToHexString(this.version, 1));
+    bufferArray.appendByte(this.version);
     bufferArray.appendHexString(this.data);
 
     return bufferArray.concatBuffer();
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.version = hexStringToInt(bufferReader.read(1).toString('hex'));
+    this.version = bufferReader.readByte();
     this.data = bufferReader.read(20).toString('hex');
   }
 }
@@ -131,7 +181,7 @@ export class Principal extends StacksMessage {
     if (this.principalType === undefined) {
       throw new Error('"principalType" is undefined');
     }
-    bufferArray.appendHexString(this.principalType);
+    bufferArray.appendByte(this.principalType);
     bufferArray.push(this.address.serialize());
     if (this.principalType == PrincipalType.Contract) {
       bufferArray.push(this.contractName.serialize());
@@ -140,7 +190,7 @@ export class Principal extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.principalType = bufferReader.read(1).toString('hex') as PrincipalType;
+    this.principalType = bufferReader.readByte() as PrincipalType;
     this.address = Address.deserialize(bufferReader);
     if (this.principalType == PrincipalType.Contract) {
       this.contractName = LengthPrefixedString.deserialize(bufferReader);

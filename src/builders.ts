@@ -35,7 +35,7 @@ import * as BigNum from 'bn.js';
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
  * @param  {String} memo - an arbitrary string to include with the transaction, must be less than
  *                          34 bytes
- * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the
+ * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
  *
  * @return {StacksTransaction}
@@ -44,7 +44,7 @@ export interface TokenTransferOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
   memo?: string;
-  postConditions?: Array<PostCondition>;
+  postConditions?: PostCondition[];
 }
 
 /**
@@ -107,7 +107,7 @@ export function makeSTXTokenTransfer(
  *
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
- * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the
+ * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
  *
  * @return {StacksTransaction}
@@ -115,7 +115,7 @@ export function makeSTXTokenTransfer(
 export interface ContractDeployOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
-  postConditions?: Array<PostCondition>;
+  postConditions?: PostCondition[];
 }
 
 /**
@@ -176,7 +176,7 @@ export function makeSmartContractDeploy(
  *
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
- * @param  {Array<PostCondition>} postConditions - an array of post conditions to add to the
+ * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
  *
  * @return {StacksTransaction}
@@ -184,7 +184,7 @@ export function makeSmartContractDeploy(
 export interface ContractCallOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
-  postConditions?: Array<PostCondition>;
+  postConditions?: PostCondition[];
 }
 
 /**
