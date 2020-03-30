@@ -201,11 +201,13 @@ const listCV = new ListCV([new TrueCV, new IntCV(1)]);
 ```
 
 ## Post Conditions
-Three types of post conditions can be added to transactions:
+Three types of post conditions can be added to transactions: 
 
 1. STX post condition
 2. Fungible token post condition
 3. Non-Fungible token post condition
+
+For details see: https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-005-blocks-and-transactions.md#transaction-post-conditions
 
 ### STX post condition
 ```javascript
