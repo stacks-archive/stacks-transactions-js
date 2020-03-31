@@ -4,6 +4,7 @@ import {
   PrincipalType,
   TransactionVersion,
   AddressHashMode,
+  AddressVersion
 } from './constants';
 
 import { StacksPublicKey } from './keys';
@@ -21,13 +22,6 @@ import {
 import { c32addressDecode, c32address } from 'c32check';
 
 import { StacksMessageCodec, StacksMessage } from './message';
-
-export enum AddressVersion {
-  MainnetSingleSig = 22,
-  MainnetMultiSig = 20,
-  TestnetSingleSig = 26,
-  TestnetMultiSig = 21,
-}
 
 /**
  * Translates the tx auth hash mode to the corresponding address version.
