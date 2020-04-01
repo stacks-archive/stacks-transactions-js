@@ -59,6 +59,8 @@ import {
 import { serializeDeserialize } from './macros';
 
 import * as BigNum from 'bn.js';
+import { trueCV, falseCV, bufferCV } from '../../src/clarity';
+
 import { c32addressDecode } from 'c32check';
 
 const SECRET_KEY = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';

@@ -20,7 +20,7 @@ import {
   NonFungibleConditionCode,
 } from '../../src/constants';
 
-import { BufferCV } from '../../src/clarity/clarityTypes';
+import { bufferCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
@@ -117,8 +117,7 @@ test('Make contract-call', () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
   const contractName = 'kv-store';
   const functionName = 'get-value';
-  const buffer = Buffer.from('foo');
-  const bufferCV = new BufferCV(buffer);
+  const buffer = bufferCV(Buffer.from('foo'));
   const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 
   const feeRate = new BigNum(0);
@@ -132,7 +131,7 @@ test('Make contract-call', () => {
     contractAddress,
     contractName,
     functionName,
-    [bufferCV],
+    [buffer],
     feeRate,
     secretKey,
     options
@@ -153,8 +152,7 @@ test('Make contract-call with post conditions', () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
   const contractName = 'kv-store';
   const functionName = 'get-value';
-  const buffer = Buffer.from('foo');
-  const bufferCV = new BufferCV(buffer);
+  const buffer = bufferCV(Buffer.from('foo'));
   const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
   const postConditionAddress = 'ST1EXHZSN8MJSJ9DSG994G1V8CNKYXGMK7Z4SA6DH';
   const assetAddress = 'ST34RKEJKQES7MXQFBT29KSJZD73QK3YNT5N56C6X';
@@ -215,7 +213,7 @@ test('Make contract-call with post conditions', () => {
     contractAddress,
     contractName,
     functionName,
-    [bufferCV],
+    [buffer],
     feeRate,
     secretKey,
     options
