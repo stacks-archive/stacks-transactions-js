@@ -24,7 +24,7 @@ import {
 
 import { StandardPrincipal, ContractPrincipal, AssetInfo } from './types';
 
-import { ClarityValue } from './clarity/clarityTypes';
+import { ClarityValue } from './clarity';
 
 import * as BigNum from 'bn.js';
 
@@ -95,7 +95,7 @@ export function makeSTXTokenTransfer(
       transaction.addPostCondition(postCondition);
     });
   }
-
+  
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 

@@ -133,6 +133,5 @@ export {
   FungibleConditionCode,
   NonFungibleConditionCode,
   PrincipalType,
-  ClarityType,
   AssetType,
 };

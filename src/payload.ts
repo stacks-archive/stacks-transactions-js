@@ -6,7 +6,7 @@ import { Address, LengthPrefixedString, CodeBodyString, AssetInfo, MemoString } 
 
 import { StacksMessage } from './message';
 
-import { ClarityValue } from './clarity/clarityTypes';
+import { ClarityValue, serializeCV, deserializeCV } from './clarity/';
 
 import * as BigNum from 'bn.js';
 
@@ -72,7 +72,7 @@ export class Payload extends StacksMessage {
         numArgs.writeUInt32BE(this.functionArgs.length, 0);
         bufferArray.push(numArgs);
         this.functionArgs.forEach(arg => {
-          bufferArray.push(arg.serialize());
+          bufferArray.push(serializeCV(arg));
         });
         break;
       case PayloadType.SmartContract:
@@ -119,7 +119,7 @@ export class Payload extends StacksMessage {
         this.functionArgs = [];
         const numberOfArgs = bufferReader.read(4).readUInt32BE(0);
         for (let i = 0; i < numberOfArgs; i++) {
-          const clarityValue = ClarityValue.deserialize(bufferReader);
+          const clarityValue = deserializeCV(bufferReader);
           this.functionArgs.push(clarityValue);
         }
         break;

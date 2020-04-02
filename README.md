@@ -160,44 +160,154 @@ This library contains Typescript types and classes that map to the Clarity types
 ```javascript
 
 // construct boolean clarity values
-const trueCV = new TrueCV();
-const falseCV = new FalseCV();
+const t = trueCV();
+const f = falseCV();
 
 // construct optional clarity values
-const noneCV = NoneCV();
-const someCV = SomeCV(trueCV);
+const nothing = noneCV();
+const something = someCV(t);
 
 // construct a buffer clarity value from an existing Buffer
 const buffer = Buffer.from('foo');
-const bufferCV = new BufferCV(buffer);
+const bufCV = bufferCV(buffer);
 
 // construct signed and unsigned integer clarity values
-const intCV = new IntCV(-10);
-const uintCV = new UIntCV(10);
+const i = intCV(-10);
+const u = uintCV(10);
 
 // construct principal clarity values
 const address = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
-const standardPrincipalCV = new StandardPrincipalCV(address);
-const contractPrincipalCV = new ContractPrincipalCV(address, 'contract-name');
+const contractName = 'contract-name';
+const spCV = standardPrincipalCV(address);
+const cpCV = contractPrincipalCV(address, contractName);
 
 // construct response clarity values
-const responseErrorCV = new ResponseErrorCV(trueCV);
-const responseOkCV = new ResponseOkCV(falseCV);
+const errCV = responseErrorCV(trueCV());
+const okCV = responseOkCV(falseCV());
 
 // construct tuple clarity values
-const tupleCV = new TupleCV({
-  'property1': new IntCV(1),
-  'property2': new TrueCV()
+const tupCV = tupleCV({
+  'a': intCV(1),
+  'b': trueCV(),
+  'c': falseCV()
 })
 
 // construct list clarity values
-const listCV = new ListCV([trueCV, falseCV])
+const l = listCV([trueCV(), falseCV()])
 ```
 
-If you develop in Typescript, the type checker will help prevent you from creating wrongly-typed Clarity values. For example, the following code won't compile since in Clarity lists are homogeneous, meaning they can only contain values of a single type.
+If you develop in Typescript, the type checker can help prevent you from creating wrongly-typed Clarity values. For example, the following code won't compile since in Clarity lists are homogeneous, meaning they can only contain values of a single type. It is important to include the type variable `BooleanCV` in this example, otherwise the typescript type checker won't know which type the list is of and won't enforce homogeneity.
 
 ```typescript
-const listCV = new ListCV([new TrueCV, new IntCV(1)]);
+const l = listCV<BooleanCV>([trueCV(), intCV(1)]);
+```
+
+## Post Conditions
+Three types of post conditions can be added to transactions: 
+
+1. STX post condition
+2. Fungible token post condition
+3. Non-Fungible token post condition
+
+For details see: https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-005-blocks-and-transactions.md#transaction-post-conditions
+
+### STX post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = FungibleConditionCode.GreaterEqual;
+const postConditionAmount = new BigNum(12345);
+
+const standardSTXPostCondition = makeStandardSTXPostCondition(
+  postConditionAddress,
+  postConditionCode,
+  postConditionAmount
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+
+const contractSTXPostCondition = makeContractSTXPostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  postConditionAmount
+);
+```
+
+### Fungible token post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = FungibleConditionCode.GreaterEqual;
+const postConditionAmount = new BigNum(12345);
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const fungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName
+)
+
+const standardFungiblePostCondition = makeStandardFungiblePostCondition(
+  postConditionAddress,
+  postConditionCode,
+  postConditionAmount,
+  fungibleAssetInfo 
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const fungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName
+)
+
+const contractFungiblePostCondition = makeContractFungiblePostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  postConditionAmount,
+  fungibleAssetInfo
+);
+```
+
+### Non-fungible token post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = NonFungibleConditionCode.Owns;
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const assetName = 'test-asset';
+const tokenAssetName = 'test-token-asset';
+const nonFungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName,
+  assetName
+)
+
+const standardNonFungiblePostCondition = makeStandardNonFungiblePostCondition(
+  postConditionAddress,
+  postConditionCode,
+  nonFungibleAssetInfo,
+  tokenAssetName
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+
+const contractNonFungiblePostCondition = makeContractNonFungiblePostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  nonFungibleAssetInfo,
+  tokenAssetName
+);
 ```
 
 ## Post Conditions

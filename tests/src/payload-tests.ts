@@ -7,7 +7,7 @@ import {
 
 import { serializeDeserialize } from './macros';
 
-import { TrueCV, FalseCV, BufferCV } from '../../src/clarity/clarityTypes';
+import { trueCV, falseCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
@@ -29,7 +29,7 @@ test('Contract call payload serialization and deserialization', () => {
   const contractAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
   const contractName = 'contract_name';
   const functionName = 'function_name';
-  const args = [new TrueCV(), new FalseCV()];
+  const args = [trueCV(), falseCV()];
 
   const payload = new ContractCallPayload(contractAddress, contractName, functionName, args);
 

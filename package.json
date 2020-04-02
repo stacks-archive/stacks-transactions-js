@@ -1,6 +1,6 @@
 {
   "name": "@blockstack/stacks-transactions",
-  "version": "0.1.1-alpha.2",
+  "version": "0.2.0-alpha.1",
   "description": "Javascript library for constructing transactions on the Stacks blockchain.",
   "main": "lib/src/index",
   "types": "lib/src/index.d.ts",
