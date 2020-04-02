@@ -1,16 +1,6 @@
-import {
-  Address,
-  LengthPrefixedString,
-  LengthPrefixedList,
-  AssetInfo,
-  StandardPrincipal,
-  ContractPrincipal
-} from '../../src/types';
+import { Address, LengthPrefixedString, LengthPrefixedList, AssetInfo } from '../../src/types';
 
-import {
-  TransactionVersion,
-  AddressHashMode
-} from '../../src/constants';
+import { TransactionVersion, AddressHashMode } from '../../src/constants';
 
 import { serializeDeserialize } from './macros';
 

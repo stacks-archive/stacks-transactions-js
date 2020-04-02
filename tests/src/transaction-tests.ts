@@ -1,21 +1,12 @@
 import { StacksTransaction } from '../../src/transaction';
 
-import {
-  StandardAuthorization,
-  SingleSigSpendingCondition
-} from '../../src/authorization';
+import { StandardAuthorization, SingleSigSpendingCondition } from '../../src/authorization';
 
-import {
-  TokenTransferPayload
-} from '../../src/payload';
+import { TokenTransferPayload } from '../../src/payload';
 
-import {
-  STXPostCondition
-} from '../../src/postcondition';
+import { STXPostCondition } from '../../src/postcondition';
 
-import {
-  StandardPrincipal
-} from '../../src/types';
+import { StandardPrincipal } from '../../src/types';
 
 import {
   COINBASE_BUFFER_LENGTH_BYTES,

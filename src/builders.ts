@@ -95,7 +95,7 @@ export function makeSTXTokenTransfer(
       transaction.addPostCondition(postCondition);
     });
   }
-  
+
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 

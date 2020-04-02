@@ -1,20 +1,16 @@
 import {
   STXPostCondition,
   FungiblePostCondition,
-  NonFungiblePostCondition
+  NonFungiblePostCondition,
 } from '../../src/postcondition';
 
-import {
-  AssetInfo,
-  StandardPrincipal,
-  ContractPrincipal
-} from '../../src/types';
+import { AssetInfo, StandardPrincipal, ContractPrincipal } from '../../src/types';
 
 import {
   PrincipalType,
   PostConditionType,
   FungibleConditionCode,
-  NonFungibleConditionCode
+  NonFungibleConditionCode,
 } from '../../src/constants';
 
 import { serializeDeserialize } from './macros';

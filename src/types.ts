@@ -4,7 +4,7 @@ import {
   PrincipalType,
   TransactionVersion,
   AddressHashMode,
-  AddressVersion
+  AddressVersion,
 } from './constants';
 
 import { StacksPublicKey } from './keys';

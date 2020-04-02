@@ -19,6 +19,3 @@ test('Stacks public key and private keys', () => {
   const randomKey = StacksPrivateKey.makeRandom();
   expect(randomKey.toString().length).toEqual(64);
 });
-
-
-
