@@ -309,3 +309,111 @@ const contractNonFungiblePostCondition = makeContractNonFungiblePostCondition(
   tokenAssetName
 );
 ```
+
+## Post Conditions
+Three types of post conditions can be added to transactions: 
+
+1. STX post condition
+2. Fungible token post condition
+3. Non-Fungible token post condition
+
+For details see: https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-005-blocks-and-transactions.md#transaction-post-conditions
+
+### STX post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = FungibleConditionCode.GreaterEqual;
+const postConditionAmount = new BigNum(12345);
+
+const standardSTXPostCondition = makeStandardSTXPostCondition(
+  postConditionAddress,
+  postConditionCode,
+  postConditionAmount
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+
+const contractSTXPostCondition = makeContractSTXPostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  postConditionAmount
+);
+```
+
+### Fungible token post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = FungibleConditionCode.GreaterEqual;
+const postConditionAmount = new BigNum(12345);
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const fungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName
+)
+
+const standardFungiblePostCondition = makeStandardFungiblePostCondition(
+  postConditionAddress,
+  postConditionCode,
+  postConditionAmount,
+  fungibleAssetInfo 
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const fungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName
+)
+
+const contractFungiblePostCondition = makeContractFungiblePostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  postConditionAmount,
+  fungibleAssetInfo
+);
+```
+
+### Non-fungible token post condition
+```javascript
+// With a standard principal
+const postConditionAddress = 'SP2ZD731ANQZT6J4K3F5N8A40ZXWXC1XFXHVVQFKE';
+const postConditionCode = NonFungibleConditionCode.Owns;
+const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
+const assetContractName = 'test-asset-contract';
+const assetName = 'test-asset';
+const tokenAssetName = 'test-token-asset';
+const nonFungibleAssetInfo = new AssetInfo(
+  assetAddress,
+  assetContractName,
+  assetName
+)
+
+const standardNonFungiblePostCondition = makeStandardNonFungiblePostCondition(
+  postConditionAddress,
+  postConditionCode,
+  nonFungibleAssetInfo,
+  tokenAssetName
+);
+
+// With a contract principal
+const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
+const contractName = 'test-contract';
+
+const contractNonFungiblePostCondition = makeContractNonFungiblePostCondition(
+  contractAddress,
+  contractName,
+  postConditionCode,
+  nonFungibleAssetInfo,
+  tokenAssetName
+);
+```

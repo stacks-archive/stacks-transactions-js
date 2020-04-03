@@ -55,6 +55,13 @@ enum AddressHashMode {
   SerializeP2WSH = 0x03,
 }
 
+enum AddressVersion {
+  MainnetSingleSig = 22,
+  MainnetMultiSig = 20,
+  TestnetSingleSig = 26,
+  TestnetMultiSig = 21,
+}
+
 enum PubKeyEncoding {
   Compressed = 0x00,
   Uncompressed = 0x01,
@@ -121,6 +128,7 @@ export {
   PostConditionType,
   AuthType,
   AddressHashMode,
+  AddressVersion,
   PubKeyEncoding,
   FungibleConditionCode,
   NonFungibleConditionCode,
