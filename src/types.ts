@@ -126,7 +126,10 @@ export class Address extends StacksMessage {
       case AddressHashMode.SerializeP2PKH:
         return Address.fromData(version, hash_p2pkh(publicKeys[0].toString()));
       default:
-        return new Address('');
+        // TODO
+        throw new Error(
+          `Not yet implemented: address construction using public keys for hash mode: ${hashMode}`
+        );
     }
   }
 

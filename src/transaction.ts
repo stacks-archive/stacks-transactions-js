@@ -30,6 +30,12 @@ import { PostCondition } from './postcondition';
 
 import { StacksPrivateKey } from './keys';
 
+export interface TransactionSerializeResult {
+  signerAddress: string;
+  txId: string;
+  rawTx: Buffer;
+}
+
 export class StacksTransaction extends StacksMessage {
   version?: TransactionVersion;
   chainId?: string;
@@ -64,17 +70,19 @@ export class StacksTransaction extends StacksMessage {
 
     if (payload !== undefined) {
       switch (payload.payloadType) {
-        case PayloadType.Coinbase: {
-          this.anchorMode = AnchorMode.OnChainOnly;
-          break;
-        }
+        case PayloadType.Coinbase:
         case PayloadType.PoisonMicroblock: {
           this.anchorMode = AnchorMode.OnChainOnly;
           break;
         }
-        default: {
+        case PayloadType.ContractCall:
+        case PayloadType.SmartContract:
+        case PayloadType.TokenTransfer: {
           this.anchorMode = AnchorMode.Any;
           break;
+        }
+        default: {
+          throw new Error(`Unexpected transaction payload type: ${payload.payloadType}`);
         }
       }
     }
@@ -139,7 +147,9 @@ export class StacksTransaction extends StacksMessage {
     return txidFromData(serialized);
   }
 
-  serialize(): Buffer {
+  serialize(): Buffer;
+  serialize(opts: { extraInfo: true }): TransactionSerializeResult;
+  serialize(opts?: { extraInfo: true }): TransactionSerializeResult | Buffer {
     if (this.version === undefined) {
       throw new Error('"version" is undefined');
     }
@@ -166,7 +176,17 @@ export class StacksTransaction extends StacksMessage {
     bufferArray.push(this.postConditions.serialize());
     bufferArray.push(this.payload.serialize());
 
-    return bufferArray.concatBuffer();
+    const rawTx = bufferArray.concatBuffer();
+    if (opts !== undefined && opts.extraInfo) {
+      const txId = txidFromData(rawTx);
+      const signerAddress = this.auth.spendingCondition?.signerAddress?.toC32AddressString();
+      if (signerAddress === undefined) {
+        throw new Error(`Unexpected undefined tx auth signer address`);
+      }
+      return { rawTx, signerAddress, txId };
+    } else {
+      return rawTx;
+    }
   }
 
   deserialize(bufferReader: BufferReader) {
