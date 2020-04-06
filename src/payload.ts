@@ -98,7 +98,9 @@ export class Payload extends StacksMessage {
         bufferArray.push(this.coinbaseBuffer);
         break;
       default:
-        break;
+        throw new Error(
+          `Unexpected transaction payload type while serializing: ${this.payloadType}`
+        );
     }
 
     return bufferArray.concatBuffer();
@@ -134,7 +136,9 @@ export class Payload extends StacksMessage {
         this.coinbaseBuffer = bufferReader.read(COINBASE_BUFFER_LENGTH_BYTES);
         break;
       default:
-        break;
+        throw new Error(
+          `Unexpected transaction payload type while deserializing: ${this.payloadType}`
+        );
     }
   }
 }
