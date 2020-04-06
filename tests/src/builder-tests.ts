@@ -18,6 +18,7 @@ import {
   TransactionVersion,
   FungibleConditionCode,
   NonFungibleConditionCode,
+  PostConditionMode,
 } from '../../src/constants';
 
 import { bufferCV } from '../../src/clarity';
@@ -207,6 +208,7 @@ test('Make contract-call with post conditions', () => {
     nonce: new BigNum(1),
     version: TransactionVersion.Testnet,
     postConditions,
+    postConditMode: PostConditionMode.Deny,
   };
 
   const transaction = makeContractCall(
@@ -237,6 +239,42 @@ test('Make contract-call with post conditions', () => {
     '8499e65f69c7798fd5d113746573742d61737365742d636f6e74726163740f746573742d61737365742d6e' +
     '616d6510746f6b656e2d61737365742d6e616d6510021ae6c05355e0c990ffad19a5e9bda394a9c5003429' +
     '086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
+
+  expect(serialized).toBe(tx);
+});
+
+test('Make contract-call with post condition allow mode', () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const buffer = bufferCV(Buffer.from('foo'));
+  const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+
+  const feeRate = new BigNum(0);
+
+  const options = {
+    nonce: new BigNum(1),
+    version: TransactionVersion.Testnet,
+    postConditMode: PostConditionMode.Allow,
+  };
+
+  const transaction = makeContractCall(
+    contractAddress,
+    contractName,
+    functionName,
+    [buffer],
+    feeRate,
+    secretKey,
+    options
+  );
+
+  const serialized = transaction.serialize().toString('hex');
+
+  const tx =
+    '80000000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000010000000000000000' +
+    '00000847ecd645be0141ccbfe7ec25ff9ef1a00cb133623327e351dfb9adb7e09e8f304b0925a3be18f5b1' +
+    '984b2d929f425e5849955abde10f1634501a4e31ba3586030200000000021ae6c05355e0c990ffad19a5e9' +
+    'bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
 
   expect(serialized).toBe(tx);
 });
