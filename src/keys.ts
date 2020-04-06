@@ -77,7 +77,9 @@ export class StacksPrivateKey {
     } else if (key.length === 64) {
       this.compressed = false;
     } else {
-      throw new Error('Improperly formatted private-key hex string: length should be 64 or 66.');
+      throw new Error(
+        `Improperly formatted private-key hex string: length should be 64 or 66, provided with length ${key.length}`
+      );
     }
 
     this.data = Buffer.from(key, 'hex');
@@ -87,7 +89,7 @@ export class StacksPrivateKey {
     const ec = new EC('secp256k1');
     const options = { entropy: randomBytes(32) };
     const keyPair = ec.genKeyPair(options);
-    const privateKey = keyPair.getPrivate().toString('hex');
+    const privateKey = keyPair.getPrivate().toString('hex', 32);
     return new StacksPrivateKey(privateKey);
   }
 
