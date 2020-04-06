@@ -20,6 +20,7 @@ import {
   AddressHashMode,
   FungibleConditionCode,
   NonFungibleConditionCode,
+  PostConditionMode,
 } from './constants';
 
 import { StandardPrincipal, ContractPrincipal, AssetInfo } from './types';
@@ -44,6 +45,7 @@ export interface TokenTransferOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
   memo?: string;
+  postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
 }
 
@@ -71,6 +73,7 @@ export function makeSTXTokenTransfer(
     nonce: new BigNum(0),
     version: TransactionVersion.Mainnet,
     memo: '',
+    postConditionMode: PostConditionMode.Deny,
   };
 
   const normalizedOptions = Object.assign(defaultOptions, options);
@@ -89,6 +92,7 @@ export function makeSTXTokenTransfer(
   const authorization = new StandardAuthorization(spendingCondition);
 
   const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
+  transaction.postConditionMode = normalizedOptions.postConditionMode;
 
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
     normalizedOptions.postConditions.forEach(postCondition => {
@@ -115,6 +119,7 @@ export function makeSTXTokenTransfer(
 export interface ContractDeployOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
+  postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
 }
 
@@ -140,6 +145,7 @@ export function makeSmartContractDeploy(
   const defaultOptions = {
     nonce: new BigNum(0),
     version: TransactionVersion.Mainnet,
+    postConditionMode: PostConditionMode.Deny,
   };
 
   const normalizedOptions = Object.assign(defaultOptions, options);
@@ -158,6 +164,7 @@ export function makeSmartContractDeploy(
   const authorization = new StandardAuthorization(spendingCondition);
 
   const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
+  transaction.postConditionMode = normalizedOptions.postConditionMode;
 
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
     normalizedOptions.postConditions.forEach(postCondition => {
@@ -184,6 +191,7 @@ export function makeSmartContractDeploy(
 export interface ContractCallOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
+  postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
 }
 
@@ -215,6 +223,7 @@ export function makeContractCall(
   const defaultOptions = {
     nonce: new BigNum(0),
     version: TransactionVersion.Mainnet,
+    postConditionMode: PostConditionMode.Deny,
   };
 
   const normalizedOptions = Object.assign(defaultOptions, options);
@@ -238,6 +247,7 @@ export function makeContractCall(
   const authorization = new StandardAuthorization(spendingCondition);
 
   const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
+  transaction.postConditionMode = normalizedOptions.postConditionMode;
 
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
     normalizedOptions.postConditions.forEach(postCondition => {
