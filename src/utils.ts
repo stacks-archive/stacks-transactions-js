@@ -4,6 +4,9 @@ import * as RIPEMD160 from 'ripemd160';
 
 import * as randombytes from 'randombytes';
 
+// eslint-disable-next-line import/no-unassigned-import
+import 'cross-fetch/polyfill'
+
 export { randombytes as randomBytes };
 
 export class BufferArray extends Array<Buffer> {
@@ -124,4 +127,16 @@ export const hash_p2pkh = (input: string) => {
 export function isClarityName(name: string) {
   const regex = /^[a-zA-Z]([a-zA-Z0-9]|[-_!?+<>=/*])*$|^[-+=/*]$|^[<>]=?$/;
   return regex.test(name) && name.length < 128;
+}
+
+/** @ignore */
+export async function fetchPrivate(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  const defaultFetchOpts: RequestInit = {
+    referrer: 'no-referrer',
+    referrerPolicy: 'no-referrer'
+  }
+  const fetchOpts = Object.assign(defaultFetchOpts, init)
+  // eslint-disable-next-line no-restricted-globals
+  const fetchResult = await fetch(input, fetchOpts)
+  return fetchResult
 }

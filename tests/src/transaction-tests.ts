@@ -9,7 +9,7 @@ import { STXPostCondition } from '../../src/postcondition';
 import { StandardPrincipal } from '../../src/types';
 
 import {
-  COINBASE_BUFFER_LENGTH_BYTES,
+  DEFAULT_CORE_NODE_API_URL,
   DEFAULT_CHAIN_ID,
   TransactionVersion,
   AnchorMode,
@@ -28,7 +28,10 @@ import { TransactionSigner } from '../../src/signer';
 import { serializeDeserialize } from './macros';
 
 import * as BigNum from 'bn.js';
-import { c32addressDecode } from 'c32check';
+
+import { enableFetchMocks } from 'jest-fetch-mock'
+
+enableFetchMocks();
 
 test('STX token transfer transaction serialization and deserialization', () => {
   const transactionVersion = TransactionVersion.Testnet;
@@ -84,4 +87,34 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserialized.postConditions[0].amount.toNumber()).toBe(0);
   expect(deserialized.payload!.recipientAddress!.toString()).toBe(recipientAddress);
   expect(deserialized.payload!.amount!.toNumber()).toBe(amount.toNumber());
+});
+
+test('Transaction broadcast', () => {
+  const transactionVersion = TransactionVersion.Testnet;
+
+  const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const amount = new BigNum(2500000);
+  const memo = 'memo (not included';
+
+  const payload = new TokenTransferPayload(recipientAddress, amount, memo);
+
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+  const nonce = new BigNum(0);
+  const feeRate = new BigNum(0);
+  const pubKey = '03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab';
+  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
+  const authorization = new StandardAuthorization(spendingCondition);
+
+  const transaction = new StacksTransaction(transactionVersion, authorization, payload);
+  const signer = new TransactionSigner(transaction);
+  signer.signOrigin(new StacksPrivateKey(secretKey));
+
+  fetchMock.mockOnce("mock core node API response");
+
+  transaction.broadcast();
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(DEFAULT_CORE_NODE_API_URL);
+  expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize().toString('hex'));
 });
