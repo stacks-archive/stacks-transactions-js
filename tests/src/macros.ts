@@ -1,11 +1,9 @@
-import { StacksMessage } from '../../src/message';
+import { StacksMessage, serializeStacksMessage, deserializeStacksMessage } from '../../src/types';
+import { BufferReader } from '../../src/binaryReader';
+import { StacksMessageType } from '../../src/constants';
 
-import { BufferReader } from '../../src/utils';
-
-export function serializeDeserialize<T extends StacksMessage>(model: T, type: new () => T) {
-  const serializedBuffer = model.serialize();
-  const bufferReader = new BufferReader(serializedBuffer);
-  const deserialized = new type();
-  deserialized.deserialize(bufferReader);
-  return deserialized;
+export function serializeDeserialize(value: StacksMessage, type: StacksMessageType): StacksMessage {
+  const serialized = serializeStacksMessage(value);
+  const bufferReader = new BufferReader(serialized);
+  return deserializeStacksMessage(bufferReader, type);
 }

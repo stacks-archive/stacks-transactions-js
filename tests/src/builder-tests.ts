@@ -12,7 +12,7 @@ import {
   makeContractNonFungiblePostCondition,
 } from '../../src/builders';
 
-import { AssetInfo } from '../../src/types';
+import { assetInfo } from '../../src/types';
 
 import {
   TransactionVersion,
@@ -159,7 +159,7 @@ test('Make contract-call with post conditions', () => {
   const assetAddress = 'ST34RKEJKQES7MXQFBT29KSJZD73QK3YNT5N56C6X';
   const assetContractName = 'test-asset-contract';
   const assetName = 'test-asset-name';
-  const assetInfo = new AssetInfo(assetAddress, assetContractName, assetName);
+  const info = assetInfo(assetAddress, assetContractName, assetName);
   const tokenAssetName = 'token-asset-name';
 
   const feeRate = new BigNum(0);
@@ -180,26 +180,26 @@ test('Make contract-call with post conditions', () => {
       postConditionAddress,
       FungibleConditionCode.Less,
       new BigNum(1000),
-      assetInfo
+      info
     ),
     makeContractFungiblePostCondition(
       postConditionAddress,
       contractName,
       FungibleConditionCode.Equal,
       new BigNum(1),
-      assetInfo
+      info
     ),
     makeStandardNonFungiblePostCondition(
       postConditionAddress,
       NonFungibleConditionCode.Owns,
-      assetInfo,
+      info,
       tokenAssetName
     ),
     makeContractNonFungiblePostCondition(
       postConditionAddress,
       contractName,
       NonFungibleConditionCode.DoesNotOwn,
-      assetInfo,
+      info,
       tokenAssetName
     ),
   ];

@@ -4,7 +4,7 @@ import {
   MessageSignature,
 } from '../../src/authorization';
 
-import { Address } from '../../src/types';
+import { Address, addressFromData } from '../../src/types';
 
 import { AddressHashMode, AddressVersion, PubKeyEncoding } from '../../src/constants';
 
@@ -13,6 +13,7 @@ import { StacksPrivateKey } from '../../src/keys';
 import { serializeDeserialize } from './macros';
 
 import * as BigNum from 'bn.js';
+import { BufferReader } from '../../src/binaryReader';
 
 test('ECDSA recoverable signature', () => {
   const privKeyString = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc';
@@ -30,10 +31,12 @@ test('Single spending condition serialization and deserialization', () => {
   const nonce = new BigNum(0);
   const feeRate = new BigNum(0);
   const pubKey = '03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab';
+  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
   const emptySignature = MessageSignature.empty();
 
-  const deserialized = serializeDeserialize(spendingCondition, SingleSigSpendingCondition);
+  const serialized = spendingCondition.serialize();
+  const deserialized = SpendingCondition.deserialize(new BufferReader(serialized));
   expect(deserialized.addressHashMode).toBe(addressHashMode);
   expect(deserialized.nonce!.toNumber()).toBe(nonce.toNumber());
   expect(deserialized.feeRate!.toNumber()).toBe(feeRate.toNumber());
@@ -46,7 +49,7 @@ test('Single sig spending condition uncompressed', () => {
   const feeRate = new BigNum(456);
   const pubKey = '';
   const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
-  spendingCondition.signerAddress = Address.fromData(
+  spendingCondition.signerAddress = addressFromData(
     AddressVersion.MainnetSingleSig,
     '11'.repeat(20)
   );
@@ -88,7 +91,7 @@ test('Single sig wpkh spending condition compressed', () => {
   const feeRate = new BigNum(456);
   const pubKey = '';
   const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
-  spendingCondition.signerAddress = Address.fromData(
+  spendingCondition.signerAddress = addressFromData(
     AddressVersion.MainnetSingleSig,
     '11'.repeat(20)
   );
