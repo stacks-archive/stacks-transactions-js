@@ -76,7 +76,8 @@
     "lodash": "^4.17.15",
     "randombytes": "^2.1.0",
     "ripemd160": "^2.0.2",
-    "sha.js": "^2.4.11"
+    "sha.js": "^2.4.11",
+    "smart-buffer": "^4.1.0"
   },
   "publishConfig": {
     "access": "public"
