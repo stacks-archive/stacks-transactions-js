@@ -1,5 +1,3 @@
-import { BufferReader } from '../utils';
-import { LengthPrefixedString, Address } from '..';
 import {
   ClarityType,
   ClarityValue,
@@ -17,21 +15,25 @@ import {
   listCV,
   tupleCV,
 } from '.';
+import { BufferReader } from '../binaryReader';
+import { deserializeAddress, deserializeLPString } from '../types';
 
 export default function deserializeCV(buffer: BufferReader | Buffer): ClarityValue {
   const bufferReader = Buffer.isBuffer(buffer) ? new BufferReader(buffer) : buffer;
-  const type = bufferReader.read(1).toString('hex') as ClarityType;
+  const type = bufferReader.readUInt8Enum(ClarityType, n => {
+    throw new Error(`Cannot recognize Clarity Type: ${n}`);
+  });
 
   switch (type) {
     case ClarityType.Int:
-      return intCV(bufferReader.read(16));
+      return intCV(bufferReader.readBuffer(16));
 
     case ClarityType.UInt:
-      return uintCV(bufferReader.read(16));
+      return uintCV(bufferReader.readBuffer(16));
 
     case ClarityType.Buffer:
-      const bufferLength = bufferReader.read(4).readUInt32BE(0);
-      return bufferCV(bufferReader.read(bufferLength));
+      const bufferLength = bufferReader.readUInt32BE();
+      return bufferCV(bufferReader.readBuffer(bufferLength));
 
     case ClarityType.BoolTrue:
       return trueCV();
@@ -40,12 +42,12 @@ export default function deserializeCV(buffer: BufferReader | Buffer): ClarityVal
       return falseCV();
 
     case ClarityType.PrincipalStandard:
-      const sAddress = Address.deserialize(bufferReader);
+      const sAddress = deserializeAddress(bufferReader);
       return standardPrincipalCVFromAddress(sAddress);
 
     case ClarityType.PrincipalContract:
-      const cAddress = Address.deserialize(bufferReader);
-      const contractName = LengthPrefixedString.deserialize(bufferReader);
+      const cAddress = deserializeAddress(bufferReader);
+      const contractName = deserializeLPString(bufferReader);
       return contractPrincipalCVFromAddress(cAddress, contractName);
 
     case ClarityType.ResponseOk:
@@ -61,7 +63,7 @@ export default function deserializeCV(buffer: BufferReader | Buffer): ClarityVal
       return someCV(deserializeCV(bufferReader));
 
     case ClarityType.List:
-      const listLength = bufferReader.read(4).readUInt32BE(0);
+      const listLength = bufferReader.readUInt32BE();
       const listContents: ClarityValue[] = [];
       for (let i = 0; i < listLength; i++) {
         listContents.push(deserializeCV(bufferReader));
@@ -69,10 +71,10 @@ export default function deserializeCV(buffer: BufferReader | Buffer): ClarityVal
       return listCV(listContents);
 
     case ClarityType.Tuple:
-      const tupleLength = bufferReader.read(4).readUInt32BE(0);
+      const tupleLength = bufferReader.readUInt32BE();
       const tupleContents: { [key: string]: ClarityValue } = {};
       for (let i = 0; i < tupleLength; i++) {
-        const clarityName = LengthPrefixedString.deserialize(bufferReader).content;
+        const clarityName = deserializeLPString(bufferReader).content;
         if (clarityName === undefined) {
           throw new Error('"content" is undefined');
         }
