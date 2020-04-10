@@ -40,8 +40,8 @@ export class StacksTransaction {
     auth: Authorization,
     payload: Payload,
     postConditions?: LengthPrefixedList,
-    anchorMode?: AnchorMode,
     postConditionMode?: PostConditionMode,
+    anchorMode?: AnchorMode,
     chainId?: string
   ) {
     this.version = version;
