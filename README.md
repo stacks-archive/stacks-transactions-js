@@ -46,7 +46,7 @@ const options = {
   nonce: new BigNum(0) // The nonce needs to be manually specified for now
 };
 
-const transaction = makeSTXTokenTransfer(
+const transaction = await makeSTXTokenTransfer(
   recipientAddress,
   amount,
   feeRate,
@@ -73,7 +73,7 @@ const options = {
   nonce: new BigNum(0) // The nonce needs to be manually specified for now
 };
 
-const transaction = makeSmartContractDeploy(
+const transaction = await makeSmartContractDeploy(
   contractName, 
   code, 
   feeRate, 
@@ -118,7 +118,7 @@ const options = {
   nonce: new BigNum(0) // The nonce needs to be manually specified for now
 };
 
-const transaction = makeContractCall(
+const transaction = await makeContractCall(
   contractAddress,
   contractName,
   functionName,
