@@ -176,8 +176,8 @@ export function deserializeTransaction(bufferReader: BufferReader) {
     auth,
     payload,
     postConditions,
-    anchorMode,
     postConditionMode,
+    anchorMode,
     chainId
   );
 }

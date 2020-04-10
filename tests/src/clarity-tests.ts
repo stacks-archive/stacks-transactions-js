@@ -1,5 +1,4 @@
-import { BufferReader } from '../../src/utils';
-import { Address } from '../../src/types';
+import { deserializeAddress } from '../../src/types';
 import {
   ClarityValue,
   serializeCV,
@@ -23,6 +22,7 @@ import {
   standardPrincipalCVFromAddress,
 } from '../../src/clarity';
 import { contractPrincipalCVFromStandard } from '../../src/clarity/types/principalCV';
+import { BufferReader } from '../../src/binaryReader';
 
 const ADDRESS = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
 
@@ -187,7 +187,7 @@ describe('Clarity Types', () => {
         0xff,
       ]);
       const bufferReader = new BufferReader(Buffer.concat([Buffer.from([0x00]), addressBuffer]));
-      const standardPrincipal = standardPrincipalCVFromAddress(Address.deserialize(bufferReader));
+      const standardPrincipal = standardPrincipalCVFromAddress(deserializeAddress(bufferReader));
       const serialized = serializeCV(standardPrincipal).toString('hex');
       expect(serialized).toEqual('050011deadbeef11ababffff11deadbeef11ababffff');
     });
@@ -217,7 +217,7 @@ describe('Clarity Types', () => {
       ]);
       const contractName = 'abcd';
       const bufferReader = new BufferReader(Buffer.concat([Buffer.from([0x00]), addressBuffer]));
-      const standardPrincipal = standardPrincipalCVFromAddress(Address.deserialize(bufferReader));
+      const standardPrincipal = standardPrincipalCVFromAddress(deserializeAddress(bufferReader));
       const contractPrincipal = contractPrincipalCVFromStandard(standardPrincipal, contractName);
       const serialized = serializeCV(contractPrincipal).toString('hex');
       expect(serialized).toEqual('060011deadbeef11ababffff11deadbeef11ababffff0461626364');
