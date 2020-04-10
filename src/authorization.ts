@@ -26,11 +26,6 @@ abstract class Deserializable {
   }
 }
 
-export interface SpendingAuthorizationField {
-  fieldID: Buffer;
-  body: Buffer;
-}
-
 export class MessageSignature extends Deserializable {
   signature?: string;
 
