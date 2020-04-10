@@ -25,7 +25,7 @@ import { bufferCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
-test('Make STX token transfer', () => {
+test('Make STX token transfer', async () => {
   const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
   const amount = new BigNum(12345);
   const feeRate = new BigNum(0);
@@ -36,7 +36,13 @@ test('Make STX token transfer', () => {
     memo: memo,
   };
 
-  const transaction = makeSTXTokenTransfer(recipientAddress, amount, feeRate, secretKey, options);
+  const transaction = await makeSTXTokenTransfer(
+    recipientAddress,
+    amount,
+    feeRate,
+    secretKey,
+    options
+  );
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -50,7 +56,7 @@ test('Make STX token transfer', () => {
   expect(serialized).toBe(tx);
 });
 
-test('Make STX token transfer with post conditions', () => {
+test('Make STX token transfer with post conditions', async () => {
   const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
   const amount = new BigNum(12345);
   const feeRate = new BigNum(0);
@@ -70,7 +76,13 @@ test('Make STX token transfer with post conditions', () => {
     postConditions,
   };
 
-  const transaction = makeSTXTokenTransfer(recipientAddress, amount, feeRate, secretKey, options);
+  const transaction = await makeSTXTokenTransfer(
+    recipientAddress,
+    amount,
+    feeRate,
+    secretKey,
+    options
+  );
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -84,7 +96,7 @@ test('Make STX token transfer with post conditions', () => {
   expect(serialized).toBe(tx);
 });
 
-test('Make smart contract deploy', () => {
+test('Make smart contract deploy', async () => {
   const contractName = 'kv-store';
   const code = fs.readFileSync('./tests/src/contracts/kv-store.clar').toString();
   const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
@@ -94,7 +106,13 @@ test('Make smart contract deploy', () => {
     version: TransactionVersion.Testnet,
   };
 
-  const transaction = makeSmartContractDeploy(contractName, code, feeRate, secretKey, options);
+  const transaction = await makeSmartContractDeploy(
+    contractName,
+    code,
+    feeRate,
+    secretKey,
+    options
+  );
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -114,7 +132,7 @@ test('Make smart contract deploy', () => {
   expect(serialized).toBe(tx);
 });
 
-test('Make contract-call', () => {
+test('Make contract-call', async () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
   const contractName = 'kv-store';
   const functionName = 'get-value';
@@ -128,7 +146,7 @@ test('Make contract-call', () => {
     version: TransactionVersion.Testnet,
   };
 
-  const transaction = makeContractCall(
+  const transaction = await makeContractCall(
     contractAddress,
     contractName,
     functionName,
@@ -149,7 +167,7 @@ test('Make contract-call', () => {
   expect(serialized).toBe(tx);
 });
 
-test('Make contract-call with post conditions', () => {
+test('Make contract-call with post conditions', async () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
   const contractName = 'kv-store';
   const functionName = 'get-value';
@@ -211,7 +229,7 @@ test('Make contract-call with post conditions', () => {
     postConditMode: PostConditionMode.Deny,
   };
 
-  const transaction = makeContractCall(
+  const transaction = await makeContractCall(
     contractAddress,
     contractName,
     functionName,
@@ -243,7 +261,7 @@ test('Make contract-call with post conditions', () => {
   expect(serialized).toBe(tx);
 });
 
-test('Make contract-call with post condition allow mode', () => {
+test('Make contract-call with post condition allow mode', async () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
   const contractName = 'kv-store';
   const functionName = 'get-value';
@@ -258,7 +276,7 @@ test('Make contract-call with post condition allow mode', () => {
     postConditMode: PostConditionMode.Allow,
   };
 
-  const transaction = makeContractCall(
+  const transaction = await makeContractCall(
     contractAddress,
     contractName,
     functionName,

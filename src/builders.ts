@@ -16,6 +16,7 @@ import {
 } from './postcondition';
 
 import {
+  DEFAULT_CORE_NODE_API_URL,
   TransactionVersion,
   AddressHashMode,
   FungibleConditionCode,
@@ -43,6 +44,7 @@ import * as BigNum from 'bn.js';
  */
 export interface TokenTransferOptions {
   nonce?: BigNum;
+  coreNodeUrl?: string;
   version?: TransactionVersion;
   memo?: string;
   postConditionMode?: PostConditionMode;
@@ -52,7 +54,7 @@ export interface TokenTransferOptions {
 /**
  * Generates a Stacks token transfer transaction
  *
- * Returns a signed Stacks token transfer transaction.
+ * Returns a promise that resolves to a signed Stacks token transfer transaction.
  *
  * @param  {String} recipientAddress - the c32check address of the recipient
  * @param  {BigNum} amount - number of tokens to transfer in microstacks
@@ -60,17 +62,18 @@ export interface TokenTransferOptions {
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TokenTransferOptions} options - an options object for the token transfer
  *
- * @return {StacksTransaction}
+ * @return {Promise<StacksTransaction>}
  */
-export function makeSTXTokenTransfer(
+export async function makeSTXTokenTransfer(
   recipientAddress: string,
   amount: BigNum,
   feeRate: BigNum,
   senderKey: string,
   options?: TokenTransferOptions
-): StacksTransaction {
+): Promise<StacksTransaction> {
   const defaultOptions = {
     nonce: new BigNum(0),
+    coreNodeUrl: DEFAULT_CORE_NODE_API_URL,
     version: TransactionVersion.Mainnet,
     memo: '',
     postConditionMode: PostConditionMode.Deny,
@@ -103,7 +106,7 @@ export function makeSTXTokenTransfer(
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
-  return transaction;
+  return Promise.resolve(transaction);
 }
 
 /**
@@ -118,6 +121,7 @@ export function makeSTXTokenTransfer(
  */
 export interface ContractDeployOptions {
   nonce?: BigNum;
+  coreNodeUrl?: string;
   version?: TransactionVersion;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
@@ -126,24 +130,25 @@ export interface ContractDeployOptions {
 /**
  * Generates a Clarity smart contract deploy transaction
  *
- * Returns a signed Stacks smart contract deploy transaction.
+ * Returns a promise that resolves to a signed Stacks smart contract deploy transaction.
  *
  * @param  {String} contractName - the contract name
  * @param  {String} codeBody - the code body string
  * @param  {BigNum} feeRate - transaction fee rate in microstacks
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  *
- * @return {StacksTransaction}
+ * @return {Promise<StacksTransaction>}
  */
-export function makeSmartContractDeploy(
+export async function makeSmartContractDeploy(
   contractName: string,
   codeBody: string,
   feeRate: BigNum,
   senderKey: string,
   options?: ContractDeployOptions
-): StacksTransaction {
+): Promise<StacksTransaction> {
   const defaultOptions = {
     nonce: new BigNum(0),
+    coreNodeUrl: DEFAULT_CORE_NODE_API_URL,
     version: TransactionVersion.Mainnet,
     postConditionMode: PostConditionMode.Deny,
   };
@@ -175,7 +180,7 @@ export function makeSmartContractDeploy(
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
-  return transaction;
+  return Promise.resolve(transaction);
 }
 
 /**
@@ -190,6 +195,7 @@ export function makeSmartContractDeploy(
  */
 export interface ContractCallOptions {
   nonce?: BigNum;
+  coreNodeUrl?: string;
   version?: TransactionVersion;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
@@ -198,7 +204,7 @@ export interface ContractCallOptions {
 /**
  * Generates a Clarity smart contract function call transaction
  *
- * Returns a signed Stacks smart contract deploy transaction.
+ * Returns a promise that resolves to a signed Stacks smart contract deploy transaction.
  *
  * @param  {String} contractAddress - the c32check address of the contract
  * @param  {String} contractName - the contract name
@@ -209,9 +215,9 @@ export interface ContractCallOptions {
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
  *
- * @return {StacksTransaction}
+ * @return {Promise<StacksTransaction>}
  */
-export function makeContractCall(
+export async function makeContractCall(
   contractAddress: string,
   contractName: string,
   functionName: string,
@@ -219,9 +225,10 @@ export function makeContractCall(
   feeRate: BigNum,
   senderKey: string,
   options?: ContractCallOptions
-): StacksTransaction {
+): Promise<StacksTransaction> {
   const defaultOptions = {
     nonce: new BigNum(0),
+    coreNodeApiUrl: DEFAULT_CORE_NODE_API_URL,
     version: TransactionVersion.Mainnet,
     postConditionMode: PostConditionMode.Deny,
   };
@@ -258,7 +265,7 @@ export function makeContractCall(
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
 
-  return transaction;
+  return Promise.resolve(transaction);
 }
 
 /**
