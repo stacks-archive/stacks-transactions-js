@@ -65,17 +65,19 @@ export class StacksTransaction extends StacksMessage {
 
     if (payload !== undefined) {
       switch (payload.payloadType) {
-        case PayloadType.Coinbase: {
-          this.anchorMode = AnchorMode.OnChainOnly;
-          break;
-        }
+        case PayloadType.Coinbase:
         case PayloadType.PoisonMicroblock: {
           this.anchorMode = AnchorMode.OnChainOnly;
           break;
         }
-        default: {
+        case PayloadType.ContractCall:
+        case PayloadType.SmartContract:
+        case PayloadType.TokenTransfer: {
           this.anchorMode = AnchorMode.Any;
           break;
+        }
+        default: {
+          throw new Error(`Unexpected transaction payload type: ${payload.payloadType}`);
         }
       }
     }

@@ -225,6 +225,7 @@ export class SpendingCondition extends StacksMessage {
       this.addressHashMode === AddressHashMode.SerializeP2WSH
     ) {
       // TODO
+      throw new Error(`Not yet implemented: serializing AddressHashMode: ${this.addressHashMode}`);
     }
 
     return bufferArray.concatBuffer();
@@ -307,7 +308,9 @@ export class Authorization extends StacksMessage {
         break;
       case AuthType.Sponsored:
         // TODO
-        break;
+        throw new Error('Not yet implemented: serializing sponsored transactions');
+      default:
+        throw new Error(`Unexpected transaction AuthType while serializing: ${this.authType}`);
     }
 
     return bufferArray.concatBuffer();
@@ -322,7 +325,9 @@ export class Authorization extends StacksMessage {
         break;
       case AuthType.Sponsored:
         // TODO
-        break;
+        throw new Error('Not yet implemented: deserializing sponsored transactions');
+      default:
+        throw new Error(`Unexpected transaction AuthType while deserializing: ${this.authType}`);
     }
   }
 }
