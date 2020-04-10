@@ -7,62 +7,53 @@ import {
   AnchorMode,
   PostConditionMode,
   AuthType,
+  StacksMessageType,
 } from './constants';
 
 import { Authorization, SpendingCondition } from './authorization';
 
-import { BufferArray, BufferReader, txidFromData, sha512_256 } from './utils';
+import { BufferArray, txidFromData, sha512_256 } from './utils';
+
+import { Payload, serializePayload, deserializePayload } from './payload';
 
 import {
-  Payload,
-  TokenTransferPayload,
-  ContractCallPayload,
-  SmartContractPayload,
-  PoisonPayload,
-  CoinbasePayload,
-} from './payload';
-
-import { LengthPrefixedList } from './types';
-
-import { StacksMessage } from './message';
-
-import { PostCondition } from './postcondition';
+  LengthPrefixedList,
+  serializeLengthPrefixedList,
+  deserializeLengthPrefixedList,
+  lengthPrefixedList,
+} from './types';
 
 import { StacksPrivateKey } from './keys';
+import { BufferReader } from './binaryReader';
 
-export class StacksTransaction extends StacksMessage {
-  version?: TransactionVersion;
-  chainId?: string;
-  auth?: Authorization;
-  anchorMode?: AnchorMode;
-  payload?:
-    | TokenTransferPayload
-    | ContractCallPayload
-    | SmartContractPayload
-    | PoisonPayload
-    | CoinbasePayload;
+export class StacksTransaction {
+  version: TransactionVersion;
+  chainId: string;
+  auth: Authorization;
+  anchorMode: AnchorMode;
+  payload: Payload;
   postConditionMode: PostConditionMode;
-  postConditions: LengthPrefixedList<PostCondition>;
+  postConditions: LengthPrefixedList;
 
   constructor(
-    version?: TransactionVersion,
-    auth?: Authorization,
-    payload?:
-      | TokenTransferPayload
-      | ContractCallPayload
-      | SmartContractPayload
-      | PoisonPayload
-      | CoinbasePayload
+    version: TransactionVersion,
+    auth: Authorization,
+    payload: Payload,
+    postConditions?: LengthPrefixedList,
+    anchorMode?: AnchorMode,
+    postConditionMode?: PostConditionMode,
+    chainId?: string
   ) {
-    super();
     this.version = version;
     this.auth = auth;
     this.payload = payload;
-    this.chainId = DEFAULT_CHAIN_ID;
-    this.postConditionMode = PostConditionMode.Deny;
-    this.postConditions = new LengthPrefixedList<PostCondition>();
+    this.chainId = chainId ? chainId : DEFAULT_CHAIN_ID;
+    this.postConditionMode = postConditionMode ? postConditionMode : PostConditionMode.Deny;
+    this.postConditions = postConditions ? postConditions : lengthPrefixedList([]);
 
-    if (payload !== undefined) {
+    if (anchorMode) {
+      this.anchorMode = anchorMode;
+    } else {
       switch (payload.payloadType) {
         case PayloadType.Coinbase:
         case PayloadType.PoisonMicroblock: {
@@ -75,26 +66,17 @@ export class StacksTransaction extends StacksMessage {
           this.anchorMode = AnchorMode.Any;
           break;
         }
-        default: {
-          throw new Error(`Unexpected transaction payload type: ${payload.payloadType}`);
-        }
       }
     }
   }
 
   signBegin() {
     const tx = _.cloneDeep(this);
-    if (tx.auth === undefined) {
-      throw new Error('"auth" is undefined');
-    }
     tx.auth = tx.auth.intoInitialSighashAuth();
     return tx.txid();
   }
 
   signNextOrigin(sigHash: string, privateKey: StacksPrivateKey): string {
-    if (this.auth === undefined) {
-      throw new Error('"auth" is undefined');
-    }
     if (this.auth.spendingCondition === undefined) {
       throw new Error('"auth.spendingCondition" is undefined');
     }
@@ -132,10 +114,6 @@ export class StacksTransaction extends StacksMessage {
     return nextSigHash;
   }
 
-  addPostCondition(postCondition: PostCondition) {
-    this.postConditions.push(postCondition);
-  }
-
   txid(): string {
     const serialized = this.serialize();
     return txidFromData(serialized);
@@ -165,22 +143,41 @@ export class StacksTransaction extends StacksMessage {
     bufferArray.push(this.auth.serialize());
     bufferArray.appendByte(this.anchorMode);
     bufferArray.appendByte(this.postConditionMode);
-    bufferArray.push(this.postConditions.serialize());
-    bufferArray.push(this.payload.serialize());
+    bufferArray.push(serializeLengthPrefixedList(this.postConditions));
+    bufferArray.push(serializePayload(this.payload));
 
     return bufferArray.concatBuffer();
   }
+}
 
-  deserialize(bufferReader: BufferReader) {
-    this.version =
-      bufferReader.readByte() === TransactionVersion.Mainnet
-        ? TransactionVersion.Mainnet
-        : TransactionVersion.Testnet;
-    this.chainId = bufferReader.read(4).toString('hex');
-    this.auth = Authorization.deserialize(bufferReader);
-    this.anchorMode = bufferReader.readByte() as AnchorMode;
-    this.postConditionMode = bufferReader.readByte() as PostConditionMode;
-    this.postConditions = LengthPrefixedList.deserialize(bufferReader, PostCondition);
-    this.payload = Payload.deserialize(bufferReader);
-  }
+export function deserializeTransaction(bufferReader: BufferReader) {
+  const version =
+    bufferReader.readUInt8Enum(TransactionVersion, n => {
+      throw new Error(`Could not parse ${n} as TransactionVersion`);
+    }) === TransactionVersion.Mainnet
+      ? TransactionVersion.Mainnet
+      : TransactionVersion.Testnet;
+  const chainId = bufferReader.readBuffer(4).toString('hex');
+  const auth = Authorization.deserialize(bufferReader);
+  const anchorMode = bufferReader.readUInt8Enum(AnchorMode, n => {
+    throw new Error(`Could not parse ${n} as AnchorMode`);
+  });
+  const postConditionMode = bufferReader.readUInt8Enum(PostConditionMode, n => {
+    throw new Error(`Could not parse ${n} as PostConditionMode`);
+  });
+  const postConditions = deserializeLengthPrefixedList(
+    bufferReader,
+    StacksMessageType.PostCondition
+  );
+  const payload = deserializePayload(bufferReader);
+
+  return new StacksTransaction(
+    version,
+    auth,
+    payload,
+    postConditions,
+    anchorMode,
+    postConditionMode,
+    chainId
+  );
 }

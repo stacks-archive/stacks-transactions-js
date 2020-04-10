@@ -1,64 +1,59 @@
-import { COMPRESSED_PUBKEY_LENGTH_BYTES, UNCOMPRESSED_PUBKEY_LENGTH_BYTES } from './constants';
-
 import {
-  BufferArray,
-  BufferReader,
-  leftPadHexToLength,
-  intToHexString,
-  randomBytes,
-} from './utils';
+  COMPRESSED_PUBKEY_LENGTH_BYTES,
+  UNCOMPRESSED_PUBKEY_LENGTH_BYTES,
+  StacksMessageType,
+} from './constants';
+
+import { BufferArray, leftPadHexToLength, intToHexString, randomBytes } from './utils';
 
 import { ec as EC } from 'elliptic';
 
-import { StacksMessage } from './message';
-
 import { MessageSignature } from './authorization';
+import { BufferReader } from './binaryReader';
 
-export class StacksPublicKey extends StacksMessage {
-  data?: Buffer;
+export interface StacksPublicKey {
+  readonly type: StacksMessageType.PublicKey;
+  readonly data: Buffer;
+}
 
-  constructor(key?: string) {
-    super();
-    if (key !== undefined) {
-      this.data = Buffer.from(key, 'hex');
-    }
-  }
+export function stacksPublicKey(key: string): StacksPublicKey {
+  return {
+    type: StacksMessageType.PublicKey,
+    data: Buffer.from(key, 'hex'),
+  };
+}
 
-  static fromPrivateKey(privateKey: string): StacksPublicKey {
-    const privKey = new StacksPrivateKey(privateKey);
-    const ec = new EC('secp256k1');
-    const keyPair = ec.keyFromPrivate(privKey.data.toString('hex').slice(0, 64), 'hex');
-    const pubKey = keyPair.getPublic(privKey.compressed, 'hex');
-    return new StacksPublicKey(pubKey);
-  }
+export function publicKeyFromBuffer(data: Buffer): StacksPublicKey {
+  return { type: StacksMessageType.PublicKey, data };
+}
 
-  compressed(): boolean {
-    if (this.data === undefined) {
-      throw new Error('"data" is undefined');
-    }
-    return !this.data.toString('hex').startsWith('04');
-  }
+export function isCompressed(key: StacksPublicKey): boolean {
+  return !key.data.toString('hex').startsWith('04');
+}
 
-  toString(): string {
-    return this.data?.toString('hex') ?? '';
-  }
+export function publicKeyToString(key: StacksPublicKey): string {
+  return key.data.toString('hex');
+}
 
-  serialize(): Buffer {
-    const bufferArray: BufferArray = new BufferArray();
-    if (this.data === undefined) {
-      throw new Error('"data" is undefined');
-    }
-    bufferArray.push(this.data);
-    return bufferArray.concatBuffer();
-  }
+export function serializePublicKey(key: StacksPublicKey): Buffer {
+  const bufferArray: BufferArray = new BufferArray();
+  bufferArray.push(key.data);
+  return bufferArray.concatBuffer();
+}
 
-  deserialize(bufferReader: BufferReader) {
-    const compressed = !(bufferReader.read(1, false).toString('hex') === '04');
-    const keyLength = compressed
-      ? COMPRESSED_PUBKEY_LENGTH_BYTES
-      : UNCOMPRESSED_PUBKEY_LENGTH_BYTES;
-    this.data = bufferReader.read(keyLength + 1);
-  }
+export function fromPrivateKey(privateKey: string): StacksPublicKey {
+  const privKey = new StacksPrivateKey(privateKey);
+  const ec = new EC('secp256k1');
+  const keyPair = ec.keyFromPrivate(privKey.data.toString('hex').slice(0, 64), 'hex');
+  const pubKey = keyPair.getPublic(privKey.compressed, 'hex');
+  return stacksPublicKey(pubKey);
+}
+
+export function deserializePublicKey(bufferReader: BufferReader): StacksPublicKey {
+  const compressed = !(bufferReader.readBuffer(1).toString('hex') === '04');
+  bufferReader.readOffset = 0;
+  const keyLength = compressed ? COMPRESSED_PUBKEY_LENGTH_BYTES : UNCOMPRESSED_PUBKEY_LENGTH_BYTES;
+  return publicKeyFromBuffer(bufferReader.readBuffer(keyLength + 1));
 }
 
 export class StacksPrivateKey {
@@ -110,7 +105,7 @@ export class StacksPrivateKey {
   }
 
   getPublicKey(): StacksPublicKey {
-    return StacksPublicKey.fromPrivateKey(this.data.toString('hex'));
+    return fromPrivateKey(this.data.toString('hex'));
   }
 
   toString(): string {
