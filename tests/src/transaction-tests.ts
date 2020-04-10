@@ -29,7 +29,7 @@ import { serializeDeserialize } from './macros';
 
 import * as BigNum from 'bn.js';
 
-import { enableFetchMocks } from 'jest-fetch-mock'
+import { enableFetchMocks } from 'jest-fetch-mock';
 
 enableFetchMocks();
 
@@ -110,7 +110,7 @@ test('Transaction broadcast', () => {
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(new StacksPrivateKey(secretKey));
 
-  fetchMock.mockOnce("mock core node API response");
+  fetchMock.mockOnce('mock core node API response');
 
   transaction.broadcast();
 

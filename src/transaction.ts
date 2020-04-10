@@ -185,39 +185,38 @@ export class StacksTransaction extends StacksMessage {
     this.payload = Payload.deserialize(bufferReader);
   }
 
-/**
- * Broadcast the signed transaction to a core node
- *
- * @param {String} apiURL - specify the core node URL to broadcast to
- * 
- * @returns {Promise} that resolves to a response if the operation succeeds
- */
+  /**
+   * Broadcast the signed transaction to a core node
+   *
+   * @param {String} apiURL - specify the core node URL to broadcast to
+   *
+   * @returns {Promise} that resolves to a response if the operation succeeds
+   */
   broadcast(apiURL?: string) {
     const tx = this.serialize().toString('hex');
 
     const requestHeaders = {
       Accept: 'application/json',
-      'Content-Type': 'text/plain'
+      'Content-Type': 'text/plain',
     };
 
     const options = {
       method: 'POST',
       headers: requestHeaders,
-      body: tx
+      body: tx,
     };
 
     const url = apiURL || DEFAULT_CORE_NODE_API_URL;
 
-    return fetchPrivate(url, options)
-      .then((response) => {
-        if (response.ok) {
-          return response.text();
-          // return response.json();
-        } else if (response.status === 400) {
-          throw new Error('Transaction rejected');
-        } else {
-          throw new Error('Remote endpoint error');
-        }
-      });
+    return fetchPrivate(url, options).then(response => {
+      if (response.ok) {
+        return response.text();
+        // return response.json();
+      } else if (response.status === 400) {
+        throw new Error('Transaction rejected');
+      } else {
+        throw new Error('Remote endpoint error');
+      }
+    });
   }
 }
