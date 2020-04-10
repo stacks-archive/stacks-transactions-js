@@ -90,6 +90,7 @@ test('STX token transfer transaction serialization and deserialization', () => {
 });
 
 test('Transaction broadcast', () => {
+  const apiUrl = `${DEFAULT_CORE_NODE_API_URL}/v2/transactions`;
   const transactionVersion = TransactionVersion.Testnet;
 
   const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
@@ -115,6 +116,6 @@ test('Transaction broadcast', () => {
   transaction.broadcast();
 
   expect(fetchMock.mock.calls.length).toEqual(1);
-  expect(fetchMock.mock.calls[0][0]).toEqual(DEFAULT_CORE_NODE_API_URL);
+  expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
   expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize().toString('hex'));
 });

@@ -6,7 +6,7 @@ const RECOVERABLE_ECDSA_SIG_LENGTH_BYTES = 65;
 const COMPRESSED_PUBKEY_LENGTH_BYTES = 32;
 const UNCOMPRESSED_PUBKEY_LENGTH_BYTES = 64;
 const MEMO_MAX_LENGTH_BYTES = 34;
-const DEFAULT_CORE_NODE_API_URL = 'https://core.blockstack.org/v2/transactions';
+const DEFAULT_CORE_NODE_API_URL = 'https://core.blockstack.org';
 
 enum PayloadType {
   TokenTransfer = 0x00,

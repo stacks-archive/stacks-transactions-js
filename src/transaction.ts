@@ -188,11 +188,11 @@ export class StacksTransaction extends StacksMessage {
   /**
    * Broadcast the signed transaction to a core node
    *
-   * @param {String} apiURL - specify the core node URL to broadcast to
+   * @param {String} apiUrl - specify the core node URL to broadcast to
    *
    * @returns {Promise} that resolves to a response if the operation succeeds
    */
-  broadcast(apiURL?: string) {
+  broadcast(apiUrl?: string) {
     const tx = this.serialize().toString('hex');
 
     const requestHeaders = {
@@ -206,7 +206,7 @@ export class StacksTransaction extends StacksMessage {
       body: tx,
     };
 
-    const url = apiURL || DEFAULT_CORE_NODE_API_URL;
+    const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/transactions`;
 
     return fetchPrivate(url, options).then(response => {
       if (response.ok) {
