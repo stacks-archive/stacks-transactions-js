@@ -7,6 +7,18 @@ const COMPRESSED_PUBKEY_LENGTH_BYTES = 32;
 const UNCOMPRESSED_PUBKEY_LENGTH_BYTES = 64;
 const MEMO_MAX_LENGTH_BYTES = 34;
 
+enum StacksMessageType {
+  Address,
+  Principal,
+  LengthPrefixedString,
+  MemoString,
+  AssetInfo,
+  PostCondition,
+  PublicKey,
+  LengthPrefixedList,
+  Payload,
+}
+
 enum PayloadType {
   TokenTransfer = 0x00,
   SmartContract = 0x01,
@@ -121,6 +133,7 @@ export {
   COMPRESSED_PUBKEY_LENGTH_BYTES,
   UNCOMPRESSED_PUBKEY_LENGTH_BYTES,
   MEMO_MAX_LENGTH_BYTES,
+  StacksMessageType,
   PayloadType,
   AnchorMode,
   TransactionVersion,
