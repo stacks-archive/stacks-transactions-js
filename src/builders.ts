@@ -23,6 +23,7 @@ import {
 } from './postcondition';
 
 import {
+  DEFAULT_CORE_NODE_API_URL,
   TransactionVersion,
   AddressHashMode,
   FungibleConditionCode,
@@ -42,8 +43,38 @@ import {
   createLPString,
 } from './types';
 
+import {
+  fetchPrivate
+} from './utils';
+
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
+
+/**
+ * Estimate the transaction fee, in microstacks per byte, for a token transfer 
+ *
+ * @param {String} apiUrl - specify the core node URL to broadcast to
+ * 
+ * @return a promise that resolves to number of microstacks per byte
+ */
+export function estimateTransfer(apiUrl?: string): Promise<BigNum> {
+  const requestHeaders = {
+    Accept: 'application/json',
+    'Content-Type': 'text/plain',
+  };
+
+  const options = {
+    method: 'GET',
+    headers: requestHeaders
+  };
+
+  const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/fees/transfer`;
+
+  return fetchPrivate(url, options).then(response => {
+    // Return dummy price of 1 microstack per byte
+    return new BigNum(1);
+  });
+}
 
 /**
  * STX token transfer transaction options
