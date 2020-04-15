@@ -117,5 +117,5 @@ test('Transaction broadcast', () => {
 
   expect(fetchMock.mock.calls.length).toEqual(1);
   expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
-  expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize().toString('hex'));
+  expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
 });

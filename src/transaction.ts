@@ -193,11 +193,11 @@ export class StacksTransaction extends StacksMessage {
    * @returns {Promise} that resolves to a response if the operation succeeds
    */
   broadcast(apiUrl?: string) {
-    const tx = this.serialize().toString('hex');
+    const tx = this.serialize();
 
     const requestHeaders = {
       Accept: 'application/json',
-      'Content-Type': 'text/plain',
+      'Content-Type': 'application/octet-stream',
     };
 
     const options = {
