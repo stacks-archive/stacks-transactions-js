@@ -1,4 +1,4 @@
-import { Address, LengthPrefixedString, address, lengthPrefixedString } from '../../types';
+import { Address, LengthPrefixedString, createAddress, createLPString } from '../../types';
 import { ClarityType } from '../clarityValue';
 
 interface StandardPrincipalCV {
@@ -13,7 +13,7 @@ interface ContractPrincipalCV {
 }
 
 function standardPrincipalCV(addressString: string): StandardPrincipalCV {
-  const addr = address(addressString);
+  const addr = createAddress(addressString);
   return { type: ClarityType.PrincipalStandard, address: addr };
 }
 
@@ -22,8 +22,8 @@ function standardPrincipalCVFromAddress(address: Address): StandardPrincipalCV {
 }
 
 function contractPrincipalCV(addressString: string, contractName: string): ContractPrincipalCV {
-  const addr = address(addressString);
-  const lengthPrefixedContractName = lengthPrefixedString(contractName);
+  const addr = createAddress(addressString);
+  const lengthPrefixedContractName = createLPString(contractName);
   return contractPrincipalCVFromAddress(addr, lengthPrefixedContractName);
 }
 
@@ -41,7 +41,7 @@ function contractPrincipalCVFromStandard(
   sp: StandardPrincipalCV,
   contractName: string
 ): ContractPrincipalCV {
-  const lengthPrefixedContractName = lengthPrefixedString(contractName);
+  const lengthPrefixedContractName = createLPString(contractName);
   return {
     type: ClarityType.PrincipalContract,
     address: sp.address,

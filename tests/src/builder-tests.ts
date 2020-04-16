@@ -12,7 +12,7 @@ import {
   makeContractNonFungiblePostCondition,
 } from '../../src/builders';
 
-import { assetInfo } from '../../src/types';
+import { createAssetInfo } from '../../src/types';
 
 import {
   TransactionVersion,
@@ -159,7 +159,7 @@ test('Make contract-call with post conditions', () => {
   const assetAddress = 'ST34RKEJKQES7MXQFBT29KSJZD73QK3YNT5N56C6X';
   const assetContractName = 'test-asset-contract';
   const assetName = 'test-asset-name';
-  const info = assetInfo(assetAddress, assetContractName, assetName);
+  const info = createAssetInfo(assetAddress, assetContractName, assetName);
   const tokenAssetName = 'token-asset-name';
 
   const feeRate = new BigNum(0);

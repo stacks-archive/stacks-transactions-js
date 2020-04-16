@@ -9,12 +9,19 @@ import {
 
 import { BufferArray, txidFromData, sha512_256 } from './utils';
 
-import { Address, fromPublicKeys, addressFromData } from './types';
+import { Address, addressFromPublicKeys, addressFromVersionHash } from './types';
 
-import { StacksPublicKey, StacksPrivateKey, stacksPublicKey, isCompressed } from './keys';
+import {
+  StacksPublicKey,
+  StacksPrivateKey,
+  createStacksPublicKey,
+  isCompressed,
+  signWithKey,
+  getPublicKey,
+} from './keys';
 
 import * as BigNum from 'bn.js';
-import { BufferReader } from './binaryReader';
+import { BufferReader } from './bufferReader';
 
 abstract class Deserializable {
   abstract serialize(): Buffer;
@@ -84,12 +91,14 @@ export class SpendingCondition extends Deserializable {
     super();
     this.addressHashMode = addressHashMode;
     if (addressHashMode !== undefined && pubKey) {
-      this.signerAddress = fromPublicKeys(0, addressHashMode, 1, [stacksPublicKey(pubKey)]);
+      this.signerAddress = addressFromPublicKeys(0, addressHashMode, 1, [
+        createStacksPublicKey(pubKey),
+      ]);
     }
     this.nonce = nonce;
     this.feeRate = feeRate;
     if (pubKey) {
-      this.pubKeyEncoding = isCompressed(stacksPublicKey(pubKey))
+      this.pubKeyEncoding = isCompressed(createStacksPublicKey(pubKey))
         ? PubKeyEncoding.Compressed
         : PubKeyEncoding.Uncompressed;
     }
@@ -176,8 +185,8 @@ export class SpendingCondition extends Deserializable {
     nextSigHash: string;
   } {
     const sigHashPreSign = this.makeSigHashPreSign(curSigHash, authType, feeRate, nonce);
-    const signature = privateKey.sign(sigHashPreSign);
-    const publicKey = privateKey.getPublicKey();
+    const signature = signWithKey(privateKey, sigHashPreSign);
+    const publicKey = getPublicKey(privateKey);
     const nextSigHash = this.makeSigHashPostSign(sigHashPreSign, publicKey, signature);
 
     return {
@@ -199,7 +208,7 @@ export class SpendingCondition extends Deserializable {
     if (this.signerAddress === undefined) {
       throw new Error('"signerAddress" is undefined');
     }
-    if (this.signerAddress.data === undefined) {
+    if (this.signerAddress.hash160 === undefined) {
       throw new Error('"signerAddress.data" is undefined');
     }
     if (this.nonce === undefined) {
@@ -209,7 +218,7 @@ export class SpendingCondition extends Deserializable {
       throw new Error('"feeRate" is undefined');
     }
     bufferArray.appendByte(this.addressHashMode);
-    bufferArray.appendHexString(this.signerAddress.data);
+    bufferArray.appendHexString(this.signerAddress.hash160);
     bufferArray.push(this.nonce.toArrayLike(Buffer, 'be', 8));
     bufferArray.push(this.feeRate.toArrayLike(Buffer, 'be', 8));
 
@@ -238,7 +247,7 @@ export class SpendingCondition extends Deserializable {
       throw new Error(`Could not parse ${n} as AddressHashMode`);
     });
     const signerPubKeyHash = bufferReader.readBuffer(20).toString('hex');
-    this.signerAddress = addressFromData(0, signerPubKeyHash);
+    this.signerAddress = addressFromVersionHash(0, signerPubKeyHash);
     this.nonce = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
     this.feeRate = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
 
@@ -324,7 +333,7 @@ export class Authorization extends Deserializable {
 
   deserialize(bufferReader: BufferReader) {
     this.authType = bufferReader.readUInt8Enum(AuthType, n => {
-      throw new Error('Could not parse ${n} as AuthType');
+      throw new Error(`Could not parse ${n} as AuthType`);
     });
 
     switch (this.authType) {

@@ -2,19 +2,19 @@ import {
   STXPostCondition,
   FungiblePostCondition,
   NonFungiblePostCondition,
-  stxPostCondition,
-  fungiblePostCondition,
-  nonFungiblePostCondition,
+  createSTXPostCondition,
+  createFungiblePostCondition,
+  createNonFungiblePostCondition,
 } from '../../src/postcondition';
 
 import {
   StandardPrincipal,
   ContractPrincipal,
-  standardPrincipal,
+  createStandardPrincipal,
   addressToString,
-  contractPrincipal,
-  assetInfo,
-  lengthPrefixedString,
+  createContractPrincipal,
+  createAssetInfo,
+  createLPString,
 } from '../../src/types';
 
 import {
@@ -35,7 +35,7 @@ test('Post condition principal serialization and deserialization', () => {
   const address = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
   const contractName = 'principal-contract-name';
 
-  const sp = standardPrincipal(address);
+  const sp = createStandardPrincipal(address);
 
   const standardDeserialized = serializeDeserialize(
     sp,
@@ -44,7 +44,7 @@ test('Post condition principal serialization and deserialization', () => {
   expect(standardDeserialized.prefix).toBe(standardPrincipalPrefix);
   expect(addressToString(standardDeserialized.address)).toBe(address);
 
-  const cp = contractPrincipal(address, contractName);
+  const cp = createContractPrincipal(address, contractName);
 
   const contractDeserialized = serializeDeserialize(
     cp,
@@ -60,12 +60,12 @@ test('STX post condition serialization and deserialization', () => {
 
   const standardPrincipalType = PrincipalType.Standard;
   const address = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
-  const sp = standardPrincipal(address);
+  const sp = createStandardPrincipal(address);
 
   const conditionCode = FungibleConditionCode.GreaterEqual;
   const amount = new BigNum(1000000);
 
-  const postCondition = stxPostCondition(sp, conditionCode, amount);
+  const postCondition = createSTXPostCondition(sp, conditionCode, amount);
 
   const deserialized = serializeDeserialize(
     postCondition,
@@ -83,7 +83,7 @@ test('Fungible post condition serialization and deserialization', () => {
 
   const standardPrincipalType = PrincipalType.Standard;
   const address = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
-  const principal = standardPrincipal(address);
+  const principal = createStandardPrincipal(address);
 
   const conditionCode = FungibleConditionCode.GreaterEqual;
   const amount = new BigNum(1000000);
@@ -91,9 +91,9 @@ test('Fungible post condition serialization and deserialization', () => {
   const assetAddress = 'SP2ZP4GJDZJ1FDHTQ963F0292PE9J9752TZJ68F21';
   const assetContractName = 'contract_name';
   const assetName = 'asset_name';
-  const info = assetInfo(assetAddress, assetContractName, assetName);
+  const info = createAssetInfo(assetAddress, assetContractName, assetName);
 
-  const postCondition = fungiblePostCondition(principal, conditionCode, amount, info);
+  const postCondition = createFungiblePostCondition(principal, conditionCode, amount, info);
 
   const deserialized = serializeDeserialize(
     postCondition,
@@ -115,18 +115,23 @@ test('Non-fungible post condition serialization and deserialization', () => {
   const contractPrincipalType = PrincipalType.Contract;
   const address = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
   const contractName = 'contract-name';
-  const principal = contractPrincipal(address, contractName);
+  const principal = createContractPrincipal(address, contractName);
 
   const conditionCode = NonFungibleConditionCode.Owns;
 
   const assetAddress = 'SP2ZP4GJDZJ1FDHTQ963F0292PE9J9752TZJ68F21';
   const assetContractName = 'contract_name';
   const assetName = 'asset_name';
-  const info = assetInfo(assetAddress, assetContractName, assetName);
+  const info = createAssetInfo(assetAddress, assetContractName, assetName);
 
-  const nftAssetName = lengthPrefixedString('nft_asset_name');
+  const nftAssetName = createLPString('nft_asset_name');
 
-  const postCondition = nonFungiblePostCondition(principal, conditionCode, info, nftAssetName);
+  const postCondition = createNonFungiblePostCondition(
+    principal,
+    conditionCode,
+    info,
+    nftAssetName
+  );
 
   const deserialized = serializeDeserialize(
     postCondition,

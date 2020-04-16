@@ -1,7 +1,5 @@
 import { StacksTransaction } from './transaction';
 
-import { AuthType } from './constants';
-
 import { StacksPrivateKey } from './keys';
 
 export class TransactionSigner {

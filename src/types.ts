@@ -26,10 +26,9 @@ import {
 } from './utils';
 
 import { c32addressDecode, c32address } from 'c32check';
-import { BufferReader } from './binaryReader';
+import { BufferReader } from './bufferReader';
 import { PostCondition, serializePostCondition, deserializePostCondition } from './postcondition';
 import { Payload, deserializePayload, serializePayload } from './payload';
-import { StacksTransaction } from '.';
 
 export type StacksMessage =
   | Address
@@ -59,7 +58,7 @@ export function serializeStacksMessage(message: StacksMessage): Buffer {
     case StacksMessageType.PublicKey:
       return serializePublicKey(message);
     case StacksMessageType.LengthPrefixedList:
-      return serializeLengthPrefixedList(message);
+      return serializeLPList(message);
     case StacksMessageType.Payload:
       return serializePayload(message);
   }
@@ -91,27 +90,27 @@ export function deserializeStacksMessage(
       if (!listType) {
         throw new Error('No List Type specified');
       }
-      return deserializeLengthPrefixedList(bufferReader, listType);
+      return deserializeLPList(bufferReader, listType);
   }
 }
 
 export interface Address {
   readonly type: StacksMessageType.Address;
   readonly version: AddressVersion;
-  readonly data: string;
+  readonly hash160: string;
 }
 
-export function address(c32AddressString: string): Address {
+export function createAddress(c32AddressString: string): Address {
   const addressData = c32addressDecode(c32AddressString);
   return {
     type: StacksMessageType.Address,
     version: addressData[0],
-    data: addressData[1],
+    hash160: addressData[1],
   };
 }
 
-export function addressFromData(version: AddressVersion, data: string): Address {
-  return { type: StacksMessageType.Address, version, data };
+export function addressFromVersionHash(version: AddressVersion, hash: string): Address {
+  return { type: StacksMessageType.Address, version, hash160: hash };
 }
 
 /**
@@ -148,16 +147,16 @@ export function addressHashModeToVersion(
   }
 }
 
-export function fromHashMode(
+export function addressFromHashMode(
   hashMode: AddressHashMode,
   txVersion: TransactionVersion,
   data: string
 ): Address {
   const version = addressHashModeToVersion(hashMode, txVersion);
-  return addressFromData(version, data);
+  return addressFromVersionHash(version, data);
 }
 
-export function fromPublicKeys(
+export function addressFromPublicKeys(
   version: AddressVersion,
   hashMode: AddressHashMode,
   numSigs: number,
@@ -183,7 +182,7 @@ export function fromPublicKeys(
 
   switch (hashMode) {
     case AddressHashMode.SerializeP2PKH:
-      return addressFromData(version, hash_p2pkh(publicKeyToString(publicKeys[0])));
+      return addressFromVersionHash(version, hash_p2pkh(publicKeyToString(publicKeys[0])));
     default:
       throw Error(
         `Not yet implemented: address construction using public keys for hash mode: ${hashMode}`
@@ -192,13 +191,13 @@ export function fromPublicKeys(
 }
 
 export function addressToString(address: Address): string {
-  return c32address(address.version, address.data).toString();
+  return c32address(address.version, address.hash160).toString();
 }
 
 export function serializeAddress(address: Address): Buffer {
   const bufferArray: BufferArray = new BufferArray();
   bufferArray.appendHexString(intToHexString(address.version, 1));
-  bufferArray.appendHexString(address.data);
+  bufferArray.appendHexString(address.hash160);
 
   return bufferArray.concatBuffer();
 }
@@ -207,7 +206,7 @@ export function deserializeAddress(bufferReader: BufferReader): Address {
   const version = hexStringToInt(bufferReader.readBuffer(1).toString('hex'));
   const data = bufferReader.readBuffer(20).toString('hex');
 
-  return { type: StacksMessageType.Address, version, data };
+  return { type: StacksMessageType.Address, version, hash160: data };
 }
 
 export type Principal = StandardPrincipal | ContractPrincipal;
@@ -225,8 +224,8 @@ export interface ContractPrincipal {
   readonly contractName: LengthPrefixedString;
 }
 
-export function standardPrincipal(addressString: string): StandardPrincipal {
-  const addr = address(addressString);
+export function createStandardPrincipal(addressString: string): StandardPrincipal {
+  const addr = createAddress(addressString);
   return {
     type: StacksMessageType.Principal,
     prefix: PrincipalType.Standard,
@@ -234,9 +233,12 @@ export function standardPrincipal(addressString: string): StandardPrincipal {
   };
 }
 
-export function contractPrincipal(addressString: string, contractName: string): ContractPrincipal {
-  const addr = address(addressString);
-  const name = lengthPrefixedString(contractName);
+export function createContractPrincipal(
+  addressString: string,
+  contractName: string
+): ContractPrincipal {
+  const addr = createAddress(addressString);
+  const name = createLPString(contractName);
   return {
     type: StacksMessageType.Principal,
     prefix: PrincipalType.Contract,
@@ -279,17 +281,14 @@ export interface LengthPrefixedString {
   readonly maxLengthBytes: number;
 }
 
-export function lengthPrefixedString(content: string): LengthPrefixedString;
-export function lengthPrefixedString(
-  content: string,
-  lengthPrefixBytes: number
-): LengthPrefixedString;
-export function lengthPrefixedString(
+export function createLPString(content: string): LengthPrefixedString;
+export function createLPString(content: string, lengthPrefixBytes: number): LengthPrefixedString;
+export function createLPString(
   content: string,
   lengthPrefixBytes: number,
   maxLengthBytes: number
 ): LengthPrefixedString;
-export function lengthPrefixedString(
+export function createLPString(
   content: string,
   lengthPrefixBytes?: number,
   maxLengthBytes?: number
@@ -324,11 +323,11 @@ export function deserializeLPString(
   prefixBytes = prefixBytes ? prefixBytes : 1;
   const length = hexStringToInt(bufferReader.readBuffer(prefixBytes).toString('hex'));
   const content = bufferReader.readBuffer(length).toString();
-  return lengthPrefixedString(content, prefixBytes, maxLength ? maxLength : 128);
+  return createLPString(content, prefixBytes, maxLength ? maxLength : 128);
 }
 
 export function codeBodyString(content: string): LengthPrefixedString {
-  return lengthPrefixedString(content, 4, 100000);
+  return createLPString(content, 4, 100000);
 }
 
 export interface MemoString {
@@ -336,7 +335,7 @@ export interface MemoString {
   readonly content: string;
 }
 
-export function memoString(content: string): MemoString {
+export function createMemoString(content: string): MemoString {
   if (content && exceedsMaxLengthBytes(content, MEMO_MAX_LENGTH_BYTES)) {
     throw new Error(`Memo exceeds maximum length of ${MEMO_MAX_LENGTH_BYTES.toString()} bytes`);
   }
@@ -366,16 +365,16 @@ export interface AssetInfo {
   readonly assetName: LengthPrefixedString;
 }
 
-export function assetInfo(
+export function createAssetInfo(
   addressString: string,
   contractName: string,
   assetName: string
 ): AssetInfo {
   return {
     type: StacksMessageType.AssetInfo,
-    address: address(addressString),
-    contractName: lengthPrefixedString(contractName),
-    assetName: lengthPrefixedString(assetName),
+    address: createAddress(addressString),
+    contractName: createLPString(contractName),
+    assetName: createLPString(assetName),
   };
 }
 
@@ -402,7 +401,7 @@ export interface LengthPrefixedList {
   readonly values: StacksMessage[];
 }
 
-export function lengthPrefixedList<T extends StacksMessage>(
+export function createLPList<T extends StacksMessage>(
   values: T[],
   lengthPrefixBytes?: number
 ): LengthPrefixedList {
@@ -413,7 +412,7 @@ export function lengthPrefixedList<T extends StacksMessage>(
   };
 }
 
-export function serializeLengthPrefixedList(lpList: LengthPrefixedList): Buffer {
+export function serializeLPList(lpList: LengthPrefixedList): Buffer {
   const list = lpList.values;
   const bufferArray: BufferArray = new BufferArray();
   bufferArray.appendHexString(intToHexString(list.length, lpList.lengthPrefixBytes));
@@ -423,7 +422,7 @@ export function serializeLengthPrefixedList(lpList: LengthPrefixedList): Buffer 
   return bufferArray.concatBuffer();
 }
 
-export function deserializeLengthPrefixedList(
+export function deserializeLPList(
   bufferReader: BufferReader,
   type: StacksMessageType,
   lengthPrefixBytes?: number
@@ -455,5 +454,5 @@ export function deserializeLengthPrefixedList(
         break;
     }
   }
-  return lengthPrefixedList(l, lengthPrefixBytes);
+  return createLPList(l, lengthPrefixBytes);
 }
