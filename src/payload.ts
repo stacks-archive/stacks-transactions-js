@@ -1,8 +1,8 @@
-import { COINBASE_BUFFER_LENGTH_BYTES, PayloadType, AssetType } from './constants';
+import { COINBASE_BUFFER_LENGTH_BYTES, PayloadType, AssetType, PrincipalType } from './constants';
 
 import { BufferArray, BufferReader } from './utils';
 
-import { Address, LengthPrefixedString, CodeBodyString, AssetInfo, MemoString } from './types';
+import { Address, LengthPrefixedString, CodeBodyString, AssetInfo, MemoString, Principal } from './types';
 
 import { StacksMessage } from './message';
 
@@ -16,7 +16,7 @@ export class Payload extends StacksMessage {
   assetType?: AssetType;
   assetInfo?: AssetInfo;
   assetName?: LengthPrefixedString;
-  recipientAddress?: Address;
+  recipientPrincipal?: Principal;
   amount?: BigNum;
   memo?: MemoString;
 
@@ -39,10 +39,22 @@ export class Payload extends StacksMessage {
 
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
-        if (this.recipientAddress === undefined) {
+        if (this.recipientPrincipal === undefined) {
           throw new Error('"recipientAddress" is undefined');
         }
-        bufferArray.push(this.recipientAddress.serialize());
+        if (this.recipientPrincipal.principalType === PrincipalType.Standard) {
+          bufferArray.push(Buffer.from([0x05]));
+          bufferArray.push(this.recipientPrincipal.address.serialize());
+        } else if (this.recipientPrincipal.principalType === PrincipalType.Contract) {
+          bufferArray.push(Buffer.from([0x06]));
+          bufferArray.push(this.recipientPrincipal.address.serialize());
+          bufferArray.push(this.recipientPrincipal.contractName.serialize());
+        } else {
+          throw new Error(
+            `unsupported recipient principal type: ${this.recipientPrincipal.principalType}`
+          );
+        }
+        // bufferArray.push(this.recipientAddress.serialize());
         if (this.amount === undefined) {
           throw new Error('"amount" is undefined');
         }
@@ -110,7 +122,21 @@ export class Payload extends StacksMessage {
     this.payloadType = bufferReader.readByte() as PayloadType;
     switch (this.payloadType) {
       case PayloadType.TokenTransfer:
-        this.recipientAddress = Address.deserialize(bufferReader);
+        const recipientPrincipalType = bufferReader.readByte();
+        if (recipientPrincipalType === 0x05) {
+          this.recipientPrincipal = new Principal(
+            PrincipalType.Standard,
+            Address.deserialize(bufferReader).toString()
+          );
+        } else if (recipientPrincipalType === 0x06) {
+          this.recipientPrincipal = new Principal(
+            PrincipalType.Contract,
+            Address.deserialize(bufferReader).toString(),
+            LengthPrefixedString.deserialize(bufferReader).content
+          );
+        } else {
+          throw new Error(`Unexpected recipient principal type ${recipientPrincipalType}`);
+        }
         this.amount = new BigNum(bufferReader.read(8).toString('hex'), 16);
         this.memo = LengthPrefixedString.deserialize(bufferReader);
         break;
@@ -144,11 +170,17 @@ export class Payload extends StacksMessage {
 }
 
 export class TokenTransferPayload extends Payload {
-  constructor(recipientAddress?: string, amount?: BigNum, memo?: string) {
+  constructor(recipientPrincipal?: string, amount?: BigNum, memo?: string) {
     super();
     this.payloadType = PayloadType.TokenTransfer;
-
-    this.recipientAddress = new Address(recipientAddress);
+    if (recipientPrincipal) {
+      if (recipientPrincipal.includes('.')) {
+        const [address, contractName] = recipientPrincipal.split('.');
+        this.recipientPrincipal = new Principal(PrincipalType.Contract, address, contractName);
+      } else {
+        this.recipientPrincipal = new Principal(PrincipalType.Standard, recipientPrincipal);
+      }
+    }
     this.amount = amount;
     this.memo = memo ? new MemoString(memo) : new MemoString('');
   }

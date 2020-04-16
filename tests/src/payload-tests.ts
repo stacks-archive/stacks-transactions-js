@@ -21,7 +21,22 @@ test('STX token transfer payload serialization and deserialization', () => {
 
   const deserialized = serializeDeserialize(payload, TokenTransferPayload);
   expect(deserialized.payloadType).toBe(payload.payloadType);
-  expect(deserialized.recipientAddress!.toString()).toBe(recipientAddress);
+  expect(deserialized.recipientPrincipal!.address.toString()).toBe(recipientAddress);
+  expect(deserialized.amount!.toNumber()).toBe(amount.toNumber());
+});
+
+test('STX token transfer to contract payload serialization and deserialization', () => {
+  const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const recipientContractName = 'hello-world';
+  const recipientPrincipal = `${recipientAddress}.${recipientContractName}`
+  const amount = new BigNum(2500000);
+
+  const payload = new TokenTransferPayload(recipientPrincipal, amount, 'memo (not being included)');
+
+  const deserialized = serializeDeserialize(payload, TokenTransferPayload);
+  expect(deserialized.payloadType).toBe(payload.payloadType);
+  expect(deserialized.recipientPrincipal!.address.toString()).toBe(recipientAddress);
+  expect(deserialized.recipientPrincipal!.contractName.toString()).toBe(recipientContractName);
   expect(deserialized.amount!.toNumber()).toBe(amount.toNumber());
 });
 

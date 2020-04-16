@@ -82,6 +82,6 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserialized.postConditions[0].principal.address!.toString()).toBe(recipientAddress);
   expect(deserialized.postConditions[0].conditionCode).toBe(FungibleConditionCode.GreaterEqual);
   expect(deserialized.postConditions[0].amount.toNumber()).toBe(0);
-  expect(deserialized.payload!.recipientAddress!.toString()).toBe(recipientAddress);
+  expect(deserialized.payload!.recipientPrincipal!.address.toString()).toBe(recipientAddress);
   expect(deserialized.payload!.amount!.toNumber()).toBe(amount.toNumber());
 });
