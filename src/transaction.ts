@@ -16,15 +16,10 @@ import { BufferArray, txidFromData, sha512_256 } from './utils';
 
 import { Payload, serializePayload, deserializePayload } from './payload';
 
-import {
-  LengthPrefixedList,
-  serializeLengthPrefixedList,
-  deserializeLengthPrefixedList,
-  lengthPrefixedList,
-} from './types';
+import { LengthPrefixedList, serializeLPList, deserializeLPList, createLPList } from './types';
 
 import { StacksPrivateKey } from './keys';
-import { BufferReader } from './binaryReader';
+import { BufferReader } from './bufferReader';
 
 export class StacksTransaction {
   version: TransactionVersion;
@@ -49,7 +44,7 @@ export class StacksTransaction {
     this.payload = payload;
     this.chainId = chainId ? chainId : DEFAULT_CHAIN_ID;
     this.postConditionMode = postConditionMode ? postConditionMode : PostConditionMode.Deny;
-    this.postConditions = postConditions ? postConditions : lengthPrefixedList([]);
+    this.postConditions = postConditions ? postConditions : createLPList([]);
 
     if (anchorMode) {
       this.anchorMode = anchorMode;
@@ -143,7 +138,7 @@ export class StacksTransaction {
     bufferArray.push(this.auth.serialize());
     bufferArray.appendByte(this.anchorMode);
     bufferArray.appendByte(this.postConditionMode);
-    bufferArray.push(serializeLengthPrefixedList(this.postConditions));
+    bufferArray.push(serializeLPList(this.postConditions));
     bufferArray.push(serializePayload(this.payload));
 
     return bufferArray.concatBuffer();
@@ -165,10 +160,7 @@ export function deserializeTransaction(bufferReader: BufferReader) {
   const postConditionMode = bufferReader.readUInt8Enum(PostConditionMode, n => {
     throw new Error(`Could not parse ${n} as PostConditionMode`);
   });
-  const postConditions = deserializeLengthPrefixedList(
-    bufferReader,
-    StacksMessageType.PostCondition
-  );
+  const postConditions = deserializeLPList(bufferReader, StacksMessageType.PostCondition);
   const payload = deserializePayload(bufferReader);
 
   return new StacksTransaction(

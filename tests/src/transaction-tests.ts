@@ -2,11 +2,11 @@ import { StacksTransaction, deserializeTransaction } from '../../src/transaction
 
 import { StandardAuthorization, SingleSigSpendingCondition } from '../../src/authorization';
 
-import { TokenTransferPayload, tokenTransferPayload } from '../../src/payload';
+import { TokenTransferPayload, createTokenTransferPayload } from '../../src/payload';
 
-import { STXPostCondition, stxPostCondition } from '../../src/postcondition';
+import { STXPostCondition, createSTXPostCondition } from '../../src/postcondition';
 
-import { standardPrincipal, lengthPrefixedList, addressToString } from '../../src/types';
+import { createStandardPrincipal, createLPList, addressToString } from '../../src/types';
 
 import {
   DEFAULT_CHAIN_ID,
@@ -20,12 +20,12 @@ import {
 
 import { hash_p2pkh } from '../../src/utils';
 
-import { StacksPrivateKey } from '../../src/keys';
+import { StacksPrivateKey, createStacksPrivateKey } from '../../src/keys';
 
 import { TransactionSigner } from '../../src/signer';
 
 import * as BigNum from 'bn.js';
-import { BufferReader } from '../../src/binaryReader';
+import { BufferReader } from '../../src/bufferReader';
 
 test('STX token transfer transaction serialization and deserialization', () => {
   const transactionVersion = TransactionVersion.Testnet;
@@ -38,7 +38,7 @@ test('STX token transfer transaction serialization and deserialization', () => {
   const amount = new BigNum(2500000);
   const memo = 'memo (not included';
 
-  const payload = tokenTransferPayload(recipientAddress, amount, memo);
+  const payload = createTokenTransferPayload(recipientAddress, amount, memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const nonce = new BigNum(0);
@@ -49,13 +49,13 @@ test('STX token transfer transaction serialization and deserialization', () => {
   const authType = AuthType.Standard;
   const authorization = new StandardAuthorization(spendingCondition);
 
-  const postCondition = stxPostCondition(
-    standardPrincipal(recipientAddress),
+  const postCondition = createSTXPostCondition(
+    createStandardPrincipal(recipientAddress),
     FungibleConditionCode.GreaterEqual,
     new BigNum(0)
   );
 
-  const postConditions = lengthPrefixedList([postCondition]);
+  const postConditions = createLPList([postCondition]);
   const transaction = new StacksTransaction(
     transactionVersion,
     authorization,
@@ -64,7 +64,7 @@ test('STX token transfer transaction serialization and deserialization', () => {
   );
 
   const signer = new TransactionSigner(transaction);
-  signer.signOrigin(new StacksPrivateKey(secretKey));
+  signer.signOrigin(createStacksPrivateKey(secretKey));
   const signature =
     '01051521ac2ac6e6123dcaf9dba000e0005d9855bcc1bc6b96aaf8b6a385238a2317' +
     'ab21e489aca47af3288cdaebd358b0458a9159cadc314cecb7dd08043c0a6d';

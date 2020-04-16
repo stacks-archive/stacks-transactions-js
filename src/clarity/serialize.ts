@@ -1,4 +1,4 @@
-import { serializeAddress, serializeLPString, lengthPrefixedString } from '../types';
+import { serializeAddress, serializeLPString, createLPString } from '../types';
 import {
   BooleanCV,
   OptionalCV,
@@ -87,7 +87,7 @@ function serializeTupleCV(cv: TupleCV) {
   });
 
   for (const key of lexicographicOrder) {
-    const nameWithLength = lengthPrefixedString(key);
+    const nameWithLength = createLPString(key);
     buffers.push(serializeLPString(nameWithLength));
 
     const serializedValue = serializeCV(cv.data[key]);

@@ -22,7 +22,7 @@ import {
   standardPrincipalCVFromAddress,
 } from '../../src/clarity';
 import { contractPrincipalCVFromStandard } from '../../src/clarity/types/principalCV';
-import { BufferReader } from '../../src/binaryReader';
+import { BufferReader } from '../../src/bufferReader';
 
 const ADDRESS = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
 

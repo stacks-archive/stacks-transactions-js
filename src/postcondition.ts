@@ -17,11 +17,11 @@ import {
   deserializePrincipal,
   deserializeAssetInfo,
   deserializeLPString,
-  standardPrincipal,
+  createStandardPrincipal,
 } from './types';
 
 import * as BigNum from 'bn.js';
-import { BufferReader } from './binaryReader';
+import { BufferReader } from './bufferReader';
 
 export type PostCondition = STXPostCondition | FungiblePostCondition | NonFungiblePostCondition;
 
@@ -33,7 +33,7 @@ export interface STXPostCondition {
   readonly amount: BigNum;
 }
 
-export function stxPostCondition(
+export function createSTXPostCondition(
   principal: Principal,
   conditionCode: FungibleConditionCode,
   amount: BigNum
@@ -56,7 +56,7 @@ export interface FungiblePostCondition {
   readonly assetInfo: AssetInfo;
 }
 
-export function fungiblePostCondition(
+export function createFungiblePostCondition(
   principal: Principal,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
@@ -81,7 +81,7 @@ export interface NonFungiblePostCondition {
   readonly assetName: LengthPrefixedString;
 }
 
-export function nonFungiblePostCondition(
+export function createNonFungiblePostCondition(
   principal: Principal,
   conditionCode: NonFungibleConditionCode,
   assetInfo: AssetInfo,

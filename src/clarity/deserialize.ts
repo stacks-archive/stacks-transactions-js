@@ -15,7 +15,7 @@ import {
   listCV,
   tupleCV,
 } from '.';
-import { BufferReader } from '../binaryReader';
+import { BufferReader } from '../bufferReader';
 import { deserializeAddress, deserializeLPString } from '../types';
 
 export default function deserializeCV(buffer: BufferReader | Buffer): ClarityValue {

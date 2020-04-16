@@ -4,16 +4,13 @@ import {
   MessageSignature,
 } from '../../src/authorization';
 
-import { Address, addressFromData } from '../../src/types';
+import { addressFromVersionHash } from '../../src/types';
 
 import { AddressHashMode, AddressVersion, PubKeyEncoding } from '../../src/constants';
 
-import { StacksPrivateKey } from '../../src/keys';
-
-import { serializeDeserialize } from './macros';
-
 import * as BigNum from 'bn.js';
-import { BufferReader } from '../../src/binaryReader';
+import { BufferReader } from '../../src/bufferReader';
+import { createStacksPrivateKey, signWithKey } from '../../src/keys';
 
 test('ECDSA recoverable signature', () => {
   const privKeyString = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc';
@@ -21,8 +18,8 @@ test('ECDSA recoverable signature', () => {
   const correctSignature =
     '019901d8b1d67a7b853dc473d0609508ab2519ec370eabfef460aa0fd9234660' +
     '787970968562da9de8b024a7f36f946b2fdcbf39b2f59247267a9d72730f19276b';
-  const privKey = new StacksPrivateKey(privKeyString);
-  const signature = privKey.sign(messagetoSign).toString();
+  const privKey = createStacksPrivateKey(privKeyString);
+  const signature = signWithKey(privKey, messagetoSign).toString();
   expect(signature).toBe(correctSignature);
 });
 
@@ -49,7 +46,7 @@ test('Single sig spending condition uncompressed', () => {
   const feeRate = new BigNum(456);
   const pubKey = '';
   const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
-  spendingCondition.signerAddress = addressFromData(
+  spendingCondition.signerAddress = addressFromVersionHash(
     AddressVersion.MainnetSingleSig,
     '11'.repeat(20)
   );
@@ -91,7 +88,7 @@ test('Single sig wpkh spending condition compressed', () => {
   const feeRate = new BigNum(456);
   const pubKey = '';
   const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, feeRate);
-  spendingCondition.signerAddress = addressFromData(
+  spendingCondition.signerAddress = addressFromVersionHash(
     AddressVersion.MainnetSingleSig,
     '11'.repeat(20)
   );

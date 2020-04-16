@@ -3,10 +3,10 @@ import {
   ContractCallPayload,
   SmartContractPayload,
   CoinbasePayload,
-  smartContractPayload,
-  coinbasePayload,
-  contractCallPayload,
-  tokenTransferPayload,
+  createSmartContractPayload,
+  createCoinbasePayload,
+  createContractCallPayload,
+  createTokenTransferPayload,
 } from '../../src/payload';
 
 import { serializeDeserialize } from './macros';
@@ -22,7 +22,7 @@ test('STX token transfer payload serialization and deserialization', () => {
   const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
   const amount = new BigNum(2500000);
 
-  const payload = tokenTransferPayload(recipientAddress, amount, 'memo (not being included)');
+  const payload = createTokenTransferPayload(recipientAddress, amount, 'memo (not being included)');
 
   const deserialized = serializeDeserialize(
     payload,
@@ -39,7 +39,7 @@ test('Contract call payload serialization and deserialization', () => {
   const functionName = 'function_name';
   const args = [trueCV(), falseCV()];
 
-  const payload = contractCallPayload(contractAddress, contractName, functionName, args);
+  const payload = createContractCallPayload(contractAddress, contractName, functionName, args);
 
   const deserialized = serializeDeserialize(
     payload,
@@ -61,7 +61,7 @@ test('Smart contract payload serialization and deserialization', () => {
     '       (map-set store ((key key)) ((value value)))' +
     "       (ok 'true)))";
 
-  const payload = smartContractPayload(contractName, codeBody);
+  const payload = createSmartContractPayload(contractName, codeBody);
 
   const deserialized = serializeDeserialize(
     payload,
@@ -75,7 +75,7 @@ test('Coinbase payload serialization and deserialization', () => {
   const coinbaseBuffer = Buffer.alloc(COINBASE_BUFFER_LENGTH_BYTES, 0);
   coinbaseBuffer.write('coinbase buffer');
 
-  const payload = coinbasePayload(coinbaseBuffer);
+  const payload = createCoinbasePayload(coinbaseBuffer);
 
   const deserialized = serializeDeserialize(payload, StacksMessageType.Payload) as CoinbasePayload;
   expect(deserialized.coinbaseBuffer.toString()).toBe(coinbaseBuffer.toString());

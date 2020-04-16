@@ -57,7 +57,7 @@ export {
 // Clarity Value Serialization/Deserialization
 export { serializeCV, deserializeCV } from './clarity';
 
-export { StacksPrivateKey, StacksPublicKey } from './keys';
+export * from './keys';
 
 export { makeSTXTokenTransfer, makeSmartContractDeploy, makeContractCall } from './builders';
 
