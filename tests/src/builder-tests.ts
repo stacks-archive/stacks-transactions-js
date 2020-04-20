@@ -204,13 +204,6 @@ test('Make contract-call with post conditions', () => {
     ),
   ];
 
-  const options = {
-    nonce: new BigNum(1),
-    version: TransactionVersion.Testnet,
-    postConditions,
-    postConditMode: PostConditionMode.Deny,
-  };
-
   const transaction = makeContractCall(
     contractAddress,
     contractName,
@@ -218,7 +211,12 @@ test('Make contract-call with post conditions', () => {
     [buffer],
     feeRate,
     secretKey,
-    options
+    {
+      nonce: new BigNum(1),
+      version: TransactionVersion.Testnet,
+      postConditions,
+      postConditionMode: PostConditionMode.Deny,
+    }
   );
 
   const serialized = transaction.serialize().toString('hex');
@@ -252,12 +250,6 @@ test('Make contract-call with post condition allow mode', () => {
 
   const feeRate = new BigNum(0);
 
-  const options = {
-    nonce: new BigNum(1),
-    version: TransactionVersion.Testnet,
-    postConditMode: PostConditionMode.Allow,
-  };
-
   const transaction = makeContractCall(
     contractAddress,
     contractName,
@@ -265,16 +257,20 @@ test('Make contract-call with post condition allow mode', () => {
     [buffer],
     feeRate,
     secretKey,
-    options
+    {
+      nonce: new BigNum(1),
+      version: TransactionVersion.Testnet,
+      postConditionMode: PostConditionMode.Allow,
+    }
   );
 
   const serialized = transaction.serialize().toString('hex');
 
   const tx =
-    '80000000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000010000000000000000' +
-    '00000847ecd645be0141ccbfe7ec25ff9ef1a00cb133623327e351dfb9adb7e09e8f304b0925a3be18f5b1' +
-    '984b2d929f425e5849955abde10f1634501a4e31ba3586030200000000021ae6c05355e0c990ffad19a5e9' +
-    'bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
+    '80000000000400e6c05355e0c990ffad19a5e9bda394a9c5003429000000000000000100000000000000' +
+    '0000018a64e4a09f2144dfa72ddb28684acc73ab1f0b8de843349d1b942efa3c640a6b187ed903855fa6' +
+    'ed8084340220cce160c9d4a7f33a87cf49005070c19327010e030100000000021ae6c05355e0c990ffad' +
+    '19a5e9bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
 
   expect(serialized).toBe(tx);
 });
