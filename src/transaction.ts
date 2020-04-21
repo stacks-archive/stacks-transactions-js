@@ -211,9 +211,8 @@ export class StacksTransaction extends StacksMessage {
     return fetchPrivate(url, options).then(response => {
       if (response.ok) {
         return response.text();
-        // return response.json();
       } else if (response.status === 400) {
-        throw new Error('Transaction rejected');
+        return Promise.reject(response);
       } else {
         throw new Error('Remote endpoint error');
       }
