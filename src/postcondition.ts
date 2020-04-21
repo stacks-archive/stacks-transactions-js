@@ -9,15 +9,14 @@ import { BufferArray } from './utils';
 
 import {
   AssetInfo,
-  Principal,
   LengthPrefixedString,
-  serializePrincipal,
   serializeAssetInfo,
   serializeLPString,
-  deserializePrincipal,
   deserializeAssetInfo,
   deserializeLPString,
-  createStandardPrincipal,
+  PostConditionPrincipal,
+  serializePrincipal,
+  deserializePrincipal,
 } from './types';
 
 import * as BigNum from 'bn.js';
@@ -28,13 +27,13 @@ export type PostCondition = STXPostCondition | FungiblePostCondition | NonFungib
 export interface STXPostCondition {
   readonly type: StacksMessageType.PostCondition;
   readonly conditionType: PostConditionType.STX;
-  readonly principal: Principal;
+  readonly principal: PostConditionPrincipal;
   readonly conditionCode: FungibleConditionCode;
   readonly amount: BigNum;
 }
 
 export function createSTXPostCondition(
-  principal: Principal,
+  principal: PostConditionPrincipal,
   conditionCode: FungibleConditionCode,
   amount: BigNum
 ): STXPostCondition {
@@ -50,14 +49,14 @@ export function createSTXPostCondition(
 export interface FungiblePostCondition {
   readonly type: StacksMessageType.PostCondition;
   readonly conditionType: PostConditionType.Fungible;
-  readonly principal: Principal;
+  readonly principal: PostConditionPrincipal;
   readonly conditionCode: FungibleConditionCode;
   readonly amount: BigNum;
   readonly assetInfo: AssetInfo;
 }
 
 export function createFungiblePostCondition(
-  principal: Principal,
+  principal: PostConditionPrincipal,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
   assetInfo: AssetInfo
@@ -75,14 +74,14 @@ export function createFungiblePostCondition(
 export interface NonFungiblePostCondition {
   readonly type: StacksMessageType.PostCondition;
   readonly conditionType: PostConditionType.NonFungible;
-  readonly principal: Principal;
+  readonly principal: PostConditionPrincipal;
   readonly conditionCode: NonFungibleConditionCode;
   readonly assetInfo: AssetInfo;
   readonly assetName: LengthPrefixedString;
 }
 
 export function createNonFungiblePostCondition(
-  principal: Principal,
+  principal: PostConditionPrincipal,
   conditionCode: NonFungibleConditionCode,
   assetInfo: AssetInfo,
   assetName: LengthPrefixedString

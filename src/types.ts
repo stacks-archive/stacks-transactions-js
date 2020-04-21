@@ -1,11 +1,11 @@
 import {
   MAX_STRING_LENGTH_BYTES,
   MEMO_MAX_LENGTH_BYTES,
-  PrincipalType,
   AddressHashMode,
   AddressVersion,
   TransactionVersion,
   StacksMessageType,
+  PostConditionPrincipalID,
 } from './constants';
 
 import {
@@ -32,7 +32,7 @@ import { Payload, deserializePayload, serializePayload } from './payload';
 
 export type StacksMessage =
   | Address
-  | Principal
+  | PostConditionPrincipal
   | LengthPrefixedString
   | LengthPrefixedList
   | Payload
@@ -209,17 +209,17 @@ export function deserializeAddress(bufferReader: BufferReader): Address {
   return { type: StacksMessageType.Address, version, hash160: data };
 }
 
-export type Principal = StandardPrincipal | ContractPrincipal;
+export type PostConditionPrincipal = StandardPrincipal | ContractPrincipal;
 
 export interface StandardPrincipal {
   readonly type: StacksMessageType.Principal;
-  readonly prefix: PrincipalType.Standard;
+  readonly prefix: PostConditionPrincipalID.Standard;
   readonly address: Address;
 }
 
 export interface ContractPrincipal {
   readonly type: StacksMessageType.Principal;
-  readonly prefix: PrincipalType.Contract;
+  readonly prefix: PostConditionPrincipalID.Contract;
   readonly address: Address;
   readonly contractName: LengthPrefixedString;
 }
@@ -228,7 +228,7 @@ export function createStandardPrincipal(addressString: string): StandardPrincipa
   const addr = createAddress(addressString);
   return {
     type: StacksMessageType.Principal,
-    prefix: PrincipalType.Standard,
+    prefix: PostConditionPrincipalID.Standard,
     address: addr,
   };
 }
@@ -241,28 +241,28 @@ export function createContractPrincipal(
   const name = createLPString(contractName);
   return {
     type: StacksMessageType.Principal,
-    prefix: PrincipalType.Contract,
+    prefix: PostConditionPrincipalID.Contract,
     address: addr,
     contractName: name,
   };
 }
 
-export function serializePrincipal(principal: Principal): Buffer {
+export function serializePrincipal(principal: PostConditionPrincipal): Buffer {
   const bufferArray: BufferArray = new BufferArray();
   bufferArray.push(Buffer.from([principal.prefix]));
   bufferArray.push(serializeAddress(principal.address));
-  if (principal.prefix === PrincipalType.Contract) {
+  if (principal.prefix === PostConditionPrincipalID.Contract) {
     bufferArray.push(serializeLPString(principal.contractName));
   }
   return bufferArray.concatBuffer();
 }
 
-export function deserializePrincipal(bufferReader: BufferReader): Principal {
-  const prefix = bufferReader.readUInt8Enum(PrincipalType, n => {
+export function deserializePrincipal(bufferReader: BufferReader): PostConditionPrincipal {
+  const prefix = bufferReader.readUInt8Enum(PostConditionPrincipalID, n => {
     throw new Error('Unexpected Principal payload type: ${n}');
   });
   const address = deserializeAddress(bufferReader);
-  if (prefix === PrincipalType.Standard) {
+  if (prefix === PostConditionPrincipalID.Standard) {
     return { type: StacksMessageType.Principal, prefix, address } as StandardPrincipal;
   }
   const contractName = deserializeLPString(bufferReader);
@@ -442,9 +442,6 @@ export function deserializeLPList(
         break;
       case StacksMessageType.AssetInfo:
         l.push(deserializeAssetInfo(bufferReader));
-        break;
-      case StacksMessageType.Principal:
-        l.push(deserializePrincipal(bufferReader));
         break;
       case StacksMessageType.PostCondition:
         l.push(deserializePostCondition(bufferReader));
