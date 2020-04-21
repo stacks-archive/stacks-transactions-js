@@ -92,7 +92,7 @@ enum NonFungibleConditionCode {
   Owns = 0x11,
 }
 
-enum PrincipalType {
+enum PostConditionPrincipalID {
   Origin = 0x01,
   Standard = 0x02,
   Contract = 0x03,
@@ -139,12 +139,12 @@ export {
   TransactionVersion,
   PostConditionMode,
   PostConditionType,
+  PostConditionPrincipalID,
   AuthType,
   AddressHashMode,
   AddressVersion,
   PubKeyEncoding,
   FungibleConditionCode,
   NonFungibleConditionCode,
-  PrincipalType,
   AssetType,
 };
