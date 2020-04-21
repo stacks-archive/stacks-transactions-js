@@ -43,18 +43,16 @@ import {
   createLPString,
 } from './types';
 
-import {
-  fetchPrivate
-} from './utils';
+import { fetchPrivate } from './utils';
 
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
 
 /**
- * Estimate the transaction fee, in microstacks per byte, for a token transfer 
+ * Estimate the transaction fee, in microstacks per byte, for a token transfer
  *
  * @param {String} apiUrl - specify the core node URL to broadcast to
- * 
+ *
  * @return a promise that resolves to number of microstacks per byte
  */
 export function estimateTransfer(apiUrl?: string): Promise<BigNum> {
@@ -65,7 +63,7 @@ export function estimateTransfer(apiUrl?: string): Promise<BigNum> {
 
   const options = {
     method: 'GET',
-    headers: requestHeaders
+    headers: requestHeaders,
   };
 
   const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/fees/transfer`;
