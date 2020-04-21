@@ -13,7 +13,7 @@ import {
 
 import { Authorization, SpendingCondition } from './authorization';
 
-import { BufferArray, txidFromData, sha512_256, fetchPrivate} from './utils';
+import { BufferArray, txidFromData, sha512_256, fetchPrivate } from './utils';
 
 import { Payload, serializePayload, deserializePayload } from './payload';
 

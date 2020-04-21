@@ -103,7 +103,7 @@ test('Transaction broadcast', () => {
   const amount = new BigNum(2500000);
   const memo = 'memo (not included';
 
-  const payload = new TokenTransferPayload(recipientAddress, amount, memo);
+  const payload = createTokenTransferPayload(recipientAddress, amount, memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const nonce = new BigNum(0);
@@ -115,7 +115,7 @@ test('Transaction broadcast', () => {
 
   const transaction = new StacksTransaction(transactionVersion, authorization, payload);
   const signer = new TransactionSigner(transaction);
-  signer.signOrigin(new StacksPrivateKey(secretKey));
+  signer.signOrigin(createStacksPrivateKey(secretKey));
 
   fetchMock.mockOnce('mock core node API response');
 
