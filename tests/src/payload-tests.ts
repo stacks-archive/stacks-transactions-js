@@ -11,25 +11,24 @@ import {
 
 import { serializeDeserialize } from './macros';
 
-import { trueCV, falseCV } from '../../src/clarity';
+import { trueCV, falseCV, standardPrincipalCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
 import { COINBASE_BUFFER_LENGTH_BYTES, StacksMessageType } from '../../src/constants';
-import { addressToString } from '../../src';
 
 test('STX token transfer payload serialization and deserialization', () => {
-  const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(2500000);
 
-  const payload = createTokenTransferPayload(recipientAddress, amount, 'memo (not being included)');
+  const payload = createTokenTransferPayload(recipient, amount, 'memo (not being included)');
 
   const deserialized = serializeDeserialize(
     payload,
     StacksMessageType.Payload
   ) as TokenTransferPayload;
   expect(deserialized.payloadType).toBe(payload.payloadType);
-  expect(addressToString(deserialized.recipientAddress)).toBe(recipientAddress);
+  expect(deserialized.recipient).toEqual(recipient);
   expect(deserialized.amount.toNumber()).toBe(amount.toNumber());
 });
 
