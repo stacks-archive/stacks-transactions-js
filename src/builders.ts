@@ -1,10 +1,14 @@
 import { StacksTransaction } from './transaction';
 
-import { TokenTransferPayload, SmartContractPayload, ContractCallPayload } from './payload';
+import {
+  createTokenTransferPayload,
+  createSmartContractPayload,
+  createContractCallPayload,
+} from './payload';
 
 import { SingleSigSpendingCondition, StandardAuthorization } from './authorization';
 
-import { StacksPrivateKey } from './keys';
+import { publicKeyToString, createStacksPrivateKey, getPublicKey } from './keys';
 
 import { TransactionSigner } from './signer';
 
@@ -13,6 +17,9 @@ import {
   STXPostCondition,
   FungiblePostCondition,
   NonFungiblePostCondition,
+  createSTXPostCondition,
+  createFungiblePostCondition,
+  createNonFungiblePostCondition,
 } from './postcondition';
 
 import {
@@ -23,7 +30,13 @@ import {
   PostConditionMode,
 } from './constants';
 
-import { StandardPrincipal, ContractPrincipal, AssetInfo } from './types';
+import {
+  AssetInfo,
+  createLPList,
+  createStandardPrincipal,
+  createContractPrincipal,
+  createLPString,
+} from './types';
 
 import { ClarityValue } from './clarity';
 
@@ -78,27 +91,34 @@ export function makeSTXTokenTransfer(
 
   const normalizedOptions = Object.assign(defaultOptions, options);
 
-  const payload = new TokenTransferPayload(recipientAddress, amount, normalizedOptions.memo);
+  const payload = createTokenTransferPayload(recipientAddress, amount, normalizedOptions.memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = new StacksPrivateKey(senderKey);
-  const pubKey = privKey.getPublicKey();
+  const privKey = createStacksPrivateKey(senderKey);
+  const pubKey = getPublicKey(privKey);
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
-    pubKey.toString(),
+    publicKeyToString(pubKey),
     normalizedOptions.nonce,
     feeRate
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
-  const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
-  transaction.postConditionMode = normalizedOptions.postConditionMode;
-
+  const postConditions: PostCondition[] = [];
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
     normalizedOptions.postConditions.forEach(postCondition => {
-      transaction.addPostCondition(postCondition);
+      postConditions.push(postCondition);
     });
   }
+
+  const lpPostConditions = createLPList(postConditions);
+  const transaction = new StacksTransaction(
+    normalizedOptions.version,
+    authorization,
+    payload,
+    lpPostConditions,
+    normalizedOptions.postConditionMode
+  );
 
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
@@ -150,27 +170,34 @@ export function makeSmartContractDeploy(
 
   const normalizedOptions = Object.assign(defaultOptions, options);
 
-  const payload = new SmartContractPayload(contractName, codeBody);
+  const payload = createSmartContractPayload(contractName, codeBody);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = new StacksPrivateKey(senderKey);
-  const pubKey = privKey.getPublicKey();
+  const privKey = createStacksPrivateKey(senderKey);
+  const pubKey = getPublicKey(privKey);
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
-    pubKey.toString(),
+    publicKeyToString(pubKey),
     normalizedOptions.nonce,
     feeRate
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
-  const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
-  transaction.postConditionMode = normalizedOptions.postConditionMode;
-
+  const postConditions: PostCondition[] = [];
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
     normalizedOptions.postConditions.forEach(postCondition => {
-      transaction.addPostCondition(postCondition);
+      postConditions.push(postCondition);
     });
   }
+
+  const lpPostConditions = createLPList(postConditions);
+  const transaction = new StacksTransaction(
+    normalizedOptions.version,
+    authorization,
+    payload,
+    lpPostConditions,
+    normalizedOptions.postConditionMode
+  );
 
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
@@ -228,7 +255,7 @@ export function makeContractCall(
 
   const normalizedOptions = Object.assign(defaultOptions, options);
 
-  const payload = new ContractCallPayload(
+  const payload = createContractCallPayload(
     contractAddress,
     contractName,
     functionName,
@@ -236,24 +263,31 @@ export function makeContractCall(
   );
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = new StacksPrivateKey(senderKey);
-  const pubKey = privKey.getPublicKey();
+  const privKey = createStacksPrivateKey(senderKey);
+  const pubKey = getPublicKey(privKey);
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
-    pubKey.toString(),
+    publicKeyToString(pubKey),
     normalizedOptions.nonce,
     feeRate
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
-  const transaction = new StacksTransaction(normalizedOptions.version, authorization, payload);
-  transaction.postConditionMode = normalizedOptions.postConditionMode;
-
+  const postConditions: PostCondition[] = [];
   if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
     normalizedOptions.postConditions.forEach(postCondition => {
-      transaction.addPostCondition(postCondition);
+      postConditions.push(postCondition);
     });
   }
+
+  const lpPostConditions = createLPList(postConditions);
+  const transaction = new StacksTransaction(
+    normalizedOptions.version,
+    authorization,
+    payload,
+    lpPostConditions,
+    normalizedOptions.postConditionMode
+  );
 
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
@@ -277,7 +311,7 @@ export function makeStandardSTXPostCondition(
   conditionCode: FungibleConditionCode,
   amount: BigNum
 ): STXPostCondition {
-  return new STXPostCondition(new StandardPrincipal(address), conditionCode, amount);
+  return createSTXPostCondition(createStandardPrincipal(address), conditionCode, amount);
 }
 
 /**
@@ -298,7 +332,11 @@ export function makeContractSTXPostCondition(
   conditionCode: FungibleConditionCode,
   amount: BigNum
 ): STXPostCondition {
-  return new STXPostCondition(new ContractPrincipal(address, contractName), conditionCode, amount);
+  return createSTXPostCondition(
+    createContractPrincipal(address, contractName),
+    conditionCode,
+    amount
+  );
 }
 
 /**
@@ -319,8 +357,8 @@ export function makeStandardFungiblePostCondition(
   amount: BigNum,
   assetInfo: AssetInfo
 ): FungiblePostCondition {
-  return new FungiblePostCondition(
-    new StandardPrincipal(address),
+  return createFungiblePostCondition(
+    createStandardPrincipal(address),
     conditionCode,
     amount,
     assetInfo
@@ -347,8 +385,8 @@ export function makeContractFungiblePostCondition(
   amount: BigNum,
   assetInfo: AssetInfo
 ): FungiblePostCondition {
-  return new FungiblePostCondition(
-    new ContractPrincipal(address, contractName),
+  return createFungiblePostCondition(
+    createContractPrincipal(address, contractName),
     conditionCode,
     amount,
     assetInfo
@@ -372,11 +410,11 @@ export function makeStandardNonFungiblePostCondition(
   assetInfo: AssetInfo,
   assetName: string
 ): NonFungiblePostCondition {
-  return new NonFungiblePostCondition(
-    new StandardPrincipal(address),
+  return createNonFungiblePostCondition(
+    createStandardPrincipal(address),
     conditionCode,
     assetInfo,
-    assetName
+    createLPString(assetName)
   );
 }
 
@@ -399,10 +437,10 @@ export function makeContractNonFungiblePostCondition(
   assetInfo: AssetInfo,
   assetName: string
 ): NonFungiblePostCondition {
-  return new NonFungiblePostCondition(
-    new ContractPrincipal(address, contractName),
+  return createNonFungiblePostCondition(
+    createContractPrincipal(address, contractName),
     conditionCode,
     assetInfo,
-    assetName
+    createLPString(assetName)
   );
 }

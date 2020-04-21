@@ -8,6 +8,18 @@ const UNCOMPRESSED_PUBKEY_LENGTH_BYTES = 64;
 const MEMO_MAX_LENGTH_BYTES = 34;
 const DEFAULT_CORE_NODE_API_URL = 'https://core.blockstack.org';
 
+enum StacksMessageType {
+  Address,
+  Principal,
+  LengthPrefixedString,
+  MemoString,
+  AssetInfo,
+  PostCondition,
+  PublicKey,
+  LengthPrefixedList,
+  Payload,
+}
+
 enum PayloadType {
   TokenTransfer = 0x00,
   SmartContract = 0x01,
@@ -123,6 +135,7 @@ export {
   UNCOMPRESSED_PUBKEY_LENGTH_BYTES,
   MEMO_MAX_LENGTH_BYTES,
   DEFAULT_CORE_NODE_API_URL,
+  StacksMessageType,
   PayloadType,
   AnchorMode,
   TransactionVersion,

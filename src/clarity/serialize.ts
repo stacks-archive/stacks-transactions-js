@@ -1,4 +1,4 @@
-import { LengthPrefixedString } from '../types';
+import { serializeAddress, serializeLPString, createLPString } from '../types';
 import {
   BooleanCV,
   OptionalCV,
@@ -16,17 +16,17 @@ import {
 import { BufferArray } from '../utils';
 
 function bufferWithTypeID(typeId: ClarityType, buffer: Buffer): Buffer {
-  const id = Buffer.from(typeId, 'hex');
+  const id = Buffer.from([typeId]);
   return Buffer.concat([id, buffer]);
 }
 
 function serializeBoolCV(value: BooleanCV): Buffer {
-  return Buffer.from(value.type, 'hex');
+  return Buffer.from([value.type]);
 }
 
 function serializeOptionalCV(cv: OptionalCV): Buffer {
   if (cv.type === ClarityType.OptionalNone) {
-    return Buffer.from(cv.type, 'hex');
+    return Buffer.from([cv.type]);
   } else {
     return bufferWithTypeID(cv.type, serializeCV(cv.value));
   }
@@ -44,13 +44,13 @@ function serializeIntCV(cv: IntCV | UIntCV): Buffer {
 }
 
 function serializeStandardPrincipalCV(cv: StandardPrincipalCV): Buffer {
-  return bufferWithTypeID(cv.type, cv.address.serialize());
+  return bufferWithTypeID(cv.type, serializeAddress(cv.address));
 }
 
 function serializeContractPrincipalCV(cv: ContractPrincipalCV): Buffer {
   return bufferWithTypeID(
     cv.type,
-    Buffer.concat([cv.address.serialize(), cv.contractName.serialize()])
+    Buffer.concat([serializeAddress(cv.address), serializeLPString(cv.contractName)])
   );
 }
 
@@ -87,8 +87,8 @@ function serializeTupleCV(cv: TupleCV) {
   });
 
   for (const key of lexicographicOrder) {
-    const nameWithLength = new LengthPrefixedString(key);
-    buffers.push(nameWithLength.serialize());
+    const nameWithLength = createLPString(key);
+    buffers.push(serializeLPString(nameWithLength));
 
     const serializedValue = serializeCV(cv.data[key]);
     buffers.push(serializedValue);

@@ -17,19 +17,19 @@ import {
  * {@link https://github.com/blockstack/blockstack-core/blob/sip/sip-005/sip/sip-005-blocks-and-transactions.md#clarity-value-representation}
  */
 export enum ClarityType {
-  Int = '00',
-  UInt = '01',
-  Buffer = '02',
-  BoolTrue = '03',
-  BoolFalse = '04',
-  PrincipalStandard = '05',
-  PrincipalContract = '06',
-  ResponseOk = '07',
-  ResponseErr = '08',
-  OptionalNone = '09',
-  OptionalSome = '0a',
-  List = '0b',
-  Tuple = '0c',
+  Int = 0x00,
+  UInt = 0x01,
+  Buffer = 0x02,
+  BoolTrue = 0x03,
+  BoolFalse = 0x04,
+  PrincipalStandard = 0x05,
+  PrincipalContract = 0x06,
+  ResponseOk = 0x07,
+  ResponseErr = 0x08,
+  OptionalNone = 0x09,
+  OptionalSome = 0x0a,
+  List = 0x0b,
+  Tuple = 0x0c,
 }
 
 export type ClarityValue =

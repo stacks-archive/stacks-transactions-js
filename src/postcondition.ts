@@ -1,136 +1,180 @@
-import { PostConditionType, FungibleConditionCode, NonFungibleConditionCode } from './constants';
+import {
+  PostConditionType,
+  FungibleConditionCode,
+  NonFungibleConditionCode,
+  StacksMessageType,
+} from './constants';
 
-import { BufferArray, BufferReader } from './utils';
+import { BufferArray } from './utils';
 
-import { AssetInfo, Principal, LengthPrefixedString } from './types';
-
-import { StacksMessage } from './message';
+import {
+  AssetInfo,
+  Principal,
+  LengthPrefixedString,
+  serializePrincipal,
+  serializeAssetInfo,
+  serializeLPString,
+  deserializePrincipal,
+  deserializeAssetInfo,
+  deserializeLPString,
+  createStandardPrincipal,
+} from './types';
 
 import * as BigNum from 'bn.js';
+import { BufferReader } from './bufferReader';
 
-export class PostCondition extends StacksMessage {
-  postConditionType?: PostConditionType;
-  principal?: Principal;
-  conditionCode?: FungibleConditionCode | NonFungibleConditionCode;
-  assetInfo?: AssetInfo;
-  assetName?: LengthPrefixedString;
-  amount?: BigNum;
+export type PostCondition = STXPostCondition | FungiblePostCondition | NonFungiblePostCondition;
 
-  constructor(
-    postConditionType?: PostConditionType,
-    principal?: Principal,
-    conditionCode?: FungibleConditionCode | NonFungibleConditionCode,
-    amount?: BigNum,
-    assetInfo?: AssetInfo,
-    assetName?: string
-  ) {
-    super();
-    this.postConditionType = postConditionType;
-    this.principal = principal;
-    this.conditionCode = conditionCode;
-    this.amount = amount;
-    this.assetInfo = assetInfo;
-    this.assetName = assetName != undefined ? new LengthPrefixedString(assetName) : undefined;
-  }
-
-  serialize(): Buffer {
-    const bufferArray: BufferArray = new BufferArray();
-    if (this.postConditionType === undefined) {
-      throw new Error('"postConditionType" is undefined');
-    }
-    bufferArray.appendByte(this.postConditionType);
-    if (this.principal === undefined) {
-      throw new Error('"principal" is undefined');
-    }
-    bufferArray.push(this.principal.serialize());
-
-    if (
-      this.postConditionType === PostConditionType.Fungible ||
-      this.postConditionType === PostConditionType.NonFungible
-    ) {
-      if (this.assetInfo === undefined) {
-        throw new Error('"assetInfo" is undefined');
-      }
-      bufferArray.push(this.assetInfo.serialize());
-    }
-
-    if (this.postConditionType === PostConditionType.NonFungible) {
-      if (this.assetName === undefined) {
-        throw new Error('"assetName" is undefined');
-      }
-      bufferArray.push(this.assetName.serialize());
-    }
-
-    if (this.conditionCode === undefined) {
-      throw new Error('"conditionCode" is undefined');
-    }
-    bufferArray.appendByte(this.conditionCode);
-
-    if (
-      this.postConditionType === PostConditionType.STX ||
-      this.postConditionType === PostConditionType.Fungible
-    ) {
-      if (this.amount === undefined) {
-        throw new Error('"amount" is undefined');
-      }
-      bufferArray.push(this.amount.toArrayLike(Buffer, 'be', 8));
-    }
-
-    return bufferArray.concatBuffer();
-  }
-
-  deserialize(bufferReader: BufferReader) {
-    this.postConditionType = bufferReader.readByte() as PostConditionType;
-    this.principal = Principal.deserialize(bufferReader);
-
-    if (
-      this.postConditionType === PostConditionType.Fungible ||
-      this.postConditionType === PostConditionType.NonFungible
-    ) {
-      this.assetInfo = AssetInfo.deserialize(bufferReader);
-    }
-
-    if (this.postConditionType === PostConditionType.NonFungible) {
-      this.assetName = LengthPrefixedString.deserialize(bufferReader);
-    }
-
-    this.conditionCode = bufferReader.readByte() as
-      | FungibleConditionCode
-      | NonFungibleConditionCode;
-
-    if (
-      this.postConditionType === PostConditionType.STX ||
-      this.postConditionType === PostConditionType.Fungible
-    ) {
-      this.amount = new BigNum(bufferReader.read(8).toString('hex'), 16);
-    }
-  }
+export interface STXPostCondition {
+  readonly type: StacksMessageType.PostCondition;
+  readonly conditionType: PostConditionType.STX;
+  readonly principal: Principal;
+  readonly conditionCode: FungibleConditionCode;
+  readonly amount: BigNum;
 }
 
-export class STXPostCondition extends PostCondition {
-  constructor(principal?: Principal, conditionCode?: FungibleConditionCode, amount?: BigNum) {
-    super(PostConditionType.STX, principal, conditionCode, amount);
-  }
+export function createSTXPostCondition(
+  principal: Principal,
+  conditionCode: FungibleConditionCode,
+  amount: BigNum
+): STXPostCondition {
+  return {
+    type: StacksMessageType.PostCondition,
+    conditionType: PostConditionType.STX,
+    principal,
+    conditionCode,
+    amount,
+  };
 }
 
-export class FungiblePostCondition extends PostCondition {
-  constructor(
-    principal?: Principal,
-    conditionCode?: FungibleConditionCode,
-    amount?: BigNum,
-    assetInfo?: AssetInfo
-  ) {
-    super(PostConditionType.Fungible, principal, conditionCode, amount, assetInfo);
-  }
+export interface FungiblePostCondition {
+  readonly type: StacksMessageType.PostCondition;
+  readonly conditionType: PostConditionType.Fungible;
+  readonly principal: Principal;
+  readonly conditionCode: FungibleConditionCode;
+  readonly amount: BigNum;
+  readonly assetInfo: AssetInfo;
 }
 
-export class NonFungiblePostCondition extends PostCondition {
-  constructor(
-    principal?: Principal,
-    conditionCode?: NonFungibleConditionCode,
-    assetInfo?: AssetInfo,
-    assetName?: string
+export function createFungiblePostCondition(
+  principal: Principal,
+  conditionCode: FungibleConditionCode,
+  amount: BigNum,
+  assetInfo: AssetInfo
+): FungiblePostCondition {
+  return {
+    type: StacksMessageType.PostCondition,
+    conditionType: PostConditionType.Fungible,
+    principal,
+    conditionCode,
+    amount,
+    assetInfo,
+  };
+}
+
+export interface NonFungiblePostCondition {
+  readonly type: StacksMessageType.PostCondition;
+  readonly conditionType: PostConditionType.NonFungible;
+  readonly principal: Principal;
+  readonly conditionCode: NonFungibleConditionCode;
+  readonly assetInfo: AssetInfo;
+  readonly assetName: LengthPrefixedString;
+}
+
+export function createNonFungiblePostCondition(
+  principal: Principal,
+  conditionCode: NonFungibleConditionCode,
+  assetInfo: AssetInfo,
+  assetName: LengthPrefixedString
+): NonFungiblePostCondition {
+  return {
+    type: StacksMessageType.PostCondition,
+    conditionType: PostConditionType.NonFungible,
+    principal,
+    conditionCode,
+    assetInfo,
+    assetName,
+  };
+}
+
+export function serializePostCondition(postCondition: PostCondition): Buffer {
+  const bufferArray: BufferArray = new BufferArray();
+  bufferArray.appendByte(postCondition.conditionType);
+  bufferArray.push(serializePrincipal(postCondition.principal));
+
+  if (
+    postCondition.conditionType === PostConditionType.Fungible ||
+    postCondition.conditionType === PostConditionType.NonFungible
   ) {
-    super(PostConditionType.NonFungible, principal, conditionCode, undefined, assetInfo, assetName);
+    bufferArray.push(serializeAssetInfo(postCondition.assetInfo));
+  }
+
+  if (postCondition.conditionType === PostConditionType.NonFungible) {
+    bufferArray.push(serializeLPString(postCondition.assetName));
+  }
+
+  bufferArray.appendByte(postCondition.conditionCode);
+
+  if (
+    postCondition.conditionType === PostConditionType.STX ||
+    postCondition.conditionType === PostConditionType.Fungible
+  ) {
+    bufferArray.push(postCondition.amount.toArrayLike(Buffer, 'be', 8));
+  }
+
+  return bufferArray.concatBuffer();
+}
+
+export function deserializePostCondition(bufferReader: BufferReader): PostCondition {
+  const postConditionType = bufferReader.readUInt8Enum(PostConditionType, n => {
+    throw new Error(`Could not read ${n} as PostConditionType`);
+  });
+
+  const principal = deserializePrincipal(bufferReader);
+
+  let conditionCode;
+  let assetInfo;
+  let amount;
+  switch (postConditionType) {
+    case PostConditionType.STX:
+      conditionCode = bufferReader.readUInt8Enum(FungibleConditionCode, n => {
+        throw new Error(`Could not read ${n} as FungibleConditionCode`);
+      });
+      amount = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
+      return {
+        type: StacksMessageType.PostCondition,
+        conditionType: PostConditionType.STX,
+        principal,
+        conditionCode,
+        amount,
+      };
+    case PostConditionType.Fungible:
+      assetInfo = deserializeAssetInfo(bufferReader);
+      conditionCode = bufferReader.readUInt8Enum(FungibleConditionCode, n => {
+        throw new Error(`Could not read ${n} as FungibleConditionCode`);
+      });
+      amount = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
+      return {
+        type: StacksMessageType.PostCondition,
+        conditionType: PostConditionType.Fungible,
+        principal,
+        conditionCode,
+        amount,
+        assetInfo,
+      };
+    case PostConditionType.NonFungible:
+      assetInfo = deserializeAssetInfo(bufferReader);
+      const assetName = deserializeLPString(bufferReader);
+      conditionCode = bufferReader.readUInt8Enum(NonFungibleConditionCode, n => {
+        throw new Error(`Could not read ${n} as FungibleConditionCode`);
+      });
+      return {
+        type: StacksMessageType.PostCondition,
+        conditionType: PostConditionType.NonFungible,
+        principal,
+        conditionCode,
+        assetInfo,
+        assetName,
+      };
   }
 }

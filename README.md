@@ -16,16 +16,16 @@ This library supports the creation of the following Stacks 2.0 transaction types
 
 ## Key Generation
 ```javascript
-import { StacksPrivateKey } from '@blockstack/stacks-transactions';
+import { createStacksPrivateKey, makeRandomPrivKey, getPublicKey } from '@blockstack/stacks-transactions';
 
 // Random key
-const privateKey = StacksPrivateKey.makeRandom();
+const privateKey = makeRandomPrivKey();
 // Get public key from private
-const publicKey = privateKey.getPublicKey();
+const publicKey = getPublicKey(privateKey);
 
 // Private key from hex string
 const key = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
-const privateKey = new StacksPrivateKey(key);
+const privateKey = createStacksPrivateKey(key);
 ```
 
 ## STX Token Transfer Transaction
@@ -244,10 +244,10 @@ const postConditionCode = FungibleConditionCode.GreaterEqual;
 const postConditionAmount = new BigNum(12345);
 const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
 const assetContractName = 'test-asset-contract';
-const fungibleAssetInfo = new AssetInfo(
+const fungibleAssetInfo = createAssetInfo(
   assetAddress,
   assetContractName
-)
+);
 
 const standardFungiblePostCondition = makeStandardFungiblePostCondition(
   postConditionAddress,
@@ -261,10 +261,10 @@ const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
 const contractName = 'test-contract';
 const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
 const assetContractName = 'test-asset-contract';
-const fungibleAssetInfo = new AssetInfo(
+const fungibleAssetInfo = createAssetInfo(
   assetAddress,
   assetContractName
-)
+);
 
 const contractFungiblePostCondition = makeContractFungiblePostCondition(
   contractAddress,
@@ -284,7 +284,7 @@ const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
 const assetContractName = 'test-asset-contract';
 const assetName = 'test-asset';
 const tokenAssetName = 'test-token-asset';
-const nonFungibleAssetInfo = new AssetInfo(
+const nonFungibleAssetInfo = createAssetInfo(
   assetAddress,
   assetContractName,
   assetName
@@ -352,7 +352,7 @@ const postConditionCode = FungibleConditionCode.GreaterEqual;
 const postConditionAmount = new BigNum(12345);
 const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
 const assetContractName = 'test-asset-contract';
-const fungibleAssetInfo = new AssetInfo(
+const fungibleAssetInfo = createAssetInfo(
   assetAddress,
   assetContractName
 )
@@ -369,7 +369,7 @@ const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
 const contractName = 'test-contract';
 const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
 const assetContractName = 'test-asset-contract';
-const fungibleAssetInfo = new AssetInfo(
+const fungibleAssetInfo = createAssetInfo(
   assetAddress,
   assetContractName
 )
@@ -392,7 +392,7 @@ const assetAddress = 'SP62M8MEFH32WGSB7XSF9WJZD7TQB48VQB5ANWSJ';
 const assetContractName = 'test-asset-contract';
 const assetName = 'test-asset';
 const tokenAssetName = 'test-token-asset';
-const nonFungibleAssetInfo = new AssetInfo(
+const nonFungibleAssetInfo = createAssetInfo(
   assetAddress,
   assetContractName,
   assetName

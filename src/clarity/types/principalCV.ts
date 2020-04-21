@@ -1,4 +1,4 @@
-import { Address, LengthPrefixedString } from '../../types';
+import { Address, LengthPrefixedString, createAddress, createLPString } from '../../types';
 import { ClarityType } from '../clarityValue';
 
 interface StandardPrincipalCV {
@@ -13,25 +13,25 @@ interface ContractPrincipalCV {
 }
 
 function standardPrincipalCV(addressString: string): StandardPrincipalCV {
-  const address = new Address(addressString);
-  return { type: ClarityType.PrincipalStandard, address };
+  const addr = createAddress(addressString);
+  return { type: ClarityType.PrincipalStandard, address: addr };
 }
 
 function standardPrincipalCVFromAddress(address: Address): StandardPrincipalCV {
   return { type: ClarityType.PrincipalStandard, address };
 }
 
-function contractPrincipalCV(addr: string, contractName: string): ContractPrincipalCV {
-  const address = new Address(addr);
-  const lengthPrefixedContractName = new LengthPrefixedString(contractName);
-  return contractPrincipalCVFromAddress(address, lengthPrefixedContractName);
+function contractPrincipalCV(addressString: string, contractName: string): ContractPrincipalCV {
+  const addr = createAddress(addressString);
+  const lengthPrefixedContractName = createLPString(contractName);
+  return contractPrincipalCVFromAddress(addr, lengthPrefixedContractName);
 }
 
 function contractPrincipalCVFromAddress(
   address: Address,
   contractName: LengthPrefixedString
 ): ContractPrincipalCV {
-  if (Buffer.byteLength(contractName.content!) >= 128) {
+  if (Buffer.byteLength(contractName.content) >= 128) {
     throw new Error('Contract name must be less than 128 bytes');
   }
   return { type: ClarityType.PrincipalContract, address, contractName };
@@ -41,7 +41,7 @@ function contractPrincipalCVFromStandard(
   sp: StandardPrincipalCV,
   contractName: string
 ): ContractPrincipalCV {
-  const lengthPrefixedContractName = new LengthPrefixedString(contractName);
+  const lengthPrefixedContractName = createLPString(contractName);
   return {
     type: ClarityType.PrincipalContract,
     address: sp.address,

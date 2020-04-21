@@ -7,22 +7,33 @@ import {
   RECOVERABLE_ECDSA_SIG_LENGTH_BYTES,
 } from './constants';
 
-import { BufferArray, BufferReader, txidFromData, sha512_256 } from './utils';
+import { BufferArray, txidFromData, sha512_256 } from './utils';
 
-import { Address } from './types';
+import { Address, addressFromPublicKeys, addressFromVersionHash } from './types';
 
-import { StacksPublicKey, StacksPrivateKey } from './keys';
-
-import { StacksMessage } from './message';
+import {
+  StacksPublicKey,
+  StacksPrivateKey,
+  createStacksPublicKey,
+  isCompressed,
+  signWithKey,
+  getPublicKey,
+} from './keys';
 
 import * as BigNum from 'bn.js';
+import { BufferReader } from './bufferReader';
 
-export class SpendingAuthorizationField {
-  fieldID?: Buffer;
-  body?: Buffer;
+abstract class Deserializable {
+  abstract serialize(): Buffer;
+  abstract deserialize(bufferReader: BufferReader): void;
+  static deserialize<T extends Deserializable>(this: new () => T, bufferReader: BufferReader): T {
+    const message = new this();
+    message.deserialize(bufferReader);
+    return message;
+  }
 }
 
-export class MessageSignature extends StacksMessage {
+export class MessageSignature extends Deserializable {
   signature?: string;
 
   constructor(signature?: string) {
@@ -58,11 +69,11 @@ export class MessageSignature extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.signature = bufferReader.read(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES).toString('hex');
+    this.signature = bufferReader.readBuffer(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES).toString('hex');
   }
 }
 
-export class SpendingCondition extends StacksMessage {
+export class SpendingCondition extends Deserializable {
   addressHashMode?: AddressHashMode;
   signerAddress?: Address;
   nonce?: BigNum;
@@ -80,14 +91,14 @@ export class SpendingCondition extends StacksMessage {
     super();
     this.addressHashMode = addressHashMode;
     if (addressHashMode !== undefined && pubKey) {
-      this.signerAddress = Address.fromPublicKeys(0, addressHashMode, 1, [
-        new StacksPublicKey(pubKey),
+      this.signerAddress = addressFromPublicKeys(0, addressHashMode, 1, [
+        createStacksPublicKey(pubKey),
       ]);
     }
     this.nonce = nonce;
     this.feeRate = feeRate;
     if (pubKey) {
-      this.pubKeyEncoding = new StacksPublicKey(pubKey).compressed()
+      this.pubKeyEncoding = isCompressed(createStacksPublicKey(pubKey))
         ? PubKeyEncoding.Compressed
         : PubKeyEncoding.Uncompressed;
     }
@@ -150,7 +161,7 @@ export class SpendingCondition extends StacksMessage {
     // * the public key compression flag
     // * the signature
     const hashLength = 32 + 1 + RECOVERABLE_ECDSA_SIG_LENGTH_BYTES;
-    const pubKeyEncoding = publicKey.compressed()
+    const pubKeyEncoding = isCompressed(publicKey)
       ? PubKeyEncoding.Compressed
       : PubKeyEncoding.Uncompressed;
 
@@ -174,8 +185,8 @@ export class SpendingCondition extends StacksMessage {
     nextSigHash: string;
   } {
     const sigHashPreSign = this.makeSigHashPreSign(curSigHash, authType, feeRate, nonce);
-    const signature = privateKey.sign(sigHashPreSign);
-    const publicKey = privateKey.getPublicKey();
+    const signature = signWithKey(privateKey, sigHashPreSign);
+    const publicKey = getPublicKey(privateKey);
     const nextSigHash = this.makeSigHashPostSign(sigHashPreSign, publicKey, signature);
 
     return {
@@ -197,7 +208,7 @@ export class SpendingCondition extends StacksMessage {
     if (this.signerAddress === undefined) {
       throw new Error('"signerAddress" is undefined');
     }
-    if (this.signerAddress.data === undefined) {
+    if (this.signerAddress.hash160 === undefined) {
       throw new Error('"signerAddress.data" is undefined');
     }
     if (this.nonce === undefined) {
@@ -207,7 +218,7 @@ export class SpendingCondition extends StacksMessage {
       throw new Error('"feeRate" is undefined');
     }
     bufferArray.appendByte(this.addressHashMode);
-    bufferArray.appendHexString(this.signerAddress.data);
+    bufferArray.appendHexString(this.signerAddress.hash160);
     bufferArray.push(this.nonce.toArrayLike(Buffer, 'be', 8));
     bufferArray.push(this.feeRate.toArrayLike(Buffer, 'be', 8));
 
@@ -232,17 +243,21 @@ export class SpendingCondition extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.addressHashMode = bufferReader.readByte() as AddressHashMode;
-    const signerPubKeyHash = bufferReader.read(20).toString('hex');
-    this.signerAddress = Address.fromData(0, signerPubKeyHash);
-    this.nonce = new BigNum(bufferReader.read(8).toString('hex'), 16);
-    this.feeRate = new BigNum(bufferReader.read(8).toString('hex'), 16);
+    this.addressHashMode = bufferReader.readUInt8Enum(AddressHashMode, n => {
+      throw new Error(`Could not parse ${n} as AddressHashMode`);
+    });
+    const signerPubKeyHash = bufferReader.readBuffer(20).toString('hex');
+    this.signerAddress = addressFromVersionHash(0, signerPubKeyHash);
+    this.nonce = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
+    this.feeRate = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
 
     if (
       this.addressHashMode === AddressHashMode.SerializeP2PKH ||
       this.addressHashMode === AddressHashMode.SerializeP2WPKH
     ) {
-      this.pubKeyEncoding = bufferReader.readByte() as PubKeyEncoding;
+      this.pubKeyEncoding = bufferReader.readUInt8Enum(PubKeyEncoding, n => {
+        throw new Error(`Could not parse ${n} as PubKeyEncoding`);
+      });
       this.signature = MessageSignature.deserialize(bufferReader);
     } else if (
       this.addressHashMode === AddressHashMode.SerializeP2SH ||
@@ -274,7 +289,7 @@ export class MultiSigSpendingCondition extends SpendingCondition {
   // TODO
 }
 
-export class Authorization extends StacksMessage {
+export class Authorization extends Deserializable {
   authType?: AuthType;
   spendingCondition?: SpendingCondition;
 
@@ -317,7 +332,9 @@ export class Authorization extends StacksMessage {
   }
 
   deserialize(bufferReader: BufferReader) {
-    this.authType = bufferReader.readByte() as AuthType;
+    this.authType = bufferReader.readUInt8Enum(AuthType, n => {
+      throw new Error(`Could not parse ${n} as AuthType`);
+    });
 
     switch (this.authType) {
       case AuthType.Standard:
