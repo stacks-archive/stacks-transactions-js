@@ -6,7 +6,7 @@ import { TokenTransferPayload, createTokenTransferPayload } from '../../src/payl
 
 import { STXPostCondition, createSTXPostCondition } from '../../src/postcondition';
 
-import { createStandardPrincipal, createLPList, addressToString } from '../../src/types';
+import { createLPList, createStandardPrincipal } from '../../src/types';
 
 import {
   DEFAULT_CHAIN_ID,
@@ -20,12 +20,13 @@ import {
 
 import { hash_p2pkh } from '../../src/utils';
 
-import { StacksPrivateKey, createStacksPrivateKey } from '../../src/keys';
+import { createStacksPrivateKey } from '../../src/keys';
 
 import { TransactionSigner } from '../../src/signer';
 
 import * as BigNum from 'bn.js';
 import { BufferReader } from '../../src/bufferReader';
+import { standardPrincipalCV } from '../../src/clarity';
 
 test('STX token transfer transaction serialization and deserialization', () => {
   const transactionVersion = TransactionVersion.Testnet;
@@ -34,11 +35,13 @@ test('STX token transfer transaction serialization and deserialization', () => {
   const anchorMode = AnchorMode.Any;
   const postConditionMode = PostConditionMode.Deny;
 
-  const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const address = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const recipient = createStandardPrincipal(address);
+  const recipientCV = standardPrincipalCV(address);
   const amount = new BigNum(2500000);
   const memo = 'memo (not included';
 
-  const payload = createTokenTransferPayload(recipientAddress, amount, memo);
+  const payload = createTokenTransferPayload(recipientCV, amount, memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const nonce = new BigNum(0);
@@ -50,7 +53,7 @@ test('STX token transfer transaction serialization and deserialization', () => {
   const authorization = new StandardAuthorization(spendingCondition);
 
   const postCondition = createSTXPostCondition(
-    createStandardPrincipal(recipientAddress),
+    recipient,
     FungibleConditionCode.GreaterEqual,
     new BigNum(0)
   );
@@ -82,11 +85,11 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserialized.postConditions.values.length).toBe(1);
 
   const deserializedPostCondition = deserialized.postConditions.values[0] as STXPostCondition;
-  expect(addressToString(deserializedPostCondition.principal.address)).toBe(recipientAddress);
+  expect(deserializedPostCondition.principal.address).toStrictEqual(recipient.address);
   expect(deserializedPostCondition.conditionCode).toBe(FungibleConditionCode.GreaterEqual);
   expect(deserializedPostCondition.amount.toNumber()).toBe(0);
 
   const deserializedPayload = deserialized.payload as TokenTransferPayload;
-  expect(addressToString(deserializedPayload.recipientAddress)).toBe(recipientAddress);
+  expect(deserializedPayload.recipient).toEqual(recipientCV);
   expect(deserializedPayload.amount.toNumber()).toBe(amount.toNumber());
 });

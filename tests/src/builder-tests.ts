@@ -21,12 +21,12 @@ import {
   PostConditionMode,
 } from '../../src/constants';
 
-import { bufferCV } from '../../src/clarity';
+import { bufferCV, standardPrincipalCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
 test('Make STX token transfer', () => {
-  const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
   const feeRate = new BigNum(0);
   const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
@@ -36,16 +36,12 @@ test('Make STX token transfer', () => {
     memo: memo,
   };
 
-  const transaction = makeSTXTokenTransfer(recipientAddress, amount, feeRate, secretKey, options);
+  const transaction = makeSTXTokenTransfer(recipient, amount, feeRate, secretKey, options);
 
   const serialized = transaction.serialize().toString('hex');
 
   const tx =
-    '0000000000040015c31b8c1c11c515e244b75806bac48d1399c775000000000000000000000000000' +
-    '00000000004ae1e7a04089e596377ab4a0f74dfbae05c615a8223f1896df0f28fc334dc794f6faed38abdb' +
-    'c611a0f1816738016afa25b4478e607b4d2a58c3d07925f8e040302000000000016df0ba3e79792be7be5e' +
-    '50a370289accfc8c9e032000000000000303974657374206d656d6f0000000000000000000000000000000' +
-    '0000000000000000000';
+    '0000000000040015c31b8c1c11c515e244b75806bac48d1399c7750000000000000000000000000000000000018d53d21cacae9bde5897ae919fb52abf675a686c7edfd600126e6a3b1a91aa142f27e71815258b506ef76e59655100ebe06a27816d84070253ef3cd0d75b4ad7030200000000000516df0ba3e79792be7be5e50a370289accfc8c9e032000000000000303974657374206d656d6f00000000000000000000000000000000000000000000000000';
 
   expect(serialized).toBe(tx);
 });
@@ -70,16 +66,18 @@ test('Make STX token transfer with post conditions', () => {
     postConditions,
   };
 
-  const transaction = makeSTXTokenTransfer(recipientAddress, amount, feeRate, secretKey, options);
+  const transaction = makeSTXTokenTransfer(
+    standardPrincipalCV(recipientAddress),
+    amount,
+    feeRate,
+    secretKey,
+    options
+  );
 
   const serialized = transaction.serialize().toString('hex');
 
   const tx =
-    '0000000000040015c31b8c1c11c515e244b75806bac48d1399c77500000000000000000000000000000000' +
-    '00008259ea38f7ac7444e043072f046db6b47cebe0b864fa60fa193eb25b82e0d3bf67073821a57392fbd5' +
-    '148827c0b1d62bb679affacdc342cc3fa4011d4f85d0db030200000001000216df0ba3e79792be7be5e50a' +
-    '370289accfc8c9e03203000000000000d4310016df0ba3e79792be7be5e50a370289accfc8c9e032000000' +
-    '000000303974657374206d656d6f00000000000000000000000000000000000000000000000000';
+    '0000000000040015c31b8c1c11c515e244b75806bac48d1399c7750000000000000000000000000000000000004f01728150f68ac3f5088bf67d72fa4bc005083706c190fa04ac137965f0e13f50067450891902e3578ecb4b6ff30ae5d39c4dbe6d28cd2b2fde13c3c36b467c030200000001000216df0ba3e79792be7be5e50a370289accfc8c9e03203000000000000d431000516df0ba3e79792be7be5e50a370289accfc8c9e032000000000000303974657374206d656d6f00000000000000000000000000000000000000000000000000';
 
   expect(serialized).toBe(tx);
 });
