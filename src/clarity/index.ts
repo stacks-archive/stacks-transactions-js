@@ -17,6 +17,7 @@ import {
   contractPrincipalCV,
   standardPrincipalCVFromAddress,
   contractPrincipalCVFromAddress,
+  PrincipalCV,
 } from './types/principalCV';
 import { ListCV, listCV } from './types/listCV';
 import { TupleCV, tupleCV } from './types/tupleCV';
@@ -37,6 +38,7 @@ export {
   ResponseCV,
   ResponseOkCV,
   ResponseErrorCV,
+  PrincipalCV,
   StandardPrincipalCV,
   ContractPrincipalCV,
   ListCV,

@@ -1,6 +1,8 @@
 import { Address, LengthPrefixedString, createAddress, createLPString } from '../../types';
 import { ClarityType } from '../clarityValue';
 
+type PrincipalCV = StandardPrincipalCV | ContractPrincipalCV;
+
 interface StandardPrincipalCV {
   readonly type: ClarityType.PrincipalStandard;
   readonly address: Address;
@@ -50,6 +52,7 @@ function contractPrincipalCVFromStandard(
 }
 
 export {
+  PrincipalCV,
   StandardPrincipalCV,
   ContractPrincipalCV,
   standardPrincipalCV,
