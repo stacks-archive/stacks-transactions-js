@@ -16,10 +16,17 @@ import {
   codeBodyString,
 } from './types';
 
-import { ClarityValue, serializeCV, deserializeCV } from './clarity/';
+import {
+  ClarityValue,
+  serializeCV,
+  deserializeCV,
+  StandardPrincipalCV,
+  ContractPrincipalCV,
+} from './clarity/';
 
 import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
+import { PrincipalCV } from './clarity/types/principalCV';
 
 export type Payload =
   | TokenTransferPayload
@@ -31,19 +38,16 @@ export type Payload =
 export interface TokenTransferPayload {
   readonly type: StacksMessageType.Payload;
   readonly payloadType: PayloadType.TokenTransfer;
-  readonly recipientAddress: Address;
+  readonly recipient: PrincipalCV;
   readonly amount: BigNum;
   readonly memo: MemoString;
 }
 
 export function createTokenTransferPayload(
-  recipientAddress: string | Address,
+  recipient: PrincipalCV,
   amount: BigNum,
   memo?: string | MemoString
 ): TokenTransferPayload {
-  if (typeof recipientAddress === 'string') {
-    recipientAddress = createAddress(recipientAddress);
-  }
   if (typeof memo === 'string') {
     memo = createMemoString(memo);
   }
@@ -51,7 +55,7 @@ export function createTokenTransferPayload(
   return {
     type: StacksMessageType.Payload,
     payloadType: PayloadType.TokenTransfer,
-    recipientAddress,
+    recipient,
     amount,
     memo: memo ? memo : createMemoString(''),
   };
@@ -146,7 +150,7 @@ export function serializePayload(payload: Payload): Buffer {
 
   switch (payload.payloadType) {
     case PayloadType.TokenTransfer:
-      bufferArray.push(serializeStacksMessage(payload.recipientAddress));
+      bufferArray.push(serializeCV(payload.recipient));
       bufferArray.push(payload.amount.toArrayLike(Buffer, 'be', 8));
       bufferArray.push(serializeStacksMessage(payload.memo));
       break;
@@ -183,10 +187,10 @@ export function deserializePayload(bufferReader: BufferReader): Payload {
 
   switch (payloadType) {
     case PayloadType.TokenTransfer:
-      const recipientAddress = deserializeAddress(bufferReader);
+      const recipient = deserializeCV(bufferReader) as PrincipalCV;
       const amount = new BigNum(bufferReader.readBuffer(8));
       const memo = deserializeMemoString(bufferReader);
-      return createTokenTransferPayload(recipientAddress, amount, memo);
+      return createTokenTransferPayload(recipient, amount, memo);
     case PayloadType.ContractCall:
       const contractAddress = deserializeAddress(bufferReader);
       const contractCallName = deserializeLPString(bufferReader);

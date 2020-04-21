@@ -38,9 +38,8 @@ import {
   createLPString,
 } from './types';
 
-import { ClarityValue } from './clarity';
-
 import * as BigNum from 'bn.js';
+import { ClarityValue, PrincipalCV } from './clarity';
 
 /**
  * STX token transfer transaction options
@@ -76,7 +75,7 @@ export interface TokenTransferOptions {
  * @return {StacksTransaction}
  */
 export function makeSTXTokenTransfer(
-  recipientAddress: string,
+  recipient: PrincipalCV,
   amount: BigNum,
   feeRate: BigNum,
   senderKey: string,
@@ -91,7 +90,7 @@ export function makeSTXTokenTransfer(
 
   const normalizedOptions = Object.assign(defaultOptions, options);
 
-  const payload = createTokenTransferPayload(recipientAddress, amount, normalizedOptions.memo);
+  const payload = createTokenTransferPayload(recipient, amount, normalizedOptions.memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(senderKey);
