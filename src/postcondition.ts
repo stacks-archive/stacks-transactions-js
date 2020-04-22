@@ -17,6 +17,7 @@ import {
   PostConditionPrincipal,
   serializePrincipal,
   deserializePrincipal,
+  createStandardPrincipal,
 } from './types';
 
 import * as BigNum from 'bn.js';
@@ -33,10 +34,14 @@ export interface STXPostCondition {
 }
 
 export function createSTXPostCondition(
-  principal: PostConditionPrincipal,
+  principal: string | PostConditionPrincipal,
   conditionCode: FungibleConditionCode,
   amount: BigNum
 ): STXPostCondition {
+  if (typeof principal === 'string') {
+    principal = createStandardPrincipal(principal);
+  }
+
   return {
     type: StacksMessageType.PostCondition,
     conditionType: PostConditionType.STX,
@@ -56,11 +61,15 @@ export interface FungiblePostCondition {
 }
 
 export function createFungiblePostCondition(
-  principal: PostConditionPrincipal,
+  principal: string | PostConditionPrincipal,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
   assetInfo: AssetInfo
 ): FungiblePostCondition {
+  if (typeof principal === 'string') {
+    principal = createStandardPrincipal(principal);
+  }
+
   return {
     type: StacksMessageType.PostCondition,
     conditionType: PostConditionType.Fungible,
@@ -81,11 +90,15 @@ export interface NonFungiblePostCondition {
 }
 
 export function createNonFungiblePostCondition(
-  principal: PostConditionPrincipal,
+  principal: string | PostConditionPrincipal,
   conditionCode: NonFungibleConditionCode,
   assetInfo: AssetInfo,
   assetName: LengthPrefixedString
 ): NonFungiblePostCondition {
+  if (typeof principal === 'string') {
+    principal = createStandardPrincipal(principal);
+  }
+
   return {
     type: StacksMessageType.PostCondition,
     conditionType: PostConditionType.NonFungible,
