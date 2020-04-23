@@ -156,7 +156,6 @@ export class StacksTransaction {
     const tx = this.serialize();
 
     const requestHeaders = {
-      Accept: 'application/json',
       'Content-Type': 'application/octet-stream',
     };
 
@@ -171,10 +170,8 @@ export class StacksTransaction {
     return fetchPrivate(url, options).then(response => {
       if (response.ok) {
         return response.text();
-      } else if (response.status === 400) {
-        return Promise.reject(response);
       } else {
-        throw new Error('Remote endpoint error');
+        return response.text();
       }
     });
   }
