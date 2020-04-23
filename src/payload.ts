@@ -54,7 +54,7 @@ export function createTokenTransferPayload(
     payloadType: PayloadType.TokenTransfer,
     recipient,
     amount,
-    memo: memo ? memo : createMemoString(''),
+    memo: memo ?? createMemoString(''),
   };
 }
 

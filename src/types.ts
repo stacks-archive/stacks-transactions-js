@@ -323,7 +323,7 @@ export function deserializeLPString(
   prefixBytes = prefixBytes ? prefixBytes : 1;
   const length = hexStringToInt(bufferReader.readBuffer(prefixBytes).toString('hex'));
   const content = bufferReader.readBuffer(length).toString();
-  return createLPString(content, prefixBytes, maxLength ? maxLength : 128);
+  return createLPString(content, prefixBytes, maxLength ?? 128);
 }
 
 export function codeBodyString(content: string): LengthPrefixedString {
