@@ -20,7 +20,7 @@ import { ClarityValue, serializeCV, deserializeCV } from './clarity/';
 
 import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
-import { PrincipalCV, standardPrincipalCV } from './clarity/types/principalCV';
+import { PrincipalCV, standardPrincipalCV, principalCV } from './clarity/types/principalCV';
 
 export type Payload =
   | TokenTransferPayload
@@ -43,7 +43,7 @@ export function createTokenTransferPayload(
   memo?: string | MemoString
 ): TokenTransferPayload {
   if (typeof recipient === 'string') {
-    recipient = standardPrincipalCV(recipient);
+    recipient = principalCV(recipient);
   }
   if (typeof memo === 'string') {
     memo = createMemoString(memo);

@@ -75,7 +75,7 @@ export interface TokenTransferOptions {
  * @return {StacksTransaction}
  */
 export function makeSTXTokenTransfer(
-  recipient: PrincipalCV,
+  recipient: string | PrincipalCV,
   amount: BigNum,
   feeRate: BigNum,
   senderKey: string,
