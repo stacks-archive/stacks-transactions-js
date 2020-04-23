@@ -55,7 +55,7 @@ const transaction = makeSTXTokenTransfer(
 );
 
 const serializedTx = transaction.serialize().toString('hex');
-transaction.broadcast(); // Not yet implemented
+transaction.broadcast();
 ```
 
 ## Smart Contract Deploy Transaction
@@ -82,7 +82,7 @@ const transaction = makeSmartContractDeploy(
 );
 
 const serializedTx = transaction.serialize().toString('hex');
-transaction.broadcast(); // Not yet implemented
+transaction.broadcast();
 ```
 
 ## Smart Contract Function Call
@@ -129,7 +129,7 @@ const transaction = makeContractCall(
 );
 
 const serializedTx = transaction.serialize().toString('hex');
-transaction.broadcast(); // Not yet implemented
+transaction.broadcast();
 ```
 
 ## Constructing Clarity Values
