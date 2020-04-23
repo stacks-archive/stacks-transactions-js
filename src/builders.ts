@@ -28,6 +28,10 @@ import {
   FungibleConditionCode,
   NonFungibleConditionCode,
   PostConditionMode,
+  ChainID,
+  DEFAULT_CHAIN_ID,
+  DEFAULT_TRANSACTION_VERSION,
+  AnchorMode,
 } from './constants';
 
 import {
@@ -56,6 +60,8 @@ import { ClarityValue, PrincipalCV } from './clarity';
 export interface TokenTransferOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
+  chainId?: ChainID;
+  anchorMode?: AnchorMode;
   memo?: string;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
@@ -83,9 +89,11 @@ export function makeSTXTokenTransfer(
 ): StacksTransaction {
   const defaultOptions = {
     nonce: new BigNum(0),
-    version: TransactionVersion.Mainnet,
-    memo: '',
+    version: DEFAULT_TRANSACTION_VERSION,
+    chainId: DEFAULT_CHAIN_ID,
+    anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
+    memo: '',
   };
 
   const normalizedOptions = Object.assign(defaultOptions, options);
@@ -116,7 +124,9 @@ export function makeSTXTokenTransfer(
     authorization,
     payload,
     lpPostConditions,
-    normalizedOptions.postConditionMode
+    normalizedOptions.postConditionMode,
+    defaultOptions.anchorMode,
+    normalizedOptions.chainId
   );
 
   const signer = new TransactionSigner(transaction);
@@ -138,6 +148,8 @@ export function makeSTXTokenTransfer(
 export interface ContractDeployOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
+  chainId?: ChainID;
+  anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
 }
@@ -163,7 +175,9 @@ export function makeSmartContractDeploy(
 ): StacksTransaction {
   const defaultOptions = {
     nonce: new BigNum(0),
-    version: TransactionVersion.Mainnet,
+    version: DEFAULT_TRANSACTION_VERSION,
+    chainId: DEFAULT_CHAIN_ID,
+    anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
   };
 
@@ -195,7 +209,9 @@ export function makeSmartContractDeploy(
     authorization,
     payload,
     lpPostConditions,
-    normalizedOptions.postConditionMode
+    normalizedOptions.postConditionMode,
+    normalizedOptions.anchorMode,
+    normalizedOptions.chainId
   );
 
   const signer = new TransactionSigner(transaction);
@@ -217,6 +233,8 @@ export function makeSmartContractDeploy(
 export interface ContractCallOptions {
   nonce?: BigNum;
   version?: TransactionVersion;
+  chainId?: ChainID;
+  anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
 }
@@ -248,7 +266,9 @@ export function makeContractCall(
 ): StacksTransaction {
   const defaultOptions = {
     nonce: new BigNum(0),
-    version: TransactionVersion.Mainnet,
+    version: DEFAULT_TRANSACTION_VERSION,
+    chainId: DEFAULT_CHAIN_ID,
+    anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
   };
 
@@ -285,7 +305,9 @@ export function makeContractCall(
     authorization,
     payload,
     lpPostConditions,
-    normalizedOptions.postConditionMode
+    normalizedOptions.postConditionMode,
+    normalizedOptions.anchorMode,
+    normalizedOptions.chainId
   );
 
   const signer = new TransactionSigner(transaction);
