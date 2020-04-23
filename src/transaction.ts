@@ -9,6 +9,7 @@ import {
   PostConditionMode,
   AuthType,
   StacksMessageType,
+  ChainID,
 } from './constants';
 
 import { Authorization, SpendingCondition } from './authorization';
@@ -24,7 +25,7 @@ import { BufferReader } from './bufferReader';
 
 export class StacksTransaction {
   version: TransactionVersion;
-  chainId: string;
+  chainId: ChainID;
   auth: Authorization;
   anchorMode: AnchorMode;
   payload: Payload;
@@ -38,14 +39,14 @@ export class StacksTransaction {
     postConditions?: LengthPrefixedList,
     postConditionMode?: PostConditionMode,
     anchorMode?: AnchorMode,
-    chainId?: string
+    chainId?: ChainID
   ) {
     this.version = version;
     this.auth = auth;
     this.payload = payload;
-    this.chainId = chainId ? chainId : DEFAULT_CHAIN_ID;
-    this.postConditionMode = postConditionMode ? postConditionMode : PostConditionMode.Deny;
-    this.postConditions = postConditions ? postConditions : createLPList([]);
+    this.chainId = chainId ?? DEFAULT_CHAIN_ID;
+    this.postConditionMode = postConditionMode ?? PostConditionMode.Deny;
+    this.postConditions = postConditions ?? createLPList([]);
 
     if (anchorMode) {
       this.anchorMode = anchorMode;
@@ -135,7 +136,9 @@ export class StacksTransaction {
     const bufferArray: BufferArray = new BufferArray();
 
     bufferArray.appendByte(this.version);
-    bufferArray.appendHexString(this.chainId);
+    const chainIdBuffer = Buffer.alloc(4);
+    chainIdBuffer.writeUInt32BE(this.chainId, 0);
+    bufferArray.push(chainIdBuffer);
     bufferArray.push(this.auth.serialize());
     bufferArray.appendByte(this.anchorMode);
     bufferArray.appendByte(this.postConditionMode);
@@ -178,13 +181,10 @@ export class StacksTransaction {
 }
 
 export function deserializeTransaction(bufferReader: BufferReader) {
-  const version =
-    bufferReader.readUInt8Enum(TransactionVersion, n => {
-      throw new Error(`Could not parse ${n} as TransactionVersion`);
-    }) === TransactionVersion.Mainnet
-      ? TransactionVersion.Mainnet
-      : TransactionVersion.Testnet;
-  const chainId = bufferReader.readBuffer(4).toString('hex');
+  const version = bufferReader.readUInt8Enum(TransactionVersion, n => {
+    throw new Error(`Could not parse ${n} as TransactionVersion`);
+  });
+  const chainId = bufferReader.readUInt32BE();
   const auth = Authorization.deserialize(bufferReader);
   const anchorMode = bufferReader.readUInt8Enum(AnchorMode, n => {
     throw new Error(`Could not parse ${n} as AnchorMode`);

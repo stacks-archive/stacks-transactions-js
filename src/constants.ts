@@ -1,4 +1,12 @@
-const DEFAULT_CHAIN_ID = '00000000'; // Main Stacks blockchain chain ID 0x00000000
+/**
+ * Unsigned 32-bit integer
+ */
+enum ChainID {
+  Testnet = 0x80000000,
+  Mainnet = 0x00000001,
+}
+
+const DEFAULT_CHAIN_ID = ChainID.Mainnet;
 const MAX_STRING_LENGTH_BYTES = 128;
 const CLARITY_INT_SIZE = 128;
 const COINBASE_BUFFER_LENGTH_BYTES = 32;
@@ -38,6 +46,8 @@ enum TransactionVersion {
   Mainnet = 0x00,
   Testnet = 0x80,
 }
+
+const DEFAULT_TRANSACTION_VERSION = TransactionVersion.Mainnet;
 
 enum PostConditionMode {
   Allow = 0x01,
@@ -93,7 +103,7 @@ enum NonFungibleConditionCode {
   Owns = 0x11,
 }
 
-enum PrincipalType {
+enum PostConditionPrincipalID {
   Origin = 0x01,
   Standard = 0x02,
   Contract = 0x03,
@@ -130,23 +140,25 @@ export {
   CLARITY_INT_SIZE,
   COINBASE_BUFFER_LENGTH_BYTES,
   DEFAULT_CHAIN_ID,
+  DEFAULT_TRANSACTION_VERSION,
   RECOVERABLE_ECDSA_SIG_LENGTH_BYTES,
   COMPRESSED_PUBKEY_LENGTH_BYTES,
   UNCOMPRESSED_PUBKEY_LENGTH_BYTES,
   MEMO_MAX_LENGTH_BYTES,
   DEFAULT_CORE_NODE_API_URL,
+  ChainID,
   StacksMessageType,
   PayloadType,
   AnchorMode,
   TransactionVersion,
   PostConditionMode,
   PostConditionType,
+  PostConditionPrincipalID,
   AuthType,
   AddressHashMode,
   AddressVersion,
   PubKeyEncoding,
   FungibleConditionCode,
   NonFungibleConditionCode,
-  PrincipalType,
   AssetType,
 };

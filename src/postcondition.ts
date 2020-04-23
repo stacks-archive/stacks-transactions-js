@@ -9,14 +9,14 @@ import { BufferArray } from './utils';
 
 import {
   AssetInfo,
-  Principal,
   LengthPrefixedString,
-  serializePrincipal,
   serializeAssetInfo,
   serializeLPString,
-  deserializePrincipal,
   deserializeAssetInfo,
   deserializeLPString,
+  PostConditionPrincipal,
+  serializePrincipal,
+  deserializePrincipal,
   createStandardPrincipal,
 } from './types';
 
@@ -28,16 +28,20 @@ export type PostCondition = STXPostCondition | FungiblePostCondition | NonFungib
 export interface STXPostCondition {
   readonly type: StacksMessageType.PostCondition;
   readonly conditionType: PostConditionType.STX;
-  readonly principal: Principal;
+  readonly principal: PostConditionPrincipal;
   readonly conditionCode: FungibleConditionCode;
   readonly amount: BigNum;
 }
 
 export function createSTXPostCondition(
-  principal: Principal,
+  principal: string | PostConditionPrincipal,
   conditionCode: FungibleConditionCode,
   amount: BigNum
 ): STXPostCondition {
+  if (typeof principal === 'string') {
+    principal = createStandardPrincipal(principal);
+  }
+
   return {
     type: StacksMessageType.PostCondition,
     conditionType: PostConditionType.STX,
@@ -50,18 +54,22 @@ export function createSTXPostCondition(
 export interface FungiblePostCondition {
   readonly type: StacksMessageType.PostCondition;
   readonly conditionType: PostConditionType.Fungible;
-  readonly principal: Principal;
+  readonly principal: PostConditionPrincipal;
   readonly conditionCode: FungibleConditionCode;
   readonly amount: BigNum;
   readonly assetInfo: AssetInfo;
 }
 
 export function createFungiblePostCondition(
-  principal: Principal,
+  principal: string | PostConditionPrincipal,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
   assetInfo: AssetInfo
 ): FungiblePostCondition {
+  if (typeof principal === 'string') {
+    principal = createStandardPrincipal(principal);
+  }
+
   return {
     type: StacksMessageType.PostCondition,
     conditionType: PostConditionType.Fungible,
@@ -75,18 +83,22 @@ export function createFungiblePostCondition(
 export interface NonFungiblePostCondition {
   readonly type: StacksMessageType.PostCondition;
   readonly conditionType: PostConditionType.NonFungible;
-  readonly principal: Principal;
+  readonly principal: PostConditionPrincipal;
   readonly conditionCode: NonFungibleConditionCode;
   readonly assetInfo: AssetInfo;
   readonly assetName: LengthPrefixedString;
 }
 
 export function createNonFungiblePostCondition(
-  principal: Principal,
+  principal: string | PostConditionPrincipal,
   conditionCode: NonFungibleConditionCode,
   assetInfo: AssetInfo,
   assetName: LengthPrefixedString
 ): NonFungiblePostCondition {
+  if (typeof principal === 'string') {
+    principal = createStandardPrincipal(principal);
+  }
+
   return {
     type: StacksMessageType.PostCondition,
     conditionType: PostConditionType.NonFungible,
