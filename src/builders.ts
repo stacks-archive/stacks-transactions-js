@@ -59,7 +59,7 @@ import { ClarityValue, PrincipalCV } from './clarity';
  */
 export function estimateTransfer(transaction: StacksTransaction, apiUrl?: string): Promise<BigNum> {
   const requestHeaders = {
-    Accept: 'application/text'
+    Accept: 'application/text',
   };
 
   const options = {
@@ -75,7 +75,7 @@ export function estimateTransfer(transaction: StacksTransaction, apiUrl?: string
 
   return fetchPrivate(url, options)
     .then(response => response.text())
-    .then((feeRateResult) => {
+    .then(feeRateResult => {
       const txBytes = new BigNum(transaction.serialize().byteLength);
       const feeRate = new BigNum(feeRateResult);
       return feeRate.mul(txBytes);
