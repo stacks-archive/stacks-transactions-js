@@ -82,12 +82,7 @@ export class SpendingCondition extends Deserializable {
   signature: MessageSignature;
   signaturesRequired?: number;
 
-  constructor(
-    addressHashMode?: AddressHashMode,
-    pubKey?: string,
-    nonce?: BigNum,
-    fee?: BigNum
-  ) {
+  constructor(addressHashMode?: AddressHashMode, pubKey?: string, nonce?: BigNum, fee?: BigNum) {
     super();
     this.addressHashMode = addressHashMode;
     if (addressHashMode !== undefined && pubKey) {
@@ -270,12 +265,7 @@ export class SpendingCondition extends Deserializable {
 }
 
 export class SingleSigSpendingCondition extends SpendingCondition {
-  constructor(
-    addressHashMode?: AddressHashMode,
-    pubKey?: string,
-    nonce?: BigNum,
-    fee?: BigNum
-  ) {
+  constructor(addressHashMode?: AddressHashMode, pubKey?: string, nonce?: BigNum, fee?: BigNum) {
     super(addressHashMode, pubKey, nonce, fee);
     this.signaturesRequired = 1;
   }
