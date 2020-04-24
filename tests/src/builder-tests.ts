@@ -332,7 +332,7 @@ test('Transaction broadcast', async () => {
 
   fetchMock.mockOnce(`${estimateFeeRate}`);
 
-  const estimateFee = new BigNum(transactionByteLength*estimateFeeRate);
+  const estimateFee = new BigNum(transactionByteLength * estimateFeeRate);
   const resultEstimateFee = await estimateTransfer(transaction);
 
   expect(fetchMock.mock.calls.length).toEqual(1);
