@@ -59,7 +59,12 @@ export { serializeCV, deserializeCV } from './clarity';
 
 export * from './keys';
 
-export { makeSTXTokenTransfer, makeSmartContractDeploy, makeContractCall } from './builders';
+export { 
+  makeSTXTokenTransfer, 
+  makeSmartContractDeploy, 
+  makeContractCall, 
+  estimateTransfer
+} from './builders';
 
 export * from './types';
 export * from './constants';

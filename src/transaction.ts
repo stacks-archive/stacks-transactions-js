@@ -151,7 +151,7 @@ export class StacksTransaction {
   /**
    * Broadcast the signed transaction to a core node
    *
-   * @param {String} apiUrl - specify the core node URL to broadcast to
+   * @param {String} apiUrl - specify the full core API URL to broadcast to
    *
    * @returns {Promise} that resolves to a response if the operation succeeds
    */

@@ -29,6 +29,7 @@ import {
   FungibleConditionCode,
   NonFungibleConditionCode,
   PostConditionMode,
+  PayloadType,
   ChainID,
   DEFAULT_CHAIN_ID,
   DEFAULT_TRANSACTION_VERSION,
@@ -49,16 +50,16 @@ import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
 
 /**
- * Estimate the transaction fee, in microstacks per byte, for a token transfer
+ * Estimate the total transaction fee in microstacks for a token transfer
  *
- * @param {String} apiUrl - specify the core node URL to broadcast to
+ * @param {StacksTransaction} transaction - the token transfer transaction to estimate fees for
+ * @param {String} apiUrl - specify the full core API URL to fetch the fee estimate from
  *
  * @return a promise that resolves to number of microstacks per byte
  */
-export function estimateTransfer(apiUrl?: string): Promise<BigNum> {
+export function estimateTransfer(transaction: StacksTransaction, apiUrl?: string): Promise<BigNum> {
   const requestHeaders = {
-    Accept: 'application/json',
-    'Content-Type': 'text/plain',
+    Accept: 'application/text'
   };
 
   const options = {
@@ -66,12 +67,19 @@ export function estimateTransfer(apiUrl?: string): Promise<BigNum> {
     headers: requestHeaders,
   };
 
+  if (transaction.payload.payloadType != PayloadType.TokenTransfer) {
+    throw new Error('Transaction is not a token transfer');
+  }
+
   const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/fees/transfer`;
 
-  return fetchPrivate(url, options).then(response => {
-    // Return dummy price of 1 microstack per byte
-    return new BigNum(1);
-  });
+  return fetchPrivate(url, options)
+    .then(response => response.text())
+    .then((feeRateResult) => {
+      const txBytes = new BigNum(transaction.serialize().byteLength);
+      const feeRate = new BigNum(feeRateResult);
+      return feeRate.mul(txBytes);
+    });
 }
 
 /**
