@@ -29,7 +29,7 @@ import * as BigNum from 'bn.js';
 test('Make STX token transfer', () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
-  const feeRate = new BigNum(0);
+  const fee = new BigNum(0);
   const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
@@ -37,7 +37,7 @@ test('Make STX token transfer', () => {
     memo: memo,
   };
 
-  const transaction = makeSTXTokenTransfer(recipient, amount, feeRate, secretKey, options);
+  const transaction = makeSTXTokenTransfer(recipient, amount, fee, secretKey, options);
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -54,11 +54,11 @@ test('Make STX token transfer', () => {
 test('Make STX token transfer with testnet', () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
-  const feeRate = new BigNum(0);
+  const fee = new BigNum(0);
   const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
-  const transaction = makeSTXTokenTransfer(recipient, amount, feeRate, secretKey, {
+  const transaction = makeSTXTokenTransfer(recipient, amount, fee, secretKey, {
     version: TransactionVersion.Testnet,
     chainId: ChainID.Testnet,
     memo: memo,
@@ -79,7 +79,7 @@ test('Make STX token transfer with testnet', () => {
 test('Make STX token transfer with post conditions', () => {
   const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
   const amount = new BigNum(12345);
-  const feeRate = new BigNum(0);
+  const fee = new BigNum(0);
   const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
@@ -99,7 +99,7 @@ test('Make STX token transfer with post conditions', () => {
   const transaction = makeSTXTokenTransfer(
     standardPrincipalCV(recipientAddress),
     amount,
-    feeRate,
+    fee,
     secretKey,
     options
   );
@@ -120,13 +120,13 @@ test('Make smart contract deploy', () => {
   const contractName = 'kv-store';
   const code = fs.readFileSync('./tests/src/contracts/kv-store.clar').toString();
   const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
-  const feeRate = new BigNum(0);
+  const fee = new BigNum(0);
 
   const options = {
     version: TransactionVersion.Testnet,
   };
 
-  const transaction = makeSmartContractDeploy(contractName, code, feeRate, secretKey, options);
+  const transaction = makeSmartContractDeploy(contractName, code, fee, secretKey, options);
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -153,7 +153,7 @@ test('Make contract-call', () => {
   const buffer = bufferCV(Buffer.from('foo'));
   const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 
-  const feeRate = new BigNum(0);
+  const fee = new BigNum(0);
 
   const options = {
     nonce: new BigNum(1),
@@ -165,7 +165,7 @@ test('Make contract-call', () => {
     contractName,
     functionName,
     [buffer],
-    feeRate,
+    fee,
     secretKey,
     options
   );
@@ -194,7 +194,7 @@ test('Make contract-call with post conditions', () => {
   const info = createAssetInfo(assetAddress, assetContractName, assetName);
   const tokenAssetName = 'token-asset-name';
 
-  const feeRate = new BigNum(0);
+  const fee = new BigNum(0);
 
   const postConditions = [
     makeStandardSTXPostCondition(
@@ -241,7 +241,7 @@ test('Make contract-call with post conditions', () => {
     contractName,
     functionName,
     [buffer],
-    feeRate,
+    fee,
     secretKey,
     {
       nonce: new BigNum(1),
@@ -280,14 +280,14 @@ test('Make contract-call with post condition allow mode', () => {
   const buffer = bufferCV(Buffer.from('foo'));
   const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 
-  const feeRate = new BigNum(0);
+  const fee = new BigNum(0);
 
   const transaction = makeContractCall(
     contractAddress,
     contractName,
     functionName,
     [buffer],
-    feeRate,
+    fee,
     secretKey,
     {
       nonce: new BigNum(1),

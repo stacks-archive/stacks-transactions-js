@@ -74,7 +74,7 @@ export interface TokenTransferOptions {
  *
  * @param  {String} recipientAddress - the c32check address of the recipient
  * @param  {BigNum} amount - number of tokens to transfer in microstacks
- * @param  {BigNum} feeRate - transaction fee rate in microstacks
+ * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TokenTransferOptions} options - an options object for the token transfer
  *
@@ -83,7 +83,7 @@ export interface TokenTransferOptions {
 export function makeSTXTokenTransfer(
   recipient: string | PrincipalCV,
   amount: BigNum,
-  feeRate: BigNum,
+  fee: BigNum,
   senderKey: string,
   options?: TokenTransferOptions
 ): StacksTransaction {
@@ -107,7 +107,7 @@ export function makeSTXTokenTransfer(
     addressHashMode,
     publicKeyToString(pubKey),
     normalizedOptions.nonce,
-    feeRate
+    fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
@@ -161,7 +161,7 @@ export interface ContractDeployOptions {
  *
  * @param  {String} contractName - the contract name
  * @param  {String} codeBody - the code body string
- * @param  {BigNum} feeRate - transaction fee rate in microstacks
+ * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  *
  * @return {StacksTransaction}
@@ -169,7 +169,7 @@ export interface ContractDeployOptions {
 export function makeSmartContractDeploy(
   contractName: string,
   codeBody: string,
-  feeRate: BigNum,
+  fee: BigNum,
   senderKey: string,
   options?: ContractDeployOptions
 ): StacksTransaction {
@@ -192,7 +192,7 @@ export function makeSmartContractDeploy(
     addressHashMode,
     publicKeyToString(pubKey),
     normalizedOptions.nonce,
-    feeRate
+    fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
@@ -248,7 +248,7 @@ export interface ContractCallOptions {
  * @param  {String} contractName - the contract name
  * @param  {String} functionName - name of the function to be called
  * @param  {[ClarityValue]} functionArgs - an array of Clarity values as arguments to the function call
- * @param  {BigNum} feeRate - transaction fee rate in microstacks
+ * @param  {BigNum} fee - transaction fee rate in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
@@ -260,7 +260,7 @@ export function makeContractCall(
   contractName: string,
   functionName: string,
   functionArgs: ClarityValue[],
-  feeRate: BigNum,
+  fee: BigNum,
   senderKey: string,
   options?: ContractCallOptions
 ): StacksTransaction {
@@ -288,7 +288,7 @@ export function makeContractCall(
     addressHashMode,
     publicKeyToString(pubKey),
     normalizedOptions.nonce,
-    feeRate
+    fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
