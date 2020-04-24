@@ -1,7 +1,7 @@
 import { ClarityValue, ClarityType } from './clarityValue';
 import { BooleanCV, TrueCV, FalseCV, trueCV, falseCV } from './types/booleanCV';
 import { IntCV, UIntCV, intCV, uintCV } from './types/intCV';
-import { BufferCV, bufferCV } from './types/bufferCV';
+import { BufferCV, bufferCV, bufferCVFromString } from './types/bufferCV';
 import { OptionalCV, noneCV, someCV } from './types/optionalCV';
 import {
   ResponseCV,
@@ -52,6 +52,7 @@ export {
   intCV,
   uintCV,
   bufferCV,
+  bufferCVFromString,
   noneCV,
   someCV,
   responseOkCV,
