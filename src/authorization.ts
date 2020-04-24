@@ -77,17 +77,12 @@ export class SpendingCondition extends Deserializable {
   addressHashMode?: AddressHashMode;
   signerAddress?: Address;
   nonce?: BigNum;
-  feeRate?: BigNum;
+  fee?: BigNum;
   pubKeyEncoding?: PubKeyEncoding;
   signature: MessageSignature;
   signaturesRequired?: number;
 
-  constructor(
-    addressHashMode?: AddressHashMode,
-    pubKey?: string,
-    nonce?: BigNum,
-    feeRate?: BigNum
-  ) {
+  constructor(addressHashMode?: AddressHashMode, pubKey?: string, nonce?: BigNum, fee?: BigNum) {
     super();
     this.addressHashMode = addressHashMode;
     if (addressHashMode !== undefined && pubKey) {
@@ -96,7 +91,7 @@ export class SpendingCondition extends Deserializable {
       ]);
     }
     this.nonce = nonce;
-    this.feeRate = feeRate;
+    this.fee = fee;
     if (pubKey) {
       this.pubKeyEncoding = isCompressed(createStacksPublicKey(pubKey))
         ? PubKeyEncoding.Compressed
@@ -119,7 +114,7 @@ export class SpendingCondition extends Deserializable {
   clear(): SpendingCondition {
     const cleared = _.cloneDeep(this);
     cleared.nonce = new BigNum(0);
-    cleared.feeRate = new BigNum(0);
+    cleared.fee = new BigNum(0);
     cleared.signature = MessageSignature.empty();
     return cleared;
   }
@@ -127,21 +122,21 @@ export class SpendingCondition extends Deserializable {
   static makeSigHashPreSign(
     curSigHash: string,
     authType: AuthType,
-    feeRate: BigNum,
+    fee: BigNum,
     nonce: BigNum
   ): string {
     // new hash combines the previous hash and all the new data this signature will add. This
     // includes:
     // * the previous hash
     // * the auth flag
-    // * the fee rate (big-endian 8-byte number)
+    // * the tx fee (big-endian 8-byte number)
     // * nonce (big-endian 8-byte number)
     const hashLength = 32 + 1 + 8 + 8;
 
     const sigHash =
       curSigHash +
       Buffer.from([authType]).toString('hex') +
-      feeRate.toArrayLike(Buffer, 'be', 8).toString('hex') +
+      fee.toArrayLike(Buffer, 'be', 8).toString('hex') +
       nonce.toArrayLike(Buffer, 'be', 8).toString('hex');
 
     if (Buffer.from(sigHash, 'hex').byteLength !== hashLength) {
@@ -177,14 +172,14 @@ export class SpendingCondition extends Deserializable {
   static nextSignature(
     curSigHash: string,
     authType: AuthType,
-    feeRate: BigNum,
+    fee: BigNum,
     nonce: BigNum,
     privateKey: StacksPrivateKey
   ): {
     nextSig: MessageSignature;
     nextSigHash: string;
   } {
-    const sigHashPreSign = this.makeSigHashPreSign(curSigHash, authType, feeRate, nonce);
+    const sigHashPreSign = this.makeSigHashPreSign(curSigHash, authType, fee, nonce);
     const signature = signWithKey(privateKey, sigHashPreSign);
     const publicKey = getPublicKey(privateKey);
     const nextSigHash = this.makeSigHashPostSign(sigHashPreSign, publicKey, signature);
@@ -214,13 +209,13 @@ export class SpendingCondition extends Deserializable {
     if (this.nonce === undefined) {
       throw new Error('"nonce" is undefined');
     }
-    if (this.feeRate === undefined) {
-      throw new Error('"feeRate" is undefined');
+    if (this.fee === undefined) {
+      throw new Error('"fee" is undefined');
     }
     bufferArray.appendByte(this.addressHashMode);
     bufferArray.appendHexString(this.signerAddress.hash160);
     bufferArray.push(this.nonce.toArrayLike(Buffer, 'be', 8));
-    bufferArray.push(this.feeRate.toArrayLike(Buffer, 'be', 8));
+    bufferArray.push(this.fee.toArrayLike(Buffer, 'be', 8));
 
     if (
       this.addressHashMode === AddressHashMode.SerializeP2PKH ||
@@ -249,7 +244,7 @@ export class SpendingCondition extends Deserializable {
     const signerPubKeyHash = bufferReader.readBuffer(20).toString('hex');
     this.signerAddress = addressFromVersionHash(0, signerPubKeyHash);
     this.nonce = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
-    this.feeRate = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
+    this.fee = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
 
     if (
       this.addressHashMode === AddressHashMode.SerializeP2PKH ||
@@ -270,13 +265,8 @@ export class SpendingCondition extends Deserializable {
 }
 
 export class SingleSigSpendingCondition extends SpendingCondition {
-  constructor(
-    addressHashMode?: AddressHashMode,
-    pubKey?: string,
-    nonce?: BigNum,
-    feeRate?: BigNum
-  ) {
-    super(addressHashMode, pubKey, nonce, feeRate);
+  constructor(addressHashMode?: AddressHashMode, pubKey?: string, nonce?: BigNum, fee?: BigNum) {
+    super(addressHashMode, pubKey, nonce, fee);
     this.signaturesRequired = 1;
   }
 

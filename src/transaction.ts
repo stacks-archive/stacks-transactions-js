@@ -89,8 +89,8 @@ export class StacksTransaction {
     authType: AuthType,
     privateKey: StacksPrivateKey
   ): string {
-    if (condition.feeRate === undefined) {
-      throw new Error('"condition.feeRate" is undefined');
+    if (condition.fee === undefined) {
+      throw new Error('"condition.fee" is undefined');
     }
     if (condition.nonce === undefined) {
       throw new Error('"condition.nonce" is undefined');
@@ -98,7 +98,7 @@ export class StacksTransaction {
     const { nextSig, nextSigHash } = SpendingCondition.nextSignature(
       curSigHash,
       authType,
-      condition.feeRate,
+      condition.fee,
       condition.nonce,
       privateKey
     );

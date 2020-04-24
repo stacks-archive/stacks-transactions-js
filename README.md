@@ -38,7 +38,7 @@ const BigNum = require('bn.js');
 
 const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
 const amount = new BigNum(12345);
-const feeRate = new BigNum(0); // Fee estimation to be implemented
+const fee = new BigNum(0); // Fee estimation to be implemented
 const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
 
 const options = {
@@ -49,7 +49,7 @@ const options = {
 const transaction = makeSTXTokenTransfer(
   recipientAddress,
   amount,
-  feeRate,
+  fee,
   secretKey,
   options
 );
@@ -67,7 +67,7 @@ const BigNum = require('bn.js');
 const contractName = 'contract_name';
 const code = fs.readFileSync('/path/to/contract.clar').toString();
 const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
-const feeRate = new BigNum(0); // Fee estimation to be implemented
+const fee = new BigNum(0); // Fee estimation to be implemented
 
 const options = {
   nonce: new BigNum(0) // The nonce needs to be manually specified for now
@@ -76,7 +76,7 @@ const options = {
 const transaction = makeSmartContractDeploy(
   contractName, 
   code, 
-  feeRate, 
+  fee, 
   secretKey
   options
 );
@@ -98,7 +98,7 @@ const buffer = Buffer.from('foo');
 const bufferClarityValue = new BufferCV(buffer);
 const functionArgs = [bufferClarityValue];
 const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
-const feeRate = new BigNum(0); // Fee estimation to be implemented
+const fee = new BigNum(0); // Fee estimation to be implemented
 
 // Add an optional post condition
 // See below for details on constructing post conditions
@@ -123,7 +123,7 @@ const transaction = makeContractCall(
   contractName,
   functionName,
   functionArgs,
-  feeRate,
+  fee,
   secretKey,
   options
 );
