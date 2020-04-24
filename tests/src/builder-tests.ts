@@ -10,11 +10,13 @@ import {
   makeContractFungiblePostCondition,
   makeStandardNonFungiblePostCondition,
   makeContractNonFungiblePostCondition,
+  estimateTransfer,
 } from '../../src/builders';
 
 import { createAssetInfo } from '../../src/types';
 
 import {
+  DEFAULT_CORE_NODE_API_URL,
   TransactionVersion,
   FungibleConditionCode,
   NonFungibleConditionCode,
@@ -25,6 +27,10 @@ import {
 import { bufferCV, standardPrincipalCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
+
+import { enableFetchMocks } from 'jest-fetch-mock';
+
+enableFetchMocks();
 
 test('Make STX token transfer', () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
@@ -305,4 +311,31 @@ test('Make contract-call with post condition allow mode', () => {
     '5e9bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
 
   expect(serialized).toBe(tx);
+});
+
+test('Transaction broadcast', async () => {
+  const apiUrl = `${DEFAULT_CORE_NODE_API_URL}/v2/fees/transfer`;
+  const estimateFeeRate = 1;
+
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(0);
+  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const memo = 'test memo';
+
+  const options = {
+    memo: memo,
+  };
+
+  const transaction = makeSTXTokenTransfer(recipient, amount, fee, secretKey, options);
+  const transactionByteLength = transaction.serialize().byteLength;
+
+  fetchMock.mockOnce(`${estimateFeeRate}`);
+
+  const estimateFee = new BigNum(transactionByteLength*estimateFeeRate);
+  const resultEstimateFee = await estimateTransfer(transaction);
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
+  expect(resultEstimateFee.toNumber()).toEqual(estimateFee.toNumber());
 });
