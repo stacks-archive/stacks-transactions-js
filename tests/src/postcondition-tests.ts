@@ -28,6 +28,7 @@ import {
 import { serializeDeserialize } from './macros';
 
 import * as BigNum from 'bn.js';
+import { bufferCVFromString, deserializeCV, BufferCV } from '../../src';
 
 test('STX post condition serialization and deserialization', () => {
   const postConditionType = PostConditionType.STX;
@@ -95,13 +96,13 @@ test('Non-fungible post condition serialization and deserialization', () => {
   const assetName = 'asset_name';
   const info = createAssetInfo(assetAddress, assetContractName, assetName);
 
-  const nftAssetName = createLPString('nft_asset_name');
+  const nftAssetName = 'nft_asset_name';
 
   const postCondition = createNonFungiblePostCondition(
     principal,
     conditionCode,
     info,
-    nftAssetName
+    bufferCVFromString(nftAssetName)
   );
 
   const deserialized = serializeDeserialize(
@@ -116,5 +117,5 @@ test('Non-fungible post condition serialization and deserialization', () => {
   expect(addressToString(deserialized.assetInfo.address)).toBe(assetAddress);
   expect(deserialized.assetInfo.contractName.content).toBe(assetContractName);
   expect(deserialized.assetInfo.assetName.content).toBe(assetName);
-  expect(deserialized.assetName).toEqual(nftAssetName);
+  expect((deserialized.assetName as BufferCV).buffer.toString()).toEqual(nftAssetName);
 });

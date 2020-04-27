@@ -429,13 +429,13 @@ export function makeStandardNonFungiblePostCondition(
   address: string,
   conditionCode: NonFungibleConditionCode,
   assetInfo: AssetInfo,
-  assetName: string
+  assetName: ClarityValue
 ): NonFungiblePostCondition {
   return createNonFungiblePostCondition(
     createStandardPrincipal(address),
     conditionCode,
     assetInfo,
-    createLPString(assetName)
+    assetName
   );
 }
 
@@ -456,12 +456,12 @@ export function makeContractNonFungiblePostCondition(
   contractName: string,
   conditionCode: NonFungibleConditionCode,
   assetInfo: AssetInfo,
-  assetName: string
+  assetName: ClarityValue
 ): NonFungiblePostCondition {
   return createNonFungiblePostCondition(
     createContractPrincipal(address, contractName),
     conditionCode,
     assetInfo,
-    createLPString(assetName)
+    assetName
   );
 }

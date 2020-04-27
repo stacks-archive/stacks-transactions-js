@@ -9,19 +9,18 @@ import { BufferArray } from './utils';
 
 import {
   AssetInfo,
-  LengthPrefixedString,
   serializeAssetInfo,
-  serializeLPString,
   deserializeAssetInfo,
-  deserializeLPString,
   PostConditionPrincipal,
   serializePrincipal,
   deserializePrincipal,
   createStandardPrincipal,
+  createAssetInfo,
 } from './types';
 
 import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
+import { ClarityValue, serializeCV, deserializeCV } from './clarity';
 
 export type PostCondition = STXPostCondition | FungiblePostCondition | NonFungiblePostCondition;
 
@@ -85,15 +84,17 @@ export interface NonFungiblePostCondition {
   readonly conditionType: PostConditionType.NonFungible;
   readonly principal: PostConditionPrincipal;
   readonly conditionCode: NonFungibleConditionCode;
+  /** Structure that identifies the token type. */
   readonly assetInfo: AssetInfo;
-  readonly assetName: LengthPrefixedString;
+  /** The Clarity value that names the token instance. */
+  readonly assetName: ClarityValue;
 }
 
 export function createNonFungiblePostCondition(
   principal: string | PostConditionPrincipal,
   conditionCode: NonFungibleConditionCode,
   assetInfo: AssetInfo,
-  assetName: LengthPrefixedString
+  assetName: ClarityValue
 ): NonFungiblePostCondition {
   if (typeof principal === 'string') {
     principal = createStandardPrincipal(principal);
@@ -122,7 +123,7 @@ export function serializePostCondition(postCondition: PostCondition): Buffer {
   }
 
   if (postCondition.conditionType === PostConditionType.NonFungible) {
-    bufferArray.push(serializeLPString(postCondition.assetName));
+    bufferArray.push(serializeCV(postCondition.assetName));
   }
 
   bufferArray.appendByte(postCondition.conditionCode);
@@ -176,7 +177,7 @@ export function deserializePostCondition(bufferReader: BufferReader): PostCondit
       };
     case PostConditionType.NonFungible:
       assetInfo = deserializeAssetInfo(bufferReader);
-      const assetName = deserializeLPString(bufferReader);
+      const assetName = deserializeCV(bufferReader);
       conditionCode = bufferReader.readUInt8Enum(NonFungibleConditionCode, n => {
         throw new Error(`Could not read ${n} as FungibleConditionCode`);
       });
