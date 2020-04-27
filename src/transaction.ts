@@ -21,7 +21,10 @@ import { Payload, serializePayload, deserializePayload } from './payload';
 import { LengthPrefixedList, serializeLPList, deserializeLPList, createLPList } from './types';
 
 import { StacksPrivateKey } from './keys';
+
 import { BufferReader } from './bufferReader';
+
+import * as BigNum from 'bn.js';
 
 export class StacksTransaction {
   version: TransactionVersion;
@@ -114,6 +117,15 @@ export class StacksTransaction {
   txid(): string {
     const serialized = this.serialize();
     return txidFromData(serialized);
+  }
+
+  /**
+   * Set the total fee to be paid for this transaction
+   *
+   * @param {BigNum} fee - the fee amount in microstacks
+   */
+  setFee(amount: BigNum) {
+    this.auth.setFee(amount);
   }
 
   serialize(): Buffer {
