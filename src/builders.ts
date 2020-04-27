@@ -51,11 +51,14 @@ import { ClarityValue, PrincipalCV } from './clarity';
  * Estimate the total transaction fee in microstacks for a token transfer
  *
  * @param {StacksTransaction} transaction - the token transfer transaction to estimate fees for
- * @param {String} apiUrl - specify the full core API URL to fetch the fee estimate from
+ * @param {StacksNetwork} network - the Stacks network to estimate transaction for
  *
  * @return a promise that resolves to number of microstacks per byte
  */
-export function estimateTransfer(transaction: StacksTransaction, apiUrl?: string): Promise<BigNum> {
+export function estimateTransfer(
+  transaction: StacksTransaction,
+  network?: StacksNetwork
+): Promise<BigNum> {
   const requestHeaders = {
     Accept: 'application/text',
   };
@@ -70,7 +73,9 @@ export function estimateTransfer(transaction: StacksTransaction, apiUrl?: string
   }
 
   const defaultNetwork = new StacksMainnet();
-  const url = apiUrl || defaultNetwork.transferFeeEstimateApiUrl;
+  const url = network
+    ? network.transferFeeEstimateApiUrl
+    : defaultNetwork.transferFeeEstimateApiUrl;
 
   return fetchPrivate(url, fetchOptions)
     .then(response => response.text())
@@ -198,10 +203,7 @@ export async function makeSTXTokenTransfer(
   );
 
   if (!options?.fee) {
-    const txFee = await estimateTransfer(
-      transaction,
-      normalizedOptions.network.transferFeeEstimateApiUrl
-    );
+    const txFee = await estimateTransfer(transaction, normalizedOptions.network);
     transaction.setFee(txFee);
   }
 
@@ -238,13 +240,13 @@ export interface ContractDeployOptions {
  * Estimate the total transaction fee in microstacks for a contract deploy
  *
  * @param {StacksTransaction} transaction - the token transfer transaction to estimate fees for
- * @param {String} apiUrl - specify the full core API URL to fetch the fee estimate from
+ * @param {StacksNetwork} network - the Stacks network to estimate transaction for
  *
  * @return a promise that resolves to number of microstacks per byte
  */
 export function estimateContractDeploy(
   transaction: StacksTransaction,
-  apiUrl?: string
+  network?: StacksNetwork
 ): Promise<BigNum> {
   const requestHeaders = {
     Accept: 'application/text',
@@ -261,7 +263,10 @@ export function estimateContractDeploy(
 
   // Place holder estimate until contract deploy fee estimation is fully implemented on Stacks
   // blockchain core
-  const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/fees/transfer`;
+  const defaultNetwork = new StacksMainnet();
+  const url = network
+    ? network.transferFeeEstimateApiUrl
+    : defaultNetwork.transferFeeEstimateApiUrl;
 
   return fetchPrivate(url, fetchOptions)
     .then(response => response.text())
@@ -331,10 +336,7 @@ export async function makeSmartContractDeploy(
   );
 
   if (!options?.fee) {
-    const txFee = await estimateTransfer(
-      transaction,
-      normalizedOptions.network.transferFeeEstimateApiUrl
-    );
+    const txFee = await estimateTransfer(transaction, normalizedOptions.network);
     transaction.setFee(txFee);
   }
 
@@ -370,13 +372,13 @@ export interface ContractCallOptions {
  * Estimate the total transaction fee in microstacks for a contract function call
  *
  * @param {StacksTransaction} transaction - the token transfer transaction to estimate fees for
- * @param {String} apiUrl - specify the full core API URL to fetch the fee estimate from
+ * @param {StacksNetwork} network - the Stacks network to estimate transaction for
  *
  * @return a promise that resolves to number of microstacks per byte
  */
 export function estimateContractFunctionCall(
   transaction: StacksTransaction,
-  apiUrl?: string
+  network?: StacksNetwork
 ): Promise<BigNum> {
   const requestHeaders = {
     Accept: 'application/text',
@@ -393,7 +395,10 @@ export function estimateContractFunctionCall(
 
   // Place holder estimate until contract call fee estimation is fully implemented on Stacks
   // blockchain core
-  const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/fees/transfer`;
+  const defaultNetwork = new StacksMainnet();
+  const url = network
+    ? network.transferFeeEstimateApiUrl
+    : defaultNetwork.transferFeeEstimateApiUrl;
 
   return fetchPrivate(url, fetchOptions)
     .then(response => response.text())
@@ -474,10 +479,7 @@ export async function makeContractCall(
   );
 
   if (!options?.fee) {
-    const txFee = await estimateContractFunctionCall(
-      transaction,
-      normalizedOptions.feeEstimateApiUrl
-    );
+    const txFee = await estimateContractFunctionCall(transaction, normalizedOptions.network);
     transaction.setFee(txFee);
   }
 

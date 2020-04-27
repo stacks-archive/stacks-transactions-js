@@ -376,9 +376,15 @@ test('Estimate token transfer fee', async () => {
   const estimateFee = new BigNum(transactionByteLength * estimateFeeRate);
   const resultEstimateFee = await estimateTransfer(transaction);
 
-  expect(fetchMock.mock.calls.length).toEqual(1);
+  fetchMock.mockOnce(`${estimateFeeRate}`);
+  const network = new StacksTestnet();
+  const resultEstimateFee2 = await estimateTransfer(transaction, network);
+
+  expect(fetchMock.mock.calls.length).toEqual(2);
   expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
+  expect(fetchMock.mock.calls[1][0]).toEqual(network.transferFeeEstimateApiUrl);
   expect(resultEstimateFee.toNumber()).toEqual(estimateFee.toNumber());
+  expect(resultEstimateFee2.toNumber()).toEqual(estimateFee.toNumber());
 });
 
 test('Transaction broadcast', async () => {
