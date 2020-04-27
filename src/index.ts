@@ -42,6 +42,7 @@ export {
   intCV,
   uintCV,
   bufferCV,
+  bufferCVFromString,
   noneCV,
   someCV,
   responseOkCV,

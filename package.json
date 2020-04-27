@@ -2,8 +2,8 @@
   "name": "@blockstack/stacks-transactions",
   "version": "0.3.0-alpha.5",
   "description": "Javascript library for constructing transactions on the Stacks blockchain.",
-  "main": "lib/src/index",
-  "types": "lib/src/index.d.ts",
+  "main": "lib/index",
+  "types": "lib/index.d.ts",
   "unpkg": "dist/stacks-transactions.js",
   "scripts": {
     "build": "npm run build:node",
@@ -12,13 +12,14 @@
     "build:webpack:analyze": "shx rm -rf dist/* && cross-env NODE_ENV=production ANALYZE=true webpack --mode=production",
     "build:docs": "rimraf docs && cross-env typedoc --name \"stacks-transactions-js $npm_package_version Library Reference\" --tsconfig tsconfig.typedoc.json --out docs --json docs/docs.json src",
     "start": "webpack-dev-server",
-    "build:node": "shx rm -rf lib && tsc --declaration",
-    "build:node:watch": "shx rm -rf lib && tsc --watch",
+    "build:node": "shx rm -rf lib && tsc -p tsconfig.build.json",
+    "build:node:watch": "shx rm -rf lib && tsc -p tsconfig.build.json --watch",
     "lint": "eslint ./src ./tests --ext .ts",
     "lint:fix": "eslint ./src ./tests --ext .ts --fix",
     "test": "jest --config ./jest.config.js --coverage",
     "prepublishOnly": "npm run test && npm run build",
-    "typecheck": "tsc --noEmit"
+    "prepare": "npm run build",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "repository": {
     "type": "git",

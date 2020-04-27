@@ -13,4 +13,6 @@ const bufferCV = (buffer: Buffer): BufferCV => {
   return { type: ClarityType.Buffer, buffer };
 };
 
-export { BufferCV, bufferCV };
+const bufferCVFromString = (str: string): BufferCV => bufferCV(Buffer.from(str));
+
+export { BufferCV, bufferCV, bufferCVFromString };

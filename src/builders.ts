@@ -34,13 +34,7 @@ import {
   AnchorMode,
 } from './constants';
 
-import {
-  AssetInfo,
-  createLPList,
-  createStandardPrincipal,
-  createContractPrincipal,
-  createLPString,
-} from './types';
+import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
 
 import { fetchPrivate } from './utils';
 
@@ -549,7 +543,7 @@ export function makeStandardFungiblePostCondition(
   address: string,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
-  assetInfo: AssetInfo
+  assetInfo: string | AssetInfo
 ): FungiblePostCondition {
   return createFungiblePostCondition(
     createStandardPrincipal(address),
@@ -577,7 +571,7 @@ export function makeContractFungiblePostCondition(
   contractName: string,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
-  assetInfo: AssetInfo
+  assetInfo: string | AssetInfo
 ): FungiblePostCondition {
   return createFungiblePostCondition(
     createContractPrincipal(address, contractName),
@@ -601,14 +595,14 @@ export function makeContractFungiblePostCondition(
 export function makeStandardNonFungiblePostCondition(
   address: string,
   conditionCode: NonFungibleConditionCode,
-  assetInfo: AssetInfo,
-  assetName: string
+  assetInfo: string | AssetInfo,
+  assetName: ClarityValue
 ): NonFungiblePostCondition {
   return createNonFungiblePostCondition(
     createStandardPrincipal(address),
     conditionCode,
     assetInfo,
-    createLPString(assetName)
+    assetName
   );
 }
 
@@ -628,13 +622,13 @@ export function makeContractNonFungiblePostCondition(
   address: string,
   contractName: string,
   conditionCode: NonFungibleConditionCode,
-  assetInfo: AssetInfo,
-  assetName: string
+  assetInfo: string | AssetInfo,
+  assetName: ClarityValue
 ): NonFungiblePostCondition {
   return createNonFungiblePostCondition(
     createContractPrincipal(address, contractName),
     conditionCode,
     assetInfo,
-    createLPString(assetName)
+    assetName
   );
 }

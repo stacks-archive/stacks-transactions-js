@@ -224,6 +224,23 @@ export interface ContractPrincipal {
   readonly contractName: LengthPrefixedString;
 }
 
+/**
+ * Parses a principal string for either a standard principal or contract principal.
+ * @param principalString - String in the format `{address}.{contractName}`
+ * @example "SP13N5TE1FBBGRZD1FCM49QDGN32WAXM2E5F8WT2G.example-contract"
+ * @example "SP13N5TE1FBBGRZD1FCM49QDGN32WAXM2E5F8WT2G"
+ */
+export function parsePrincipalString(
+  principalString: string
+): StandardPrincipal | ContractPrincipal {
+  if (principalString.includes('.')) {
+    const [address, contractName] = principalString.split('.');
+    return createContractPrincipal(address, contractName);
+  } else {
+    return createStandardPrincipal(principalString);
+  }
+}
+
 export function createStandardPrincipal(addressString: string): StandardPrincipal {
   const addr = createAddress(addressString);
   return {
@@ -363,6 +380,17 @@ export interface AssetInfo {
   readonly address: Address;
   readonly contractName: LengthPrefixedString;
   readonly assetName: LengthPrefixedString;
+}
+
+/**
+ * Parse a fully qualified string that identifies the token type.
+ * @param id - String in the format `{address}.{contractName}::{assetName}`
+ * @example "SP13N5TE1FBBGRZD1FCM49QDGN32WAXM2E5F8WT2G.example-contract::example-token"
+ */
+export function parseAssetInfoString(id: string): AssetInfo {
+  const [assetAddress, assetContractName, assetTokenName] = id.split(/\.|::/);
+  const assetInfo = createAssetInfo(assetAddress, assetContractName, assetTokenName);
+  return assetInfo;
 }
 
 export function createAssetInfo(
