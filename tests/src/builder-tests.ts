@@ -11,18 +11,19 @@ import {
   makeStandardNonFungiblePostCondition,
   makeContractNonFungiblePostCondition,
   estimateTransfer,
+  broadcastTransaction,
 } from '../../src/builders';
 
 import { createAssetInfo } from '../../src/types';
 
 import {
   DEFAULT_CORE_NODE_API_URL,
-  TransactionVersion,
   FungibleConditionCode,
   NonFungibleConditionCode,
   PostConditionMode,
-  ChainID,
 } from '../../src/constants';
+
+import { StacksTestnet, StacksMainnet } from '../../src/network';
 
 import { bufferCV, standardPrincipalCV } from '../../src/clarity';
 
@@ -104,8 +105,7 @@ test('Make STX token transfer with testnet', async () => {
 
   const transaction = await makeSTXTokenTransfer(recipient, amount, secretKey, {
     fee,
-    version: TransactionVersion.Testnet,
-    chainId: ChainID.Testnet,
+    network: new StacksTestnet(),
     memo: memo,
   });
 
@@ -169,7 +169,7 @@ test('Make smart contract deploy', async () => {
 
   const options = {
     fee,
-    version: TransactionVersion.Testnet,
+    network: new StacksTestnet(),
   };
 
   const transaction = await makeSmartContractDeploy(contractName, code, secretKey, options);
@@ -177,9 +177,9 @@ test('Make smart contract deploy', async () => {
   const serialized = transaction.serialize().toString('hex');
 
   const tx =
-    '80000000010400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000000000000000000000' +
-    '0000c9dc4064c85e9d595299fd480c4e8d894744a8180c18bbb7003eab47e880e81338e68c3a30b587244b' +
-    'a1a3fbe5853cc4a65c593ccbfd1b70b522eea6a74630cc03020000000001086b762d73746f726500000156' +
+    '80800000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000000000000000000000' +
+    '0000c9c499f85df311348f81520268e11acadb8be0df1bb8db85989f71e32db7192e2806a1179fce6bf775' +
+    '932b28976c9e78c645d7acac8eefaf416a14f4fd14a49303020000000001086b762d73746f726500000156' +
     '28646566696e652d6d61702073746f72652028286b657920286275666620333229292920282876616c7565' +
     '202862756666203332292929290a0a28646566696e652d7075626c696320286765742d76616c756520286b' +
     '65792028627566662033322929290a20202020286d6174636820286d61702d6765743f2073746f72652028' +
@@ -204,7 +204,7 @@ test('Make contract-call', async () => {
   const options = {
     fee,
     nonce: new BigNum(1),
-    version: TransactionVersion.Testnet,
+    network: new StacksTestnet(),
   };
 
   const transaction = await makeContractCall(
@@ -219,9 +219,9 @@ test('Make contract-call', async () => {
   const serialized = transaction.serialize().toString('hex');
 
   const tx =
-    '80000000010400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000010000000000000000' +
-    '0000bdf1592fef11d55466692063b9b286bb5e9918aefcf99584abede81a615ef10e4ead079d3dc8aec254' +
-    '3469837a971aea1c9a3df68ce643bfb87362acab657613030200000000021ae6c05355e0c990ffad19a5e9' +
+    '80800000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000010000000000000000' +
+    '0000b2c4262b8716891ee4a3361b31b3847cdb3d4897538f0f7716a3720686aee96f01be6610141c6afb36' +
+    'f32c60575147b7e08191bae5cf9706c528adf46f28473e030200000000021ae6c05355e0c990ffad19a5e9' +
     'bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
 
   expect(serialized).toBe(tx);
@@ -291,7 +291,7 @@ test('Make contract-call with post conditions', async () => {
     {
       fee,
       nonce: new BigNum(1),
-      version: TransactionVersion.Testnet,
+      network: new StacksTestnet(),
       postConditions,
       postConditionMode: PostConditionMode.Deny,
     }
@@ -300,9 +300,9 @@ test('Make contract-call with post conditions', async () => {
   const serialized = transaction.serialize().toString('hex');
 
   const tx =
-    '80000000010400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000010000000000000000' +
-    '0001c479cc4c3048e5e617620859ba8b6c8c1fce4c3b7834e98c19de85866c4a102c51bb872fd047d1bd1b' +
-    '8e84081efae5c4bfd7942229b85d9fc83dc4d8ca8c7d3003020000000600021a5dd8ff3545259925b98252' +
+    '80800000000400e6c05355e0c990ffad19a5e9bda394a9c500342900000000000000010000000000000000' +
+    '00006d8cc28f1348a5373372631170e4c95cd6b3e594514af3ebf0eccafe11b500c64923e8581df3ef4424' +
+    '9b7d1993d23857b249da0c7135a3d8604040f66e4c728803020000000600021a5dd8ff3545259925b98252' +
     '4807686567eec2933f03000000000000000a00031ae6c05355e0c990ffad19a5e9bda394a9c5003429086b' +
     '762d73746f726503000000000000303901021a5dd8ff3545259925b982524807686567eec2933f1ac989ba' +
     '53bbb27a76ef5e8499e65f69c7798fd5d113746573742d61737365742d636f6e74726163740f746573742d' +
@@ -337,7 +337,7 @@ test('Make contract-call with post condition allow mode', async () => {
     {
       fee,
       nonce: new BigNum(1),
-      version: TransactionVersion.Testnet,
+      network: new StacksTestnet(),
       postConditionMode: PostConditionMode.Allow,
     }
   );
@@ -345,9 +345,9 @@ test('Make contract-call with post condition allow mode', async () => {
   const serialized = transaction.serialize().toString('hex');
 
   const tx =
-    '80000000010400e6c05355e0c990ffad19a5e9bda394a9c50034290000000000000001000000000000000' +
-    '000008d027cd8e305c182c68a385915aab7b67084270657ea810c22655ef9e82da1f7583e245838437d65' +
-    'cf990749543af0d3e06b14047be5a7e625ae0d48f47f798b030100000000021ae6c05355e0c990ffad19a' +
+    '80800000000400e6c05355e0c990ffad19a5e9bda394a9c50034290000000000000001000000000000000' +
+    '0000074ba5083c1b444e5d1eb7bc7add66a9a511f57fc4b2514f5b0e54892962d5b453ea0ec6e473bc695' +
+    '22fd3fdd9104b7a354f830ad7ceabd0b3f2859d15697ad9b030100000000021ae6c05355e0c990ffad19a' +
     '5e9bda394a9c5003429086b762d73746f7265096765742d76616c7565000000010200000003666f6f';
 
   expect(serialized).toBe(tx);
@@ -376,7 +376,38 @@ test('Estimate token transfer fee', async () => {
   const estimateFee = new BigNum(transactionByteLength * estimateFeeRate);
   const resultEstimateFee = await estimateTransfer(transaction);
 
-  expect(fetchMock.mock.calls.length).toEqual(1);
+  fetchMock.mockOnce(`${estimateFeeRate}`);
+  const network = new StacksTestnet();
+  const resultEstimateFee2 = await estimateTransfer(transaction, network);
+
+  expect(fetchMock.mock.calls.length).toEqual(2);
   expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
+  expect(fetchMock.mock.calls[1][0]).toEqual(network.transferFeeEstimateApiUrl);
   expect(resultEstimateFee.toNumber()).toEqual(estimateFee.toNumber());
+  expect(resultEstimateFee2.toNumber()).toEqual(estimateFee.toNumber());
+});
+
+test('Transaction broadcast', async () => {
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(0);
+  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const memo = 'test memo';
+
+  const network = new StacksMainnet();
+
+  const options = {
+    fee,
+    memo: memo,
+  };
+
+  const transaction = await makeSTXTokenTransfer(recipient, amount, secretKey, options);
+
+  fetchMock.mockOnce('mock core node API response');
+
+  broadcastTransaction(transaction, network);
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(network.broadcastApiUrl);
+  expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
 });

@@ -66,5 +66,6 @@ export {
   estimateTransfer,
 } from './builders';
 
+export * from './network';
 export * from './types';
 export * from './constants';

@@ -32,17 +32,23 @@ const privateKey = createStacksPrivateKey(key);
 
 ```javascript
 import { 
-  makeSTXTokenTransfer, estimateTransfer, makeStandardSTXPostCondition 
+  makeSTXTokenTransfer, 
+  makeStandardSTXPostCondition, 
+  StacksMainnet, 
+  broadcastTransaction
 } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
 const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
 const amount = new BigNum(12345);
 const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
+const network = new StacksTestnet();
 
 const options = {
+  network: network,
   memo: "test memo",
-  nonce: new BigNum(0) 
+  nonce: new BigNum(0),
+  fee: new BigNum(200), // set a tx fee if you don't want the builder to estimate
 };
 
 const transaction = await makeSTXTokenTransfer(
@@ -54,20 +60,22 @@ const transaction = await makeSTXTokenTransfer(
 
 const serializedTx = transaction.serialize().toString('hex'); 
 
-transaction.broadcast();
+broadcastTransaction(transaction, network);
 ```
 
 ## Smart Contract Deploy Transaction
 
 ```javascript
-import { makeSmartContractDeploy } from '@blockstack/stacks-transactions';
+import { makeSmartContractDeploy, StacksMainnet, broadcastTransaction } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
 const contractName = 'contract_name';
 const code = fs.readFileSync('/path/to/contract.clar').toString();
 const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
+const network = new StacksMainnet();
 
 const options = {
+  network: network,
   nonce: new BigNum(0) // The nonce needs to be manually specified for now
 };
 
@@ -78,14 +86,13 @@ const transaction = await makeSmartContractDeploy(
   options
 );
 
-const serializedTx = transaction.serialize().toString('hex');
-transaction.broadcast();
+broadcastTransaction(transaction, network);
 ```
 
 ## Smart Contract Function Call
 
 ```javascript
-import { makeContractCall, BufferCV } from '@blockstack/stacks-transactions';
+import { makeContractCall, BufferCV, StacksMainnet, broadcastTransaction } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
 const contractAddress = 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X';
@@ -95,6 +102,7 @@ const buffer = Buffer.from('foo');
 const bufferClarityValue = new BufferCV(buffer);
 const functionArgs = [bufferClarityValue];
 const secretKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
+const network = new StacksMainnet();
 
 // Add an optional post condition
 // See below for details on constructing post conditions
@@ -110,6 +118,7 @@ const postConditions = [
 ];
 
 const options = {
+  network: network,
   postConditions,
   nonce: new BigNum(0) // The nonce needs to be manually specified for now
 };
@@ -123,8 +132,7 @@ const transaction = await makeContractCall(
   options
 );
 
-const serializedTx = transaction.serialize().toString('hex');
-transaction.broadcast();
+broadcastTransaction(transaction, network);
 ```
 
 ## Constructing Clarity Values

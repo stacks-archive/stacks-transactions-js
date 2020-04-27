@@ -159,37 +159,6 @@ export class StacksTransaction {
 
     return bufferArray.concatBuffer();
   }
-
-  /**
-   * Broadcast the signed transaction to a core node
-   *
-   * @param {String} apiUrl - specify the full core API URL to broadcast to
-   *
-   * @returns {Promise} that resolves to a response if the operation succeeds
-   */
-  broadcast(apiUrl?: string) {
-    const tx = this.serialize();
-
-    const requestHeaders = {
-      'Content-Type': 'application/octet-stream',
-    };
-
-    const options = {
-      method: 'POST',
-      headers: requestHeaders,
-      body: tx,
-    };
-
-    const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/transactions`;
-
-    return fetchPrivate(url, options).then(response => {
-      if (response.ok) {
-        return response.text();
-      } else {
-        return response.text();
-      }
-    });
-  }
 }
 
 export function deserializeTransaction(bufferReader: BufferReader) {
