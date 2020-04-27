@@ -34,13 +34,7 @@ import {
   AnchorMode,
 } from './constants';
 
-import {
-  AssetInfo,
-  createLPList,
-  createStandardPrincipal,
-  createContractPrincipal,
-  createLPString,
-} from './types';
+import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
 
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
@@ -376,7 +370,7 @@ export function makeStandardFungiblePostCondition(
   address: string,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
-  assetInfo: AssetInfo
+  assetInfo: string | AssetInfo
 ): FungiblePostCondition {
   return createFungiblePostCondition(
     createStandardPrincipal(address),
@@ -404,7 +398,7 @@ export function makeContractFungiblePostCondition(
   contractName: string,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
-  assetInfo: AssetInfo
+  assetInfo: string | AssetInfo
 ): FungiblePostCondition {
   return createFungiblePostCondition(
     createContractPrincipal(address, contractName),
@@ -428,7 +422,7 @@ export function makeContractFungiblePostCondition(
 export function makeStandardNonFungiblePostCondition(
   address: string,
   conditionCode: NonFungibleConditionCode,
-  assetInfo: AssetInfo,
+  assetInfo: string | AssetInfo,
   assetName: ClarityValue
 ): NonFungiblePostCondition {
   return createNonFungiblePostCondition(
@@ -455,7 +449,7 @@ export function makeContractNonFungiblePostCondition(
   address: string,
   contractName: string,
   conditionCode: NonFungibleConditionCode,
-  assetInfo: AssetInfo,
+  assetInfo: string | AssetInfo,
   assetName: ClarityValue
 ): NonFungiblePostCondition {
   return createNonFungiblePostCondition(

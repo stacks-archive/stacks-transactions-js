@@ -14,8 +14,8 @@ import {
   PostConditionPrincipal,
   serializePrincipal,
   deserializePrincipal,
-  createStandardPrincipal,
-  createAssetInfo,
+  parseAssetInfoString,
+  parsePrincipalString,
 } from './types';
 
 import * as BigNum from 'bn.js';
@@ -38,7 +38,7 @@ export function createSTXPostCondition(
   amount: BigNum
 ): STXPostCondition {
   if (typeof principal === 'string') {
-    principal = createStandardPrincipal(principal);
+    principal = parsePrincipalString(principal);
   }
 
   return {
@@ -63,10 +63,13 @@ export function createFungiblePostCondition(
   principal: string | PostConditionPrincipal,
   conditionCode: FungibleConditionCode,
   amount: BigNum,
-  assetInfo: AssetInfo
+  assetInfo: string | AssetInfo
 ): FungiblePostCondition {
   if (typeof principal === 'string') {
-    principal = createStandardPrincipal(principal);
+    principal = parsePrincipalString(principal);
+  }
+  if (typeof assetInfo === 'string') {
+    assetInfo = parseAssetInfoString(assetInfo);
   }
 
   return {
@@ -93,11 +96,14 @@ export interface NonFungiblePostCondition {
 export function createNonFungiblePostCondition(
   principal: string | PostConditionPrincipal,
   conditionCode: NonFungibleConditionCode,
-  assetInfo: AssetInfo,
+  assetInfo: string | AssetInfo,
   assetName: ClarityValue
 ): NonFungiblePostCondition {
   if (typeof principal === 'string') {
-    principal = createStandardPrincipal(principal);
+    principal = parsePrincipalString(principal);
+  }
+  if (typeof assetInfo === 'string') {
+    assetInfo = parseAssetInfoString(assetInfo);
   }
 
   return {
