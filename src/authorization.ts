@@ -7,7 +7,7 @@ import {
   RECOVERABLE_ECDSA_SIG_LENGTH_BYTES,
 } from './constants';
 
-import { BufferArray, txidFromData, sha512_256 } from './utils';
+import { BufferArray, txidFromData, sha512_256, leftPadHex } from './utils';
 
 import { Address, addressFromPublicKeys, addressFromVersionHash } from './types';
 
@@ -160,7 +160,7 @@ export class SpendingCondition extends Deserializable {
       ? PubKeyEncoding.Compressed
       : PubKeyEncoding.Uncompressed;
 
-    const sigHash = curSigHash + pubKeyEncoding.toString(16) + signature.toString();
+    const sigHash = curSigHash + leftPadHex(pubKeyEncoding.toString(16)) + signature.toString();
 
     if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
       throw Error('Invalid signature hash length');
