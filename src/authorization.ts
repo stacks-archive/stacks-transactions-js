@@ -160,7 +160,7 @@ export class SpendingCondition extends Deserializable {
       ? PubKeyEncoding.Compressed
       : PubKeyEncoding.Uncompressed;
 
-    const sigHash = curSigHash + pubKeyEncoding + signature.toString();
+    const sigHash = curSigHash + pubKeyEncoding.toString(16) + signature.toString();
 
     if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
       throw Error('Invalid signature hash length');
