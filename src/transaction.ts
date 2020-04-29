@@ -21,7 +21,10 @@ import { Payload, serializePayload, deserializePayload } from './payload';
 import { LengthPrefixedList, serializeLPList, deserializeLPList, createLPList } from './types';
 
 import { StacksPrivateKey } from './keys';
+
 import { BufferReader } from './bufferReader';
+
+import * as BigNum from 'bn.js';
 
 export class StacksTransaction {
   version: TransactionVersion;
@@ -116,6 +119,15 @@ export class StacksTransaction {
     return txidFromData(serialized);
   }
 
+  /**
+   * Set the total fee to be paid for this transaction
+   *
+   * @param {BigNum} fee - the fee amount in microstacks
+   */
+  setFee(amount: BigNum) {
+    this.auth.setFee(amount);
+  }
+
   serialize(): Buffer {
     if (this.version === undefined) {
       throw new Error('"version" is undefined');
@@ -146,37 +158,6 @@ export class StacksTransaction {
     bufferArray.push(serializePayload(this.payload));
 
     return bufferArray.concatBuffer();
-  }
-
-  /**
-   * Broadcast the signed transaction to a core node
-   *
-   * @param {String} apiUrl - specify the core node URL to broadcast to
-   *
-   * @returns {Promise} that resolves to a response if the operation succeeds
-   */
-  broadcast(apiUrl?: string) {
-    const tx = this.serialize();
-
-    const requestHeaders = {
-      'Content-Type': 'application/octet-stream',
-    };
-
-    const options = {
-      method: 'POST',
-      headers: requestHeaders,
-      body: tx,
-    };
-
-    const url = apiUrl || `${DEFAULT_CORE_NODE_API_URL}/v2/transactions`;
-
-    return fetchPrivate(url, options).then(response => {
-      if (response.ok) {
-        return response.text();
-      } else {
-        return response.text();
-      }
-    });
   }
 }
 

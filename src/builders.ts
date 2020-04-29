@@ -1,5 +1,7 @@
 import { StacksTransaction } from './transaction';
 
+import { StacksNetwork, StacksMainnet } from './network';
+
 import {
   createTokenTransferPayload,
   createSmartContractPayload,
@@ -23,38 +25,111 @@ import {
 } from './postcondition';
 
 import {
-  TransactionVersion,
+  DEFAULT_CORE_NODE_API_URL,
   AddressHashMode,
   FungibleConditionCode,
   NonFungibleConditionCode,
   PostConditionMode,
-  ChainID,
-  DEFAULT_CHAIN_ID,
-  DEFAULT_TRANSACTION_VERSION,
+  PayloadType,
   AnchorMode,
 } from './constants';
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
 
+import { fetchPrivate } from './utils';
+
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
 
 /**
+ * Estimate the total transaction fee in microstacks for a token transfer
+ *
+ * @param {StacksTransaction} transaction - the token transfer transaction to estimate fees for
+ * @param {StacksNetwork} network - the Stacks network to estimate transaction for
+ *
+ * @return a promise that resolves to number of microstacks per byte
+ */
+export function estimateTransfer(
+  transaction: StacksTransaction,
+  network?: StacksNetwork
+): Promise<BigNum> {
+  const requestHeaders = {
+    Accept: 'application/text',
+  };
+
+  const fetchOptions = {
+    method: 'GET',
+    headers: requestHeaders,
+  };
+
+  if (transaction.payload.payloadType != PayloadType.TokenTransfer) {
+    throw new Error('Transaction is not a token transfer');
+  }
+
+  const defaultNetwork = new StacksMainnet();
+  const url = network
+    ? network.transferFeeEstimateApiUrl
+    : defaultNetwork.transferFeeEstimateApiUrl;
+
+  return fetchPrivate(url, fetchOptions)
+    .then(response => response.text())
+    .then(feeRateResult => {
+      const txBytes = new BigNum(transaction.serialize().byteLength);
+      const feeRate = new BigNum(feeRateResult);
+      return feeRate.mul(txBytes);
+    });
+}
+
+/**
+ * Broadcast the signed transaction to a core node
+ *
+ * @param {StacksTransaction} transaction - the token transfer transaction to broadcast
+ * @param {StacksNetwork} network - the Stacks network to broadcast transaction to
+ *
+ * @returns {Promise} that resolves to a response if the operation succeeds
+ */
+export function broadcastTransaction(transaction: StacksTransaction, network: StacksNetwork) {
+  const tx = transaction.serialize();
+
+  const requestHeaders = {
+    'Content-Type': 'application/octet-stream',
+  };
+
+  const options = {
+    method: 'POST',
+    headers: requestHeaders,
+    body: tx,
+  };
+
+  const url = network.broadcastApiUrl;
+
+  return fetchPrivate(url, options).then(response => {
+    if (response.ok) {
+      return response.text();
+    } else {
+      return response.text();
+    }
+  });
+}
+
+/**
  * STX token transfer transaction options
  *
+ * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
- * @param  {TransactionVersion} version - can be set to mainnet or testnet
+ * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
+ * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
  * @param  {String} memo - an arbitrary string to include with the transaction, must be less than
  *                          34 bytes
+ * @param  {PostconditionMode} postConditionMode - whether post conditions must fully cover all
+ *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
- *
- * @return {StacksTransaction}
  */
 export interface TokenTransferOptions {
+  fee?: BigNum;
   nonce?: BigNum;
-  version?: TransactionVersion;
-  chainId?: ChainID;
+  network?: StacksNetwork;
   anchorMode?: AnchorMode;
   memo?: string;
   postConditionMode?: PostConditionMode;
@@ -68,23 +143,21 @@ export interface TokenTransferOptions {
  *
  * @param  {String} recipientAddress - the c32check address of the recipient
  * @param  {BigNum} amount - number of tokens to transfer in microstacks
- * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TokenTransferOptions} options - an options object for the token transfer
  *
  * @return {StacksTransaction}
  */
-export function makeSTXTokenTransfer(
+export async function makeSTXTokenTransfer(
   recipient: string | PrincipalCV,
   amount: BigNum,
-  fee: BigNum,
   senderKey: string,
   options?: TokenTransferOptions
-): StacksTransaction {
+): Promise<StacksTransaction> {
   const defaultOptions = {
+    fee: new BigNum(0),
     nonce: new BigNum(0),
-    version: DEFAULT_TRANSACTION_VERSION,
-    chainId: DEFAULT_CHAIN_ID,
+    network: new StacksMainnet(),
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
     memo: '',
@@ -101,7 +174,7 @@ export function makeSTXTokenTransfer(
     addressHashMode,
     publicKeyToString(pubKey),
     normalizedOptions.nonce,
-    fee
+    normalizedOptions.fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
@@ -114,17 +187,24 @@ export function makeSTXTokenTransfer(
 
   const lpPostConditions = createLPList(postConditions);
   const transaction = new StacksTransaction(
-    normalizedOptions.version,
+    normalizedOptions.network.version,
     authorization,
     payload,
     lpPostConditions,
     normalizedOptions.postConditionMode,
     defaultOptions.anchorMode,
-    normalizedOptions.chainId
+    normalizedOptions.network.chainId
   );
 
-  const signer = new TransactionSigner(transaction);
-  signer.signOrigin(privKey);
+  if (!options?.fee) {
+    const txFee = await estimateTransfer(transaction, normalizedOptions.network);
+    transaction.setFee(txFee);
+  }
+
+  if (senderKey) {
+    const signer = new TransactionSigner(transaction);
+    signer.signOrigin(privKey);
+  }
 
   return transaction;
 }
@@ -132,20 +212,63 @@ export function makeSTXTokenTransfer(
 /**
  * Contract deploy transaction options
  *
+ * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
- * @param  {TransactionVersion} version - can be set to mainnet or testnet
+ * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
+ * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
+ * @param  {PostconditionMode} postConditionMode - whether post conditions must fully cover all
+ *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
- *
- * @return {StacksTransaction}
  */
 export interface ContractDeployOptions {
+  fee?: BigNum;
   nonce?: BigNum;
-  version?: TransactionVersion;
-  chainId?: ChainID;
+  network?: StacksNetwork;
   anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
+}
+
+/**
+ * Estimate the total transaction fee in microstacks for a contract deploy
+ *
+ * @param {StacksTransaction} transaction - the token transfer transaction to estimate fees for
+ * @param {StacksNetwork} network - the Stacks network to estimate transaction for
+ *
+ * @return a promise that resolves to number of microstacks per byte
+ */
+export function estimateContractDeploy(
+  transaction: StacksTransaction,
+  network?: StacksNetwork
+): Promise<BigNum> {
+  const requestHeaders = {
+    Accept: 'application/text',
+  };
+
+  const fetchOptions = {
+    method: 'GET',
+    headers: requestHeaders,
+  };
+
+  if (transaction.payload.payloadType != PayloadType.TokenTransfer) {
+    throw new Error('Transaction is not a token transfer');
+  }
+
+  // Place holder estimate until contract deploy fee estimation is fully implemented on Stacks
+  // blockchain core
+  const defaultNetwork = new StacksMainnet();
+  const url = network
+    ? network.transferFeeEstimateApiUrl
+    : defaultNetwork.transferFeeEstimateApiUrl;
+
+  return fetchPrivate(url, fetchOptions)
+    .then(response => response.text())
+    .then(feeRateResult => {
+      const txBytes = new BigNum(transaction.serialize().byteLength);
+      const feeRate = new BigNum(feeRateResult);
+      return feeRate.mul(txBytes);
+    });
 }
 
 /**
@@ -155,22 +278,20 @@ export interface ContractDeployOptions {
  *
  * @param  {String} contractName - the contract name
  * @param  {String} codeBody - the code body string
- * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  *
  * @return {StacksTransaction}
  */
-export function makeSmartContractDeploy(
+export async function makeSmartContractDeploy(
   contractName: string,
   codeBody: string,
-  fee: BigNum,
   senderKey: string,
   options?: ContractDeployOptions
-): StacksTransaction {
+): Promise<StacksTransaction> {
   const defaultOptions = {
+    fee: new BigNum(0),
     nonce: new BigNum(0),
-    version: DEFAULT_TRANSACTION_VERSION,
-    chainId: DEFAULT_CHAIN_ID,
+    network: new StacksMainnet(),
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
   };
@@ -186,7 +307,7 @@ export function makeSmartContractDeploy(
     addressHashMode,
     publicKeyToString(pubKey),
     normalizedOptions.nonce,
-    fee
+    normalizedOptions.fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
@@ -199,14 +320,19 @@ export function makeSmartContractDeploy(
 
   const lpPostConditions = createLPList(postConditions);
   const transaction = new StacksTransaction(
-    normalizedOptions.version,
+    normalizedOptions.network.version,
     authorization,
     payload,
     lpPostConditions,
     normalizedOptions.postConditionMode,
     normalizedOptions.anchorMode,
-    normalizedOptions.chainId
+    normalizedOptions.network.chainId
   );
+
+  if (!options?.fee) {
+    const txFee = await estimateTransfer(transaction, normalizedOptions.network);
+    transaction.setFee(txFee);
+  }
 
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);
@@ -217,20 +343,64 @@ export function makeSmartContractDeploy(
 /**
  * Contract function call transaction options
  *
+ * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
- * @param  {TransactionVersion} version - can be set to mainnet or testnet
+ * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
+ * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
+ * @param  {PostconditionMode} postConditionMode - whether post conditions must fully cover all
+ *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
- *
- * @return {StacksTransaction}
  */
 export interface ContractCallOptions {
+  fee?: BigNum;
+  feeEstimateApiUrl?: string;
   nonce?: BigNum;
-  version?: TransactionVersion;
-  chainId?: ChainID;
+  network?: StacksNetwork;
   anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
+}
+
+/**
+ * Estimate the total transaction fee in microstacks for a contract function call
+ *
+ * @param {StacksTransaction} transaction - the token transfer transaction to estimate fees for
+ * @param {StacksNetwork} network - the Stacks network to estimate transaction for
+ *
+ * @return a promise that resolves to number of microstacks per byte
+ */
+export function estimateContractFunctionCall(
+  transaction: StacksTransaction,
+  network?: StacksNetwork
+): Promise<BigNum> {
+  const requestHeaders = {
+    Accept: 'application/text',
+  };
+
+  const fetchOptions = {
+    method: 'GET',
+    headers: requestHeaders,
+  };
+
+  if (transaction.payload.payloadType != PayloadType.TokenTransfer) {
+    throw new Error('Transaction is not a token transfer');
+  }
+
+  // Place holder estimate until contract call fee estimation is fully implemented on Stacks
+  // blockchain core
+  const defaultNetwork = new StacksMainnet();
+  const url = network
+    ? network.transferFeeEstimateApiUrl
+    : defaultNetwork.transferFeeEstimateApiUrl;
+
+  return fetchPrivate(url, fetchOptions)
+    .then(response => response.text())
+    .then(feeRateResult => {
+      const txBytes = new BigNum(transaction.serialize().byteLength);
+      const feeRate = new BigNum(feeRateResult);
+      return feeRate.mul(txBytes);
+    });
 }
 
 /**
@@ -242,26 +412,24 @@ export interface ContractCallOptions {
  * @param  {String} contractName - the contract name
  * @param  {String} functionName - name of the function to be called
  * @param  {[ClarityValue]} functionArgs - an array of Clarity values as arguments to the function call
- * @param  {BigNum} fee - transaction fee rate in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TransactionVersion} version - can be set to mainnet or testnet
  *
  * @return {StacksTransaction}
  */
-export function makeContractCall(
+export async function makeContractCall(
   contractAddress: string,
   contractName: string,
   functionName: string,
   functionArgs: ClarityValue[],
-  fee: BigNum,
   senderKey: string,
   options?: ContractCallOptions
-): StacksTransaction {
+): Promise<StacksTransaction> {
   const defaultOptions = {
+    fee: new BigNum(0),
     nonce: new BigNum(0),
-    version: DEFAULT_TRANSACTION_VERSION,
-    chainId: DEFAULT_CHAIN_ID,
+    network: new StacksMainnet(),
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
   };
@@ -282,7 +450,7 @@ export function makeContractCall(
     addressHashMode,
     publicKeyToString(pubKey),
     normalizedOptions.nonce,
-    fee
+    normalizedOptions.fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
@@ -295,14 +463,19 @@ export function makeContractCall(
 
   const lpPostConditions = createLPList(postConditions);
   const transaction = new StacksTransaction(
-    normalizedOptions.version,
+    normalizedOptions.network.version,
     authorization,
     payload,
     lpPostConditions,
     normalizedOptions.postConditionMode,
     normalizedOptions.anchorMode,
-    normalizedOptions.chainId
+    normalizedOptions.network.chainId
   );
+
+  if (!options?.fee) {
+    const txFee = await estimateContractFunctionCall(transaction, normalizedOptions.network);
+    transaction.setFee(txFee);
+  }
 
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(privKey);

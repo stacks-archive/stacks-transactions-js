@@ -32,6 +32,10 @@ import { standardPrincipalCV } from '../../src/clarity';
 
 enableFetchMocks();
 
+beforeEach(() => {
+  fetchMock.resetMocks();
+});
+
 test('STX token transfer transaction serialization and deserialization', () => {
   const transactionVersion = TransactionVersion.Testnet;
   const chainId = DEFAULT_CHAIN_ID;
@@ -98,15 +102,20 @@ test('STX token transfer transaction serialization and deserialization', () => {
   expect(deserializedPayload.amount.toNumber()).toBe(amount.toNumber());
 });
 
-test('Transaction broadcast', () => {
-  const apiUrl = `${DEFAULT_CORE_NODE_API_URL}/v2/transactions`;
+test('STX token transfer transaction fee setting', () => {
   const transactionVersion = TransactionVersion.Testnet;
+  const chainId = DEFAULT_CHAIN_ID;
 
-  const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const anchorMode = AnchorMode.Any;
+  const postConditionMode = PostConditionMode.Deny;
+
+  const address = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
+  const recipient = createStandardPrincipal(address);
+  const recipientCV = standardPrincipalCV(address);
   const amount = new BigNum(2500000);
   const memo = 'memo (not included';
 
-  const payload = createTokenTransferPayload(recipientAddress, amount, memo);
+  const payload = createTokenTransferPayload(recipientCV, amount, memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const nonce = new BigNum(0);
@@ -114,17 +123,56 @@ test('Transaction broadcast', () => {
   const pubKey = '03ef788b3830c00abe8f64f62dc32fc863bc0b2cafeb073b6c8e1c7657d9c2c3ab';
   const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, fee);
+  const authType = AuthType.Standard;
   const authorization = new StandardAuthorization(spendingCondition);
 
-  const transaction = new StacksTransaction(transactionVersion, authorization, payload);
+  const postCondition = createSTXPostCondition(
+    recipient,
+    FungibleConditionCode.GreaterEqual,
+    new BigNum(0)
+  );
+
+  const postConditions = createLPList([postCondition]);
+
+  const transaction = new StacksTransaction(
+    transactionVersion,
+    authorization,
+    payload,
+    postConditions
+  );
+
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(createStacksPrivateKey(secretKey));
+  const signature =
+    '01051521ac2ac6e6123dcaf9dba000e0005d9855bcc1bc6b96aaf8b6a385238a2317' +
+    'ab21e489aca47af3288cdaebd358b0458a9159cadc314cecb7dd08043c0a6d';
 
-  fetchMock.mockOnce('mock core node API response');
+  const serialized = transaction.serialize();
+  const deserialized = deserializeTransaction(new BufferReader(serialized));
+  expect(deserialized.auth.spendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
 
-  transaction.broadcast();
+  const setFee = new BigNum(123);
+  transaction.setFee(setFee);
 
-  expect(fetchMock.mock.calls.length).toEqual(1);
-  expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
-  expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
+  const postSetFeeSerialized = transaction.serialize();
+  const postSetFeeDeserialized = deserializeTransaction(new BufferReader(postSetFeeSerialized));
+  expect(postSetFeeDeserialized.version).toBe(transactionVersion);
+  expect(postSetFeeDeserialized.chainId).toBe(chainId);
+  expect(postSetFeeDeserialized.auth.authType).toBe(authType);
+  expect(postSetFeeDeserialized.auth.spendingCondition!.addressHashMode).toBe(addressHashMode);
+  expect(postSetFeeDeserialized.auth.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(postSetFeeDeserialized.auth.spendingCondition!.fee!.toNumber()).toBe(setFee.toNumber());
+  expect(postSetFeeDeserialized.anchorMode).toBe(anchorMode);
+  expect(postSetFeeDeserialized.postConditionMode).toBe(postConditionMode);
+  expect(postSetFeeDeserialized.postConditions.values.length).toBe(1);
+
+  const deserializedPostCondition = postSetFeeDeserialized.postConditions
+    .values[0] as STXPostCondition;
+  expect(deserializedPostCondition.principal.address).toStrictEqual(recipient.address);
+  expect(deserializedPostCondition.conditionCode).toBe(FungibleConditionCode.GreaterEqual);
+  expect(deserializedPostCondition.amount.toNumber()).toBe(0);
+
+  const deserializedPayload = postSetFeeDeserialized.payload as TokenTransferPayload;
+  expect(deserializedPayload.recipient).toEqual(recipientCV);
+  expect(deserializedPayload.amount.toNumber()).toBe(amount.toNumber());
 });
