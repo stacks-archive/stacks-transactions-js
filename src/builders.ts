@@ -25,7 +25,6 @@ import {
 } from './postcondition';
 
 import {
-  DEFAULT_CORE_NODE_API_URL,
   AddressHashMode,
   FungibleConditionCode,
   NonFungibleConditionCode,
@@ -115,6 +114,10 @@ export function broadcastTransaction(transaction: StacksTransaction, network: St
 /**
  * STX token transfer transaction options
  *
+ * @param  {String|PrincipalCV} recipientAddress - the c32check address of the recipient or a
+ *                                                  principal clarity value
+ * @param  {BigNum} amount - number of tokens to transfer in microstacks
+ * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
@@ -127,6 +130,9 @@ export function broadcastTransaction(transaction: StacksTransaction, network: St
  *                                                  transaction
  */
 export interface TokenTransferOptions {
+  recipient: string | PrincipalCV;
+  amount: BigNum;
+  senderKey: string;
   fee?: BigNum;
   nonce?: BigNum;
   network?: StacksNetwork;
@@ -141,18 +147,12 @@ export interface TokenTransferOptions {
  *
  * Returns a signed Stacks token transfer transaction.
  *
- * @param  {String} recipientAddress - the c32check address of the recipient
- * @param  {BigNum} amount - number of tokens to transfer in microstacks
- * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {TokenTransferOptions} options - an options object for the token transfer
  *
  * @return {StacksTransaction}
  */
 export async function makeSTXTokenTransfer(
-  recipient: string | PrincipalCV,
-  amount: BigNum,
-  senderKey: string,
-  options?: TokenTransferOptions
+  txOptions: TokenTransferOptions
 ): Promise<StacksTransaction> {
   const defaultOptions = {
     fee: new BigNum(0),
@@ -163,45 +163,45 @@ export async function makeSTXTokenTransfer(
     memo: '',
   };
 
-  const normalizedOptions = Object.assign(defaultOptions, options);
+  const options = Object.assign(defaultOptions, txOptions);
 
-  const payload = createTokenTransferPayload(recipient, amount, normalizedOptions.memo);
+  const payload = createTokenTransferPayload(options.recipient, options.amount, options.memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = createStacksPrivateKey(senderKey);
+  const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
-    normalizedOptions.nonce,
-    normalizedOptions.fee
+    options.nonce,
+    options.fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
   const postConditions: PostCondition[] = [];
-  if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
-    normalizedOptions.postConditions.forEach(postCondition => {
+  if (options.postConditions && options.postConditions.length > 0) {
+    options.postConditions.forEach(postCondition => {
       postConditions.push(postCondition);
     });
   }
 
   const lpPostConditions = createLPList(postConditions);
   const transaction = new StacksTransaction(
-    normalizedOptions.network.version,
+    options.network.version,
     authorization,
     payload,
     lpPostConditions,
-    normalizedOptions.postConditionMode,
+    options.postConditionMode,
     defaultOptions.anchorMode,
-    normalizedOptions.network.chainId
+    options.network.chainId
   );
 
-  if (!options?.fee) {
-    const txFee = await estimateTransfer(transaction, normalizedOptions.network);
+  if (!txOptions.fee) {
+    const txFee = await estimateTransfer(transaction, options.network);
     transaction.setFee(txFee);
   }
 
-  if (senderKey) {
+  if (options.senderKey) {
     const signer = new TransactionSigner(transaction);
     signer.signOrigin(privKey);
   }
@@ -212,6 +212,9 @@ export async function makeSTXTokenTransfer(
 /**
  * Contract deploy transaction options
  *
+ * @param  {String} contractName - the contract name
+ * @param  {String} codeBody - the code body string
+ * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
@@ -222,6 +225,9 @@ export async function makeSTXTokenTransfer(
  *                                                  transaction
  */
 export interface ContractDeployOptions {
+  contractName: string;
+  codeBody: string;
+  senderKey: string;
   fee?: BigNum;
   nonce?: BigNum;
   network?: StacksNetwork;
@@ -274,19 +280,14 @@ export function estimateContractDeploy(
 /**
  * Generates a Clarity smart contract deploy transaction
  *
- * Returns a signed Stacks smart contract deploy transaction.
+ * @param  {ContractDeployOptions} options - an options object for the contract deploy
  *
- * @param  {String} contractName - the contract name
- * @param  {String} codeBody - the code body string
- * @param  {String} senderKey - hex string sender private key used to sign transaction
+ * Returns a signed Stacks smart contract deploy transaction.
  *
  * @return {StacksTransaction}
  */
 export async function makeSmartContractDeploy(
-  contractName: string,
-  codeBody: string,
-  senderKey: string,
-  options?: ContractDeployOptions
+  txOptions: ContractDeployOptions
 ): Promise<StacksTransaction> {
   const defaultOptions = {
     fee: new BigNum(0),
@@ -296,53 +297,59 @@ export async function makeSmartContractDeploy(
     postConditionMode: PostConditionMode.Deny,
   };
 
-  const normalizedOptions = Object.assign(defaultOptions, options);
+  const options = Object.assign(defaultOptions, txOptions);
 
-  const payload = createSmartContractPayload(contractName, codeBody);
+  const payload = createSmartContractPayload(options.contractName, options.codeBody);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = createStacksPrivateKey(senderKey);
+  const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
-    normalizedOptions.nonce,
-    normalizedOptions.fee
+    options.nonce,
+    options.fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
   const postConditions: PostCondition[] = [];
-  if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
-    normalizedOptions.postConditions.forEach(postCondition => {
+  if (options.postConditions && options.postConditions.length > 0) {
+    options.postConditions.forEach(postCondition => {
       postConditions.push(postCondition);
     });
   }
 
   const lpPostConditions = createLPList(postConditions);
   const transaction = new StacksTransaction(
-    normalizedOptions.network.version,
+    options.network.version,
     authorization,
     payload,
     lpPostConditions,
-    normalizedOptions.postConditionMode,
-    normalizedOptions.anchorMode,
-    normalizedOptions.network.chainId
+    options.postConditionMode,
+    options.anchorMode,
+    options.network.chainId
   );
 
-  if (!options?.fee) {
-    const txFee = await estimateTransfer(transaction, normalizedOptions.network);
+  if (!txOptions.fee) {
+    const txFee = await estimateTransfer(transaction, options.network);
     transaction.setFee(txFee);
   }
 
-  const signer = new TransactionSigner(transaction);
-  signer.signOrigin(privKey);
+  if (options.senderKey) {
+    const signer = new TransactionSigner(transaction);
+    signer.signOrigin(privKey);
+  }
 
   return transaction;
 }
 
 /**
  * Contract function call transaction options
- *
+ * @param  {String} contractAddress - the c32check address of the contract
+ * @param  {String} contractName - the contract name
+ * @param  {String} functionName - name of the function to be called
+ * @param  {[ClarityValue]} functionArgs - an array of Clarity values as arguments to the function call
+ * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
@@ -353,6 +360,11 @@ export async function makeSmartContractDeploy(
  *                                                  transaction
  */
 export interface ContractCallOptions {
+  contractAddress: string;
+  contractName: string;
+  functionName: string;
+  functionArgs: ClarityValue[];
+  senderKey: string;
   fee?: BigNum;
   feeEstimateApiUrl?: string;
   nonce?: BigNum;
@@ -406,26 +418,13 @@ export function estimateContractFunctionCall(
 /**
  * Generates a Clarity smart contract function call transaction
  *
- * Returns a signed Stacks smart contract deploy transaction.
+ * @param  {ContractCallOptions} options - an options object for the contract function call
  *
- * @param  {String} contractAddress - the c32check address of the contract
- * @param  {String} contractName - the contract name
- * @param  {String} functionName - name of the function to be called
- * @param  {[ClarityValue]} functionArgs - an array of Clarity values as arguments to the function call
- * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
- * @param  {String} senderKey - hex string sender private key used to sign transaction
- * @param  {TransactionVersion} version - can be set to mainnet or testnet
+ * Returns a signed Stacks smart contract function call transaction.
  *
  * @return {StacksTransaction}
  */
-export async function makeContractCall(
-  contractAddress: string,
-  contractName: string,
-  functionName: string,
-  functionArgs: ClarityValue[],
-  senderKey: string,
-  options?: ContractCallOptions
-): Promise<StacksTransaction> {
+export async function makeContractCall(txOptions: ContractCallOptions): Promise<StacksTransaction> {
   const defaultOptions = {
     fee: new BigNum(0),
     nonce: new BigNum(0),
@@ -434,51 +433,53 @@ export async function makeContractCall(
     postConditionMode: PostConditionMode.Deny,
   };
 
-  const normalizedOptions = Object.assign(defaultOptions, options);
+  const options = Object.assign(defaultOptions, txOptions);
 
   const payload = createContractCallPayload(
-    contractAddress,
-    contractName,
-    functionName,
-    functionArgs
+    options.contractAddress,
+    options.contractName,
+    options.functionName,
+    options.functionArgs
   );
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = createStacksPrivateKey(senderKey);
+  const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
-    normalizedOptions.nonce,
-    normalizedOptions.fee
+    options.nonce,
+    options.fee
   );
   const authorization = new StandardAuthorization(spendingCondition);
 
   const postConditions: PostCondition[] = [];
-  if (normalizedOptions.postConditions && normalizedOptions.postConditions.length > 0) {
-    normalizedOptions.postConditions.forEach(postCondition => {
+  if (options.postConditions && options.postConditions.length > 0) {
+    options.postConditions.forEach(postCondition => {
       postConditions.push(postCondition);
     });
   }
 
   const lpPostConditions = createLPList(postConditions);
   const transaction = new StacksTransaction(
-    normalizedOptions.network.version,
+    options.network.version,
     authorization,
     payload,
     lpPostConditions,
-    normalizedOptions.postConditionMode,
-    normalizedOptions.anchorMode,
-    normalizedOptions.network.chainId
+    options.postConditionMode,
+    options.anchorMode,
+    options.network.chainId
   );
 
-  if (!options?.fee) {
-    const txFee = await estimateContractFunctionCall(transaction, normalizedOptions.network);
+  if (!txOptions.fee) {
+    const txFee = await estimateContractFunctionCall(transaction, options.network);
     transaction.setFee(txFee);
   }
 
-  const signer = new TransactionSigner(transaction);
-  signer.signOrigin(privKey);
+  if (options.senderKey) {
+    const signer = new TransactionSigner(transaction);
+    signer.signOrigin(privKey);
+  }
 
   return transaction;
 }
