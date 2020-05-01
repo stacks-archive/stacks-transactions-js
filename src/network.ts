@@ -6,6 +6,7 @@ export interface StacksNetwork {
   coreApiUrl: string;
   broadcastApiUrl: string;
   transferFeeEstimateApiUrl: string;
+  balanceApiUrl: string;
 }
 
 export class StacksMainnet implements StacksNetwork {
@@ -14,6 +15,7 @@ export class StacksMainnet implements StacksNetwork {
   coreApiUrl = 'https://core.blockstack.org';
   broadcastApiUrl = `${this.coreApiUrl}/v2/transactions`;
   transferFeeEstimateApiUrl = `${this.coreApiUrl}/v2/fees/transfer`;
+  balanceApiUrl = `${this.coreApiUrl}/v2/accounts`;
 }
 
 export class StacksTestnet implements StacksNetwork {
@@ -22,4 +24,5 @@ export class StacksTestnet implements StacksNetwork {
   coreApiUrl = 'http://neon.blockstack.org:20443';
   broadcastApiUrl = `${this.coreApiUrl}/v2/transactions`;
   transferFeeEstimateApiUrl = `${this.coreApiUrl}/v2/fees/transfer`;
+  balanceApiUrl = `${this.coreApiUrl}/v2/accounts`;
 }

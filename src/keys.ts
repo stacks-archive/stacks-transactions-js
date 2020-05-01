@@ -4,12 +4,14 @@ import {
   StacksMessageType,
 } from './constants';
 
-import { BufferArray, leftPadHexToLength, intToHexString, randomBytes } from './utils';
+import { BufferArray, leftPadHexToLength, intToHexString, randomBytes, hash160 } from './utils';
 
 import { ec as EC } from 'elliptic';
 
 import { MessageSignature } from './authorization';
 import { BufferReader } from './bufferReader';
+import { AddressVersion } from './constants';
+import { c32address } from 'c32check';
 
 export interface StacksPublicKey {
   readonly type: StacksMessageType.PublicKey;
@@ -114,4 +116,8 @@ export function getPublicKey(privateKey: StacksPrivateKey): StacksPublicKey {
 
 export function privateKeyToString(privateKey: StacksPrivateKey): string {
   return privateKey.data.toString('hex');
+}
+
+export function publicKeyToAddress(version: AddressVersion, publicKey: StacksPublicKey): string {
+  return c32address(version, hash160(publicKey.data.toString('hex')));
 }
