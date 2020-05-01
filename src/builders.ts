@@ -56,7 +56,7 @@ import { ClarityValue, PrincipalCV } from './clarity';
  * @return a promise that resolves to an integer
  */
 export function getNonce(address: string, network?: StacksNetwork): Promise<BigNum> {
-  return fetch(`${network?.balanceApiUrl}/${address}?proof=0`)
+  return fetchPrivate(`${network?.balanceApiUrl}/${address}?proof=0`)
     .then(response => response.json())
     .then(response => Promise.resolve(new BigNum(response.nonce)));
 }
