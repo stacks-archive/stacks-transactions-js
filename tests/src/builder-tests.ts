@@ -12,6 +12,7 @@ import {
   makeContractNonFungiblePostCondition,
   estimateTransfer,
   broadcastTransaction,
+  getNonce,
 } from '../../src/builders';
 
 import { createAssetInfo } from '../../src/types';
@@ -41,15 +42,18 @@ test('Make STX token transfer with set tx fee', async () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
   const fee = new BigNum(0);
-  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
-  const options = {
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
     fee,
+    nonce,
     memo: memo,
-  };
-
-  const transaction = await makeSTXTokenTransfer(recipient, amount, secretKey, options);
+  });
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -68,16 +72,20 @@ test('Make STX token transfer with fee estimate', async () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
   const estimateFeeRate = 1;
-  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
-
-  const options = {
-    memo: memo,
-  };
 
   fetchMock.mockOnce(`${estimateFeeRate}`);
 
-  const transaction = await makeSTXTokenTransfer(recipient, amount, secretKey, options);
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    nonce,
+    senderKey,
+    memo,
+  });
+
   const fee = new BigNum(transaction.serialize().byteLength * estimateFeeRate);
 
   expect(transaction.auth.spendingCondition?.fee?.toNumber()).toEqual(fee.toNumber());
@@ -100,11 +108,16 @@ test('Make STX token transfer with testnet', async () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
   const fee = new BigNum(0);
-  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
-  const transaction = await makeSTXTokenTransfer(recipient, amount, secretKey, {
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
     fee,
+    nonce,
     network: new StacksTestnet(),
     memo: memo,
   });
@@ -125,7 +138,8 @@ test('Make STX token transfer with post conditions', async () => {
   const recipientAddress = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
   const amount = new BigNum(12345);
   const fee = new BigNum(0);
-  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
   const postConditions = [
@@ -136,18 +150,15 @@ test('Make STX token transfer with post conditions', async () => {
     ),
   ];
 
-  const options = {
+  const transaction = await makeSTXTokenTransfer({
+    recipient: standardPrincipalCV(recipientAddress),
+    amount,
+    senderKey,
     fee,
+    nonce,
     memo,
     postConditions,
-  };
-
-  const transaction = await makeSTXTokenTransfer(
-    standardPrincipalCV(recipientAddress),
-    amount,
-    secretKey,
-    options
-  );
+  });
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -163,16 +174,19 @@ test('Make STX token transfer with post conditions', async () => {
 
 test('Make smart contract deploy', async () => {
   const contractName = 'kv-store';
-  const code = fs.readFileSync('./tests/src/contracts/kv-store.clar').toString();
-  const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+  const codeBody = fs.readFileSync('./tests/src/contracts/kv-store.clar').toString();
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
   const fee = new BigNum(0);
+  const nonce = new BigNum(0);
 
-  const options = {
+  const transaction = await makeSmartContractDeploy({
+    contractName,
+    codeBody,
+    senderKey,
     fee,
+    nonce,
     network: new StacksTestnet(),
-  };
-
-  const transaction = await makeSmartContractDeploy(contractName, code, secretKey, options);
+  });
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -197,24 +211,20 @@ test('Make contract-call', async () => {
   const contractName = 'kv-store';
   const functionName = 'get-value';
   const buffer = bufferCV(Buffer.from('foo'));
-  const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 
   const fee = new BigNum(0);
 
-  const options = {
-    fee,
-    nonce: new BigNum(1),
-    network: new StacksTestnet(),
-  };
-
-  const transaction = await makeContractCall(
+  const transaction = await makeContractCall({
     contractAddress,
     contractName,
     functionName,
-    [buffer],
-    secretKey,
-    options
-  );
+    functionArgs: [buffer],
+    senderKey,
+    fee,
+    nonce: new BigNum(1),
+    network: new StacksTestnet(),
+  });
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -232,7 +242,7 @@ test('Make contract-call with post conditions', async () => {
   const contractName = 'kv-store';
   const functionName = 'get-value';
   const buffer = bufferCV(Buffer.from('foo'));
-  const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
   const postConditionAddress = 'ST1EXHZSN8MJSJ9DSG994G1V8CNKYXGMK7Z4SA6DH';
   const assetAddress = 'ST34RKEJKQES7MXQFBT29KSJZD73QK3YNT5N56C6X';
   const assetContractName = 'test-asset-contract';
@@ -282,20 +292,18 @@ test('Make contract-call with post conditions', async () => {
     ),
   ];
 
-  const transaction = await makeContractCall(
+  const transaction = await makeContractCall({
     contractAddress,
     contractName,
     functionName,
-    [buffer],
-    secretKey,
-    {
-      fee,
-      nonce: new BigNum(1),
-      network: new StacksTestnet(),
-      postConditions,
-      postConditionMode: PostConditionMode.Deny,
-    }
-  );
+    functionArgs: [buffer],
+    senderKey,
+    fee,
+    nonce: new BigNum(1),
+    network: new StacksTestnet(),
+    postConditions,
+    postConditionMode: PostConditionMode.Deny,
+  });
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -324,23 +332,21 @@ test('Make contract-call with post condition allow mode', async () => {
   const contractName = 'kv-store';
   const functionName = 'get-value';
   const buffer = bufferCV(Buffer.from('foo'));
-  const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 
   const fee = new BigNum(0);
 
-  const transaction = await makeContractCall(
+  const transaction = await makeContractCall({
     contractAddress,
     contractName,
     functionName,
-    [buffer],
-    secretKey,
-    {
-      fee,
-      nonce: new BigNum(1),
-      network: new StacksTestnet(),
-      postConditionMode: PostConditionMode.Allow,
-    }
-  );
+    functionArgs: [buffer],
+    senderKey,
+    fee,
+    nonce: new BigNum(1),
+    network: new StacksTestnet(),
+    postConditionMode: PostConditionMode.Allow,
+  });
 
   const serialized = transaction.serialize().toString('hex');
 
@@ -360,15 +366,19 @@ test('Estimate token transfer fee', async () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
   const fee = new BigNum(0);
-  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
-  const options = {
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
     fee,
-    memo: memo,
-  };
+    nonce,
+    memo,
+  });
 
-  const transaction = await makeSTXTokenTransfer(recipient, amount, secretKey, options);
   const transactionByteLength = transaction.serialize().byteLength;
 
   fetchMock.mockOnce(`${estimateFeeRate}`);
@@ -387,21 +397,57 @@ test('Estimate token transfer fee', async () => {
   expect(resultEstimateFee2.toNumber()).toEqual(estimateFee.toNumber());
 });
 
+test('Make STX token transfer with fetch account nonce', async () => {
+  const nonce = 123;
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(0);
+  const senderKey = 'cb3df38053d132895220b9ce471f6b676db5b9bf0b4adefb55f2118ece2478df01';
+  const senderAddress = 'STB44HYPYAT2BB2QE513NSP81HTMYWBJP02HPGK6';
+  const memo = 'test memo';
+  const network = new StacksTestnet();
+  const apiUrl = `${network.balanceApiUrl}/${senderAddress}?proof=0`;
+
+  fetchMock.mockOnce(`{"balance":"0", "nonce":${nonce}}`);
+
+  const fetchNonce = await getNonce(senderAddress, network);
+
+  fetchMock.mockOnce(`{"balance":"0", "nonce":${nonce}}`);
+
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
+    fee,
+    memo,
+    network,
+  });
+
+  expect(fetchMock.mock.calls.length).toEqual(2);
+  expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
+  expect(fetchMock.mock.calls[1][0]).toEqual(apiUrl);
+  expect(fetchNonce.toNumber()).toEqual(nonce);
+  expect(transaction.auth.spendingCondition?.nonce?.toNumber()).toEqual(nonce);
+});
+
 test('Transaction broadcast', async () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
   const fee = new BigNum(0);
-  const secretKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
   const memo = 'test memo';
 
   const network = new StacksMainnet();
 
-  const options = {
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
     fee,
-    memo: memo,
-  };
-
-  const transaction = await makeSTXTokenTransfer(recipient, amount, secretKey, options);
+    nonce,
+    memo,
+  });
 
   fetchMock.mockOnce('mock core node API response');
 
