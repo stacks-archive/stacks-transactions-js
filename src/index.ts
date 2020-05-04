@@ -65,6 +65,7 @@ export {
   makeSmartContractDeploy,
   makeContractCall,
   estimateTransfer,
+  broadcastTransaction,
 } from './builders';
 
 export * from './network';
