@@ -10,7 +10,12 @@ import {
 
 import { SingleSigSpendingCondition, StandardAuthorization } from './authorization';
 
-import { publicKeyToString, createStacksPrivateKey, getPublicKey } from './keys';
+import {
+  publicKeyToString,
+  createStacksPrivateKey,
+  getPublicKey,
+  publicKeyToAddress,
+} from './keys';
 
 import { TransactionSigner } from './signer';
 
@@ -26,11 +31,13 @@ import {
 
 import {
   AddressHashMode,
+  AddressVersion,
   FungibleConditionCode,
   NonFungibleConditionCode,
   PostConditionMode,
   PayloadType,
   AnchorMode,
+  TransactionVersion,
 } from './constants';
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
@@ -39,6 +46,20 @@ import { fetchPrivate } from './utils';
 
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
+
+/**
+ * Lookup the nonce for an address from a core node
+ *
+ * @param {string} address - the c32check address to look up
+ * @param {StacksNetwork} network - the Stacks network to look up address on
+ *
+ * @return a promise that resolves to an integer
+ */
+export function getNonce(address: string, network?: StacksNetwork): Promise<BigNum> {
+  return fetchPrivate(`${network?.balanceApiUrl}/${address}?proof=0`)
+    .then(response => response.json())
+    .then(response => Promise.resolve(new BigNum(response.nonce)));
+}
 
 /**
  * Estimate the total transaction fee in microstacks for a token transfer
@@ -201,6 +222,16 @@ export async function makeSTXTokenTransfer(
     transaction.setFee(txFee);
   }
 
+  if (!txOptions.nonce) {
+    const addressVersion =
+      options.network.version === TransactionVersion.Mainnet
+        ? AddressVersion.MainnetSingleSig
+        : AddressVersion.TestnetSingleSig;
+    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+    const txNonce = await getNonce(senderAddress, options.network);
+    transaction.setNonce(txNonce);
+  }
+
   if (options.senderKey) {
     const signer = new TransactionSigner(transaction);
     signer.signOrigin(privKey);
@@ -333,6 +364,16 @@ export async function makeSmartContractDeploy(
   if (!txOptions.fee) {
     const txFee = await estimateTransfer(transaction, options.network);
     transaction.setFee(txFee);
+  }
+
+  if (!txOptions.nonce) {
+    const addressVersion =
+      options.network.version === TransactionVersion.Mainnet
+        ? AddressVersion.MainnetSingleSig
+        : AddressVersion.TestnetSingleSig;
+    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+    const txNonce = await getNonce(senderAddress, options.network);
+    transaction.setNonce(txNonce);
   }
 
   if (options.senderKey) {
@@ -474,6 +515,16 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
   if (!txOptions.fee) {
     const txFee = await estimateContractFunctionCall(transaction, options.network);
     transaction.setFee(txFee);
+  }
+
+  if (!txOptions.nonce) {
+    const addressVersion =
+      options.network.version === TransactionVersion.Mainnet
+        ? AddressVersion.MainnetSingleSig
+        : AddressVersion.TestnetSingleSig;
+    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+    const txNonce = await getNonce(senderAddress, options.network);
+    transaction.setNonce(txNonce);
   }
 
   if (options.senderKey) {

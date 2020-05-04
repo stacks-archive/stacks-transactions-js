@@ -66,11 +66,6 @@ export const leftPadHexToLength = (hexString: string, length: number): string =>
 export const rightPadHexToLength = (hexString: string, length: number): string =>
   hexString.padEnd(length, '0');
 
-// export const bigIntToHexString = (integer: BigInt, lengthBytes: number = 8): string =>
-//   integer.toString(16).padStart(lengthBytes * 2, '0');
-
-// export const hexStringToBigInt = (hexString: string): BigInt => BigInt("0x" + hexString);
-
 export const intToHexString = (integer: number, lengthBytes = 8): string =>
   integer.toString(16).padStart(lengthBytes * 2, '0');
 

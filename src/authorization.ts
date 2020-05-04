@@ -301,6 +301,10 @@ export class Authorization extends Deserializable {
     this.spendingCondition!.fee = amount;
   }
 
+  setNonce(nonce: BigNum) {
+    this.spendingCondition!.nonce = nonce;
+  }
+
   serialize(): Buffer {
     const bufferArray: BufferArray = new BufferArray();
     if (this.authType === undefined) {

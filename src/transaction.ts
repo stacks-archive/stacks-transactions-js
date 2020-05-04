@@ -128,6 +128,15 @@ export class StacksTransaction {
     this.auth.setFee(amount);
   }
 
+  /**
+   * Set the transaction nonce
+   *
+   * @param {BigNum} nonce - the nonce value
+   */
+  setNonce(nonce: BigNum) {
+    this.auth.setNonce(nonce);
+  }
+
   serialize(): Buffer {
     if (this.version === undefined) {
       throw new Error('"version" is undefined');

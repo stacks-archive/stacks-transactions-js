@@ -47,7 +47,7 @@ const txOptions = {
   senderKey: 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01',
   network,
   memo: "test memo",
-  nonce: new BigNum(0),
+  nonce: new BigNum(0), // set a nonce manually if you don't want builder to fetch from a Stacks node
   fee: new BigNum(200), // set a tx fee if you don't want the builder to estimate
 };
 
@@ -73,7 +73,6 @@ const txOptions = {
   codeBody: fs.readFileSync('/path/to/contract.clar').toString();
   senderKey: 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
   network,
-  nonce: new BigNum(0) // The nonce needs to be manually specified for now
 };
 
 const transaction = await makeSmartContractDeploy(txOptions);
@@ -110,7 +109,6 @@ const txOptions = {
   senderKey: 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01',
   network,
   postConditions,
-  nonce: new BigNum(0) // The nonce needs to be manually specified for now
 };
 
 const transaction = await makeContractCall(txOptions);
