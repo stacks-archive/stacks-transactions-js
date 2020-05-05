@@ -73,6 +73,14 @@ export function estimateTransfer(
   transaction: StacksTransaction,
   network?: StacksNetwork
 ): Promise<BigNum> {
+  if (transaction.payload.payloadType !== PayloadType.TokenTransfer) {
+    throw new Error(
+      `Transaction fee estimation only possible with ${
+        PayloadType[PayloadType.TokenTransfer]
+      } transactions. Invoked with: ${PayloadType[transaction.payload.payloadType]}`
+    );
+  }
+
   const requestHeaders = {
     Accept: 'application/text',
   };
@@ -81,10 +89,6 @@ export function estimateTransfer(
     method: 'GET',
     headers: requestHeaders,
   };
-
-  if (transaction.payload.payloadType != PayloadType.TokenTransfer) {
-    throw new Error('Transaction is not a token transfer');
-  }
 
   const defaultNetwork = new StacksMainnet();
   const url = network
@@ -279,6 +283,14 @@ export function estimateContractDeploy(
   transaction: StacksTransaction,
   network?: StacksNetwork
 ): Promise<BigNum> {
+  if (transaction.payload.payloadType !== PayloadType.SmartContract) {
+    throw new Error(
+      `Contract deploy fee estimation only possible with ${
+        PayloadType[PayloadType.SmartContract]
+      } transactions. Invoked with: ${PayloadType[transaction.payload.payloadType]}`
+    );
+  }
+
   const requestHeaders = {
     Accept: 'application/text',
   };
@@ -287,10 +299,6 @@ export function estimateContractDeploy(
     method: 'GET',
     headers: requestHeaders,
   };
-
-  if (transaction.payload.payloadType != PayloadType.TokenTransfer) {
-    throw new Error('Transaction is not a token transfer');
-  }
 
   // Place holder estimate until contract deploy fee estimation is fully implemented on Stacks
   // blockchain core
@@ -427,6 +435,14 @@ export function estimateContractFunctionCall(
   transaction: StacksTransaction,
   network?: StacksNetwork
 ): Promise<BigNum> {
+  if (transaction.payload.payloadType !== PayloadType.ContractCall) {
+    throw new Error(
+      `Contract call fee estimation only possible with ${
+        PayloadType[PayloadType.ContractCall]
+      } transactions. Invoked with: ${PayloadType[transaction.payload.payloadType]}`
+    );
+  }
+
   const requestHeaders = {
     Accept: 'application/text',
   };
@@ -435,10 +451,6 @@ export function estimateContractFunctionCall(
     method: 'GET',
     headers: requestHeaders,
   };
-
-  if (transaction.payload.payloadType != PayloadType.TokenTransfer) {
-    throw new Error('Transaction is not a token transfer');
-  }
 
   // Place holder estimate until contract call fee estimation is fully implemented on Stacks
   // blockchain core
