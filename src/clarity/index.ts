@@ -1,4 +1,4 @@
-import { ClarityValue, ClarityType } from './clarityValue';
+import { ClarityValue, ClarityType, getCVTypeString } from './clarityValue';
 import { BooleanCV, TrueCV, FalseCV, trueCV, falseCV } from './types/booleanCV';
 import { IntCV, UIntCV, intCV, uintCV } from './types/intCV';
 import { BufferCV, bufferCV, bufferCVFromString } from './types/bufferCV';
@@ -63,6 +63,7 @@ export {
   contractPrincipalCVFromAddress,
   listCV,
   tupleCV,
+  getCVTypeString,
 };
 
 // Serialization

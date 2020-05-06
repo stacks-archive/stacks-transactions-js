@@ -44,3 +44,34 @@ export type ClarityValue =
   | ResponseOkCV
   | ListCV
   | TupleCV;
+
+export function getCVTypeString(val: ClarityValue): string {
+  switch (val.type) {
+    case ClarityType.BoolTrue:
+    case ClarityType.BoolFalse:
+      return 'bool';
+    case ClarityType.Int:
+      return 'int128';
+    case ClarityType.UInt:
+      return 'uint128';
+    case ClarityType.Buffer:
+      return `buffer(${val.buffer.length})`;
+    case ClarityType.OptionalNone:
+      return 'optional(none)';
+    case ClarityType.OptionalSome:
+      return `optional(${getCVTypeString(val.value)})`;
+    case ClarityType.ResponseErr:
+      return `responseError(${getCVTypeString(val.value)})`;
+    case ClarityType.ResponseOk:
+      return `responseOk(${getCVTypeString(val.value)})`;
+    case ClarityType.PrincipalStandard:
+    case ClarityType.PrincipalContract:
+      return 'principal';
+    case ClarityType.List:
+      return `list(${getCVTypeString(val.list[0])},${val.list.length})`;
+    case ClarityType.Tuple:
+      return `tuple(${Object.keys(val.data)
+        .map(key => JSON.stringify(key) + ':' + getCVTypeString(val.data[key]))
+        .join(',')})`;
+  }
+}
