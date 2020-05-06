@@ -11,7 +11,8 @@
           { "name": "key4", "type": "principal" },
           { "name": "key5", "type": { "buffer": { "length": 3 } } },
           { "name": "key6", "type": { "optional": "bool" } },
-          { "name": "key7", "type": { "list": { "type": "bool", "length": 2 } } }
+          { "name": "key7", "type": { "response": { "ok": "bool", "error": "bool" } } },
+          { "name": "key8", "type": { "list": { "type": "bool", "length": 2 } } }
         ]}}
       ],
       "outputs": { "type": { "response": { "ok": "bool", "error": "none" } } }

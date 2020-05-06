@@ -11,10 +11,7 @@ import {
   falseCV,
   trueCV,
   ClarityType,
-  bufferCVFromString,
-  tupleCV,
   getCVTypeString,
-  listCV,
 } from './clarity';
 import { ContractCallPayload, createContractCallPayload } from './payload';
 
@@ -298,6 +295,7 @@ function matchType(cv: ClarityValue, abiType: ClarityAbiType): boolean {
         }
         return true;
       }
+    default:
       return false;
   }
 }
@@ -310,7 +308,7 @@ export function validateContractCall(payload: ContractCallPayload, abi: ClarityA
 
     if (payload.functionArgs.length !== abiArgs.length) {
       throw new Error(
-        `Clarity function expects ${abiArgs.length} arguments but received ${payload.functionArgs.length}`
+        `Clarity function expects ${abiArgs.length} argument(s) but received ${payload.functionArgs.length}`
       );
     }
 
