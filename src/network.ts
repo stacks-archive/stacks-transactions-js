@@ -1,4 +1,5 @@
 import { TransactionVersion, ChainID } from './constants';
+import { Address, addressToString } from './types';
 
 export interface StacksNetwork {
   version: TransactionVersion;
@@ -7,6 +8,7 @@ export interface StacksNetwork {
   broadcastApiUrl: string;
   transferFeeEstimateApiUrl: string;
   balanceApiUrl: string;
+  getAbiApiUrl: (address: string, contract: string) => string;
 }
 
 export class StacksMainnet implements StacksNetwork {
@@ -16,6 +18,8 @@ export class StacksMainnet implements StacksNetwork {
   broadcastApiUrl = `${this.coreApiUrl}/v2/transactions`;
   transferFeeEstimateApiUrl = `${this.coreApiUrl}/v2/fees/transfer`;
   balanceApiUrl = `${this.coreApiUrl}/v2/accounts`;
+  getAbiApiUrl = (address: string, contract: string) =>
+    `${this.coreApiUrl}/v2/contracts/interface/${address}/${contract}`;
 }
 
 export class StacksTestnet implements StacksNetwork {
@@ -25,4 +29,6 @@ export class StacksTestnet implements StacksNetwork {
   broadcastApiUrl = `${this.coreApiUrl}/v2/transactions`;
   transferFeeEstimateApiUrl = `${this.coreApiUrl}/v2/fees/transfer`;
   balanceApiUrl = `${this.coreApiUrl}/v2/accounts`;
+  getAbiApiUrl = (address: string, contract: string) =>
+    `${this.coreApiUrl}/v2/contracts/interface/${address}/${contract}`;
 }
