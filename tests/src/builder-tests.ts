@@ -464,7 +464,7 @@ test('Make contract-call ABI validation', async () => {
   const contractName = 'kv-store';
   const functionName = 'get-value';
   const buffer = bufferCV(Buffer.from('foo'));
-  const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
 
   const fee = new BigNum(0);
 
@@ -473,20 +473,18 @@ test('Make contract-call ABI validation', async () => {
   const abi = fs.readFileSync('./tests/src/abi/kv-store-abi.json').toString();
   fetchMock.mockOnce(abi);
 
-  const transaction = await makeContractCall(
+  const transaction = await makeContractCall({
     contractAddress,
     contractName,
     functionName,
-    [buffer],
-    secretKey,
-    {
-      fee,
-      nonce: new BigNum(1),
-      network: new StacksTestnet(),
-      validateWithAbi: true,
-      postConditionMode: PostConditionMode.Allow,
-    }
-  );
+    senderKey,
+    functionArgs: [buffer],
+    fee,
+    nonce: new BigNum(1),
+    network: new StacksTestnet(),
+    validateWithAbi: true,
+    postConditionMode: PostConditionMode.Allow,
+  });
 
   expect(fetchMock.mock.calls.length).toEqual(1);
   expect(fetchMock.mock.calls[0][0]).toEqual(network.getAbiApiUrl(contractAddress, contractName));

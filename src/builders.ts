@@ -507,7 +507,7 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
 
   if (options?.validateWithAbi) {
     if (options?.network) {
-      const abi = await getAbi(contractAddress, contractName, options.network);
+      const abi = await getAbi(options.contractAddress, options.contractName, options.network);
       validateContractCall(payload, abi);
     } else {
       throw new Error('Network option must be provided in order to validate with ABI');
