@@ -80,17 +80,11 @@ function serializeTupleCV(cv: TupleCV) {
   length.writeUInt32BE(Object.keys(cv.data).length, 0);
   buffers.push(length);
 
-  const lexicographicOrder = Object.keys(cv.data).sort((a, b) => {
-    const bufA = Buffer.from(a);
-    const bufB = Buffer.from(b);
-    return bufA.compare(bufB);
-  });
-
-  for (const key of lexicographicOrder) {
+  for (const [key, value] of Object.entries(cv.data)) {
     const nameWithLength = createLPString(key);
     buffers.push(serializeLPString(nameWithLength));
 
-    const serializedValue = serializeCV(cv.data[key]);
+    const serializedValue = serializeCV(value);
     buffers.push(serializedValue);
   }
 
