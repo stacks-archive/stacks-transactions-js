@@ -1,0 +1,24 @@
+{
+  "functions": [
+    {
+      "name": "tuple-test",
+      "access": "public",
+      "args": [
+        { "name": "arg1", "type": { "tuple": [
+          { "name": "key1", "type": "bool" },
+          { "name": "key2", "type": "int128" },
+          { "name": "key3", "type": "uint128" },
+          { "name": "key4", "type": "principal" },
+          { "name": "key5", "type": { "buffer": { "length": 3 } } },
+          { "name": "key6", "type": { "optional": "bool" } },
+          { "name": "key7", "type": { "list": { "type": "bool", "length": 2 } } }
+        ]}}
+      ],
+      "outputs": { "type": { "response": { "ok": "bool", "error": "none" } } }
+    }
+  ],
+  "variables": [],
+  "maps": [],
+  "fungible_tokens": [],
+  "non_fungible_tokens": []
+}
