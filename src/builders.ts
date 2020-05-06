@@ -46,6 +46,7 @@ import { fetchPrivate } from './utils';
 
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
+import { validateContractCall, ClarityAbi } from './contract-abi';
 
 /**
  * Lookup the nonce for an address from a core node
@@ -126,6 +127,26 @@ export function broadcastTransaction(transaction: StacksTransaction, network: St
   return fetchPrivate(url, options).then(response => {
     if (response.ok) {
       return response.text();
+    } else {
+      return response.text();
+    }
+  });
+}
+
+export async function getAbi(
+  address: string,
+  contractName: string,
+  network: StacksNetwork
+): Promise<ClarityAbi> {
+  const options = {
+    method: 'GET',
+  };
+
+  const url = network.getAbiApiUrl(address, contractName);
+
+  return fetchPrivate(url, options).then(async response => {
+    if (response.ok) {
+      return JSON.parse(await response.text());
     } else {
       return response.text();
     }
@@ -413,6 +434,7 @@ export interface ContractCallOptions {
   anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
+  validateWithAbi?: boolean;
 }
 
 /**
@@ -482,6 +504,15 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
     options.functionName,
     options.functionArgs
   );
+
+  if (options?.validateWithAbi) {
+    if (options?.network) {
+      const abi = await getAbi(contractAddress, contractName, options.network);
+      validateContractCall(payload, abi);
+    } else {
+      throw new Error('Network option must be provided in order to validate with ABI');
+    }
+  }
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
