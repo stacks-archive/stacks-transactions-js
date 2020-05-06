@@ -26,11 +26,12 @@ import {
 
 import { StacksTestnet, StacksMainnet } from '../../src/network';
 
-import { bufferCV, standardPrincipalCV, bufferCVFromString } from '../../src/clarity';
+import { bufferCV, standardPrincipalCV, bufferCVFromString, falseCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
 import { enableFetchMocks } from 'jest-fetch-mock';
+import { ClarityAbi } from '../../src/contract-abi';
 
 enableFetchMocks();
 
@@ -456,4 +457,37 @@ test('Transaction broadcast', async () => {
   expect(fetchMock.mock.calls.length).toEqual(1);
   expect(fetchMock.mock.calls[0][0]).toEqual(network.broadcastApiUrl);
   expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
+});
+
+test('Make contract-call ABI validation', async () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const buffer = bufferCV(Buffer.from('foo'));
+  const secretKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+
+  const fee = new BigNum(0);
+
+  const network = new StacksTestnet();
+
+  const abi = fs.readFileSync('./tests/src/abi/kv-store-abi.json').toString();
+  fetchMock.mockOnce(abi);
+
+  const transaction = await makeContractCall(
+    contractAddress,
+    contractName,
+    functionName,
+    [buffer],
+    secretKey,
+    {
+      fee,
+      nonce: new BigNum(1),
+      network: new StacksTestnet(),
+      validateWithAbi: true,
+      postConditionMode: PostConditionMode.Allow,
+    }
+  );
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(network.getAbiApiUrl(contractAddress, contractName));
 });
