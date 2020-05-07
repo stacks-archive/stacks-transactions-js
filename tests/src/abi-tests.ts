@@ -13,7 +13,6 @@ import {
   responseOkCV,
   responseErrorCV,
   noneCV,
-  ClarityValue,
 } from '../../src';
 import { validateContractCall, ClarityAbi } from '../../src/contract-abi';
 
@@ -73,7 +72,27 @@ test('ABI validation fail, tuple mistyped', () => {
   );
 
   expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
-    'Clarity function `tuple-test` expects argument 0 to be of type tuple("key1":bool,"key2":int128,"key3":uint128,"key4":principal,"key5":buffer(3),"key6":optional(bool),"key7":response(bool,bool),"key8":list(bool,2))'
+    // prettier-ignore
+    'Clarity function `tuple-test` expects argument 1 to be of type ' +
+      'tuple(' +
+        '"key1":bool,' +
+        '"key2":int128,' +
+        '"key3":uint128,' +
+        '"key4":principal,' +
+        '"key5":buffer(3),' +
+        '"key6":optional(bool),' +
+        '"key7":response(bool,bool),' +
+        '"key8":list(bool,2)), ' +
+      'not ' +
+      'tuple(' +
+        '"key1":bool,' +
+        '"key2":int128,' +
+        '"key3":uint128,' +
+        '"key4":principal,' +
+        '"key5":buffer(3),' +
+        '"key6":optional(none),' +
+        '"key7":responseError(bool),' +
+        '"key8":bool)'
   );
 });
 
@@ -102,7 +121,26 @@ test('ABI validation fail, tuple wrong key', () => {
   );
 
   expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
-    'Clarity function `tuple-test` expects argument 0 to be of type tuple("key1":bool,"key2":int128,"key3":uint128,"key4":principal,"key5":buffer(3),"key6":optional(bool),"key7":response(bool,bool),"key8":list(bool,2))'
+    // prettier-ignore
+    'Clarity function `tuple-test` expects argument 1 to be of type ' +
+      'tuple(' +
+        '"key1":bool,' +
+        '"key2":int128,' +
+        '"key3":uint128,' +
+        '"key4":principal,' +
+        '"key5":buffer(3),' +
+        '"key6":optional(bool),' +
+        '"key7":response(bool,bool),' +
+        '"key8":list(bool,2)), ' +
+      'not ' +
+      'tuple("wrong-key":bool,' +
+        '"key2":int128,' +
+        '"key3":uint128,' +
+        '"key4":principal,' +
+        '"key5":buffer(3),' +
+        '"key6":optional(bool),' +
+        '"key7":responseOk(bool),' +
+        '"key9":list(bool,2))'
   );
 });
 
