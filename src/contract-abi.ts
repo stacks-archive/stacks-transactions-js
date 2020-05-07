@@ -281,15 +281,20 @@ function matchType(cv: ClarityValue, abiType: ClarityAbiType): boolean {
       );
     case ClarityType.Tuple:
       if (union.id == ClarityAbiTypeId.ClarityAbiTypeTuple) {
+        const tuple = _.cloneDeep(cv.data);
         for (let i = 0; i < union.type.tuple.length; i++) {
           const abiTupleEntry = union.type.tuple[i];
-          const abiKey = abiTupleEntry.name;
-          const key = Object.keys(cv.data)[i];
-          if (abiKey !== key) {
-            return false;
-          }
+          const key = abiTupleEntry.name;
+          const val = tuple[key];
 
-          if (!matchType(cv.data[key], abiTupleEntry.type)) {
+          // if key exists in cv tuple, check if its type matches the abi
+          // return false if key doesn't exist
+          if (val) {
+            if (!matchType(val, abiTupleEntry.type)) {
+              return false;
+            }
+            delete tuple[key];
+          } else {
             return false;
           }
         }

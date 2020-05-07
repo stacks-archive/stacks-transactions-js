@@ -15,18 +15,7 @@ function tupleCV(data: TupleData): TupleCV {
     }
   }
 
-  const ordered: TupleData = {};
-  Object.keys(data)
-    .sort((a, b) => {
-      const bufA = Buffer.from(a);
-      const bufB = Buffer.from(b);
-      return bufA.compare(bufB);
-    })
-    .forEach(key => {
-      ordered[key] = data[key];
-    });
-
-  return { type: ClarityType.Tuple, data: ordered };
+  return { type: ClarityType.Tuple, data };
 }
 
 export { TupleCV, tupleCV };
