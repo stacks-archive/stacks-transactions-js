@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import { readFileSync } from 'fs';
 import { createContractCallPayload } from '../../src/payload';
 import {
   trueCV,
@@ -16,9 +16,7 @@ import {
 } from '../../src';
 import { validateContractCall, ClarityAbi } from '../../src/contract-abi';
 
-const TEST_ABI: ClarityAbi = JSON.parse(
-  fs.readFileSync('./tests/src/abi/test-abi.json').toString()
-);
+const TEST_ABI: ClarityAbi = JSON.parse(readFileSync('./tests/src/abi/test-abi.json').toString());
 
 test('ABI validation', () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';

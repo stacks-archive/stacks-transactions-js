@@ -307,6 +307,14 @@ function matchType(cv: ClarityValue, abiType: ClarityAbiType): boolean {
   }
 }
 
+/**
+ * Validates a contract-call payload with a contract ABI
+ *
+ * @param {ContractCallPayload} payload - a contract-call payload
+ * @param {ClarityAbi} abi - a contract ABI
+ *
+ * @returns {boolean} true if the payloads functionArgs type check against those in the ABI
+ */
 export function validateContractCall(payload: ContractCallPayload, abi: ClarityAbi): boolean {
   const filtered = abi.functions.filter(fn => fn.name === payload.functionName.content);
   if (filtered.length === 1) {
