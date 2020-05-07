@@ -459,7 +459,7 @@ test('Transaction broadcast', async () => {
   expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
 });
 
-test('Make contract-call ABI validation', async () => {
+test('Make contract-call with network ABI validation', async () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
   const contractName = 'kv-store';
   const functionName = 'get-value';
@@ -488,4 +488,30 @@ test('Make contract-call ABI validation', async () => {
 
   expect(fetchMock.mock.calls.length).toEqual(1);
   expect(fetchMock.mock.calls[0][0]).toEqual(network.getAbiApiUrl(contractAddress, contractName));
+});
+
+test('Make contract-call with provided ABI validation', async () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const buffer = bufferCV(Buffer.from('foo'));
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+
+  const fee = new BigNum(0);
+
+  const abi: ClarityAbi = JSON.parse(
+    fs.readFileSync('./tests/src/abi/kv-store-abi.json').toString()
+  );
+
+  const transaction = await makeContractCall({
+    contractAddress,
+    contractName,
+    functionName,
+    senderKey,
+    functionArgs: [buffer],
+    fee,
+    nonce: new BigNum(1),
+    validateWithAbi: abi,
+    postConditionMode: PostConditionMode.Allow,
+  });
 });
