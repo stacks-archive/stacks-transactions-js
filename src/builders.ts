@@ -434,7 +434,7 @@ export interface ContractCallOptions {
   anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
-  validateWithAbi?: boolean;
+  validateWithAbi?: boolean | ClarityAbi;
 }
 
 /**
@@ -506,12 +506,18 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
   );
 
   if (options?.validateWithAbi) {
-    if (options?.network) {
-      const abi = await getAbi(options.contractAddress, options.contractName, options.network);
-      validateContractCall(payload, abi);
+    let abi;
+    if (typeof options.validateWithAbi === 'boolean') {
+      if (options?.network) {
+        abi = await getAbi(options.contractAddress, options.contractName, options.network);
+      } else {
+        throw new Error('Network option must be provided in order to validate with ABI');
+      }
     } else {
-      throw new Error('Network option must be provided in order to validate with ABI');
+      abi = options.validateWithAbi;
     }
+
+    validateContractCall(payload, abi);
   }
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
