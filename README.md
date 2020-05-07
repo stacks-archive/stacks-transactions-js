@@ -107,6 +107,7 @@ const txOptions = {
   functionName: 'contract_function',
   functionArgs: [bufferCVFromString('foo')],
   senderKey: 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01',
+  validateWithAbi: true,
   network,
   postConditions,
 };
@@ -114,6 +115,14 @@ const txOptions = {
 const transaction = await makeContractCall(txOptions);
 
 broadcastTransaction(transaction, network);
+```
+
+In this example we construct a `contract-call` transaction with a post condition. We have set the `validateWithAbi` option to `true`, so the `makeContractCall` builder will attempt to fetch this contracts ABI from the specified Stacks network, and validate that the provided functionArgs match what is described in the ABI. This should help you avoid constructing invalid contract-call transactions. If you would prefer to provide your own ABI instead of fetching it from the network, the `validateWithABI` option also accepts [ClarityABI](https://github.com/blockstack/stacks-transactions-js/blob/master/src/contract-abi.ts#L231) objects, which can be constructed from ABI files like so:
+
+```typescript
+import { readFileSync } from 'fs';
+
+const abi: ClarityAbi = JSON.parse(readFileSync('abi.json').toString());
 ```
 
 ## Constructing Clarity Values

@@ -133,6 +133,15 @@ export function broadcastTransaction(transaction: StacksTransaction, network: St
   });
 }
 
+/**
+ * Fetch a contract's ABI
+ *
+ * @param {string} address - the contracts address
+ * @param {string} contractName - the contracts name
+ * @param {Stacks} network - the Stacks network to broadcast transaction to
+ *
+ * @returns {Promise} that resolves to a ClarityAbi if the operation succeeds
+ */
 export async function getAbi(
   address: string,
   contractName: string,
@@ -506,7 +515,7 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
   );
 
   if (options?.validateWithAbi) {
-    let abi;
+    let abi: ClarityAbi;
     if (typeof options.validateWithAbi === 'boolean') {
       if (options?.network) {
         abi = await getAbi(options.contractAddress, options.contractName, options.network);
