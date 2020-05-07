@@ -20,7 +20,9 @@ class NotImplementedError extends Error {
     super(message);
     this.message = message;
     this.name = this.constructor.name;
-    Error.captureStackTrace(this, this.constructor);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
   }
 }
 
