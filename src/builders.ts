@@ -57,7 +57,12 @@ import { validateContractCall, ClarityAbi } from './contract-abi';
  * @return a promise that resolves to an integer
  */
 export function getNonce(address: string, network?: StacksNetwork): Promise<BigNum> {
-  return fetchPrivate(`${network?.balanceApiUrl}/${address}?proof=0`)
+  const defaultNetwork = new StacksMainnet();
+  const url = network
+    ? network.getAccountApiUrl(address)
+    : defaultNetwork.getAccountApiUrl(address);
+
+  return fetchPrivate(url)
     .then(response => response.json())
     .then(response => Promise.resolve(new BigNum(response.nonce)));
 }
@@ -93,8 +98,8 @@ export function estimateTransfer(
 
   const defaultNetwork = new StacksMainnet();
   const url = network
-    ? network.transferFeeEstimateApiUrl
-    : defaultNetwork.transferFeeEstimateApiUrl;
+    ? network.getTransferFeeEstimateApiUrl()
+    : defaultNetwork.getTransferFeeEstimateApiUrl();
 
   return fetchPrivate(url, fetchOptions)
     .then(response => response.text())
@@ -126,7 +131,7 @@ export function broadcastTransaction(transaction: StacksTransaction, network: St
     body: tx,
   };
 
-  const url = network.broadcastApiUrl;
+  const url = network.getBroadcastApiUrl();
 
   return fetchPrivate(url, options).then(response => {
     if (response.ok) {
@@ -334,8 +339,8 @@ export function estimateContractDeploy(
   // blockchain core
   const defaultNetwork = new StacksMainnet();
   const url = network
-    ? network.transferFeeEstimateApiUrl
-    : defaultNetwork.transferFeeEstimateApiUrl;
+    ? network.getTransferFeeEstimateApiUrl()
+    : defaultNetwork.getTransferFeeEstimateApiUrl();
 
   return fetchPrivate(url, fetchOptions)
     .then(response => response.text())
@@ -487,8 +492,8 @@ export function estimateContractFunctionCall(
   // blockchain core
   const defaultNetwork = new StacksMainnet();
   const url = network
-    ? network.transferFeeEstimateApiUrl
-    : defaultNetwork.transferFeeEstimateApiUrl;
+    ? network.getTransferFeeEstimateApiUrl()
+    : defaultNetwork.getTransferFeeEstimateApiUrl();
 
   return fetchPrivate(url, fetchOptions)
     .then(response => response.text())

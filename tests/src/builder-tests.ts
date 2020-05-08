@@ -393,7 +393,7 @@ test('Estimate token transfer fee', async () => {
 
   expect(fetchMock.mock.calls.length).toEqual(2);
   expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
-  expect(fetchMock.mock.calls[1][0]).toEqual(network.transferFeeEstimateApiUrl);
+  expect(fetchMock.mock.calls[1][0]).toEqual(network.getTransferFeeEstimateApiUrl());
   expect(resultEstimateFee.toNumber()).toEqual(estimateFee.toNumber());
   expect(resultEstimateFee2.toNumber()).toEqual(estimateFee.toNumber());
 });
@@ -407,7 +407,7 @@ test('Make STX token transfer with fetch account nonce', async () => {
   const senderAddress = 'STB44HYPYAT2BB2QE513NSP81HTMYWBJP02HPGK6';
   const memo = 'test memo';
   const network = new StacksTestnet();
-  const apiUrl = `${network.balanceApiUrl}/${senderAddress}?proof=0`;
+  const apiUrl = network.getAccountApiUrl(senderAddress);
 
   fetchMock.mockOnce(`{"balance":"0", "nonce":${nonce}}`);
 
@@ -455,7 +455,7 @@ test('Transaction broadcast', async () => {
   broadcastTransaction(transaction, network);
 
   expect(fetchMock.mock.calls.length).toEqual(1);
-  expect(fetchMock.mock.calls[0][0]).toEqual(network.broadcastApiUrl);
+  expect(fetchMock.mock.calls[0][0]).toEqual(network.getBroadcastApiUrl());
   expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
 });
 
