@@ -1,13 +1,16 @@
 import { TransactionVersion, ChainID } from './constants';
-import { Address, addressToString } from './types';
 
 export interface StacksNetwork {
   version: TransactionVersion;
   chainId: ChainID;
   coreApiUrl: string;
-  broadcastApiUrl: string;
-  transferFeeEstimateApiUrl: string;
-  balanceApiUrl: string;
+  broadcastEndpoint: string;
+  transferFeeEstimateEndpoint: string;
+  accountEndpoint: string;
+  contractAbiEndpoint: string;
+  getBroadcastApiUrl: () => string;
+  getTransferFeeEstimateApiUrl: () => string;
+  getAccountApiUrl: (address: string) => string;
   getAbiApiUrl: (address: string, contract: string) => string;
 }
 
@@ -15,20 +18,20 @@ export class StacksMainnet implements StacksNetwork {
   version = TransactionVersion.Mainnet;
   chainId = ChainID.Mainnet;
   coreApiUrl = 'https://core.blockstack.org';
-  broadcastApiUrl = `${this.coreApiUrl}/v2/transactions`;
-  transferFeeEstimateApiUrl = `${this.coreApiUrl}/v2/fees/transfer`;
-  balanceApiUrl = `${this.coreApiUrl}/v2/accounts`;
+  broadcastEndpoint = '/v2/transactions';
+  transferFeeEstimateEndpoint = '/v2/fees/transfer';
+  accountEndpoint = '/v2/accounts';
+  contractAbiEndpoint = '/v2/contracts/interface';
+  getBroadcastApiUrl = () => `${this.coreApiUrl}${this.broadcastEndpoint}`;
+  getTransferFeeEstimateApiUrl = () => `${this.coreApiUrl}${this.transferFeeEstimateEndpoint}`;
+  getAccountApiUrl = (address: string) =>
+    `${this.coreApiUrl}${this.accountEndpoint}/${address}?proof=0`;
   getAbiApiUrl = (address: string, contract: string) =>
-    `${this.coreApiUrl}/v2/contracts/interface/${address}/${contract}`;
+    `${this.coreApiUrl}${this.contractAbiEndpoint}/${address}/${contract}`;
 }
 
-export class StacksTestnet implements StacksNetwork {
+export class StacksTestnet extends StacksMainnet implements StacksNetwork {
   version = TransactionVersion.Testnet;
   chainId = ChainID.Testnet;
   coreApiUrl = 'http://neon.blockstack.org:20443';
-  broadcastApiUrl = `${this.coreApiUrl}/v2/transactions`;
-  transferFeeEstimateApiUrl = `${this.coreApiUrl}/v2/fees/transfer`;
-  balanceApiUrl = `${this.coreApiUrl}/v2/accounts`;
-  getAbiApiUrl = (address: string, contract: string) =>
-    `${this.coreApiUrl}/v2/contracts/interface/${address}/${contract}`;
 }
