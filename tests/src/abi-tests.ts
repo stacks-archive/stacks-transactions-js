@@ -159,3 +159,64 @@ test('ABI validation fail, wrong number of args', () => {
     'Clarity function expects 1 argument(s) but received 2'
   );
 });
+
+test('Validation fails when ABI has multiple functions with the same nam', () => {
+  const abi: ClarityAbi = {
+    functions: [
+      {
+        name: 'get-value',
+        access: 'public',
+        args: [{ name: 'key', type: { buffer: { length: 3 } } }],
+        outputs: {
+          type: { response: { ok: { buffer: { length: 3 } }, error: 'int128' } },
+        },
+      },
+      {
+        name: 'get-value',
+        access: 'public',
+        args: [{ name: 'key', type: { buffer: { length: 3 } } }],
+        outputs: {
+          type: { response: { ok: { buffer: { length: 3 } }, error: 'int128' } },
+        },
+      },
+    ],
+    variables: [],
+    maps: [],
+    fungible_tokens: [],
+    non_fungible_tokens: [],
+  };
+
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const functionArgs = [trueCV(), falseCV()];
+
+  const payload = createContractCallPayload(
+    contractAddress,
+    contractName,
+    functionName,
+    functionArgs
+  );
+
+  expect(() => validateContractCall(payload, abi)).toThrow(
+    'Malformed ABI. Contains multiple functions with the name get-value'
+  );
+});
+
+test('Validation fails when abi is missing specified function', () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const functionArgs = [trueCV(), falseCV()];
+
+  const payload = createContractCallPayload(
+    contractAddress,
+    contractName,
+    functionName,
+    functionArgs
+  );
+
+  expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
+    "ABI doesn't contain a function with the name get-value"
+  );
+});
