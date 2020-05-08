@@ -114,7 +114,10 @@ export function estimateTransfer(
  *
  * @returns {Promise} that resolves to a response if the operation succeeds
  */
-export function broadcastTransaction(transaction: StacksTransaction, network: StacksNetwork) {
+export async function broadcastTransaction(
+  transaction: StacksTransaction,
+  network: StacksNetwork
+): Promise<string> {
   const tx = transaction.serialize();
 
   const requestHeaders = {
@@ -129,13 +132,18 @@ export function broadcastTransaction(transaction: StacksTransaction, network: St
 
   const url = network.getBroadcastApiUrl();
 
-  return fetchPrivate(url, options).then(response => {
-    if (response.ok) {
-      return response.text();
-    } else {
-      return response.text();
-    }
-  });
+  const response = await fetchPrivate(url, options);
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error broadcasting transaction. Response ${response.status}: ${response.statusText} fetching ${url} - ${msg}`
+    );
+  }
+
+  return response.text();
 }
 
 /**
@@ -158,13 +166,18 @@ export async function getAbi(
 
   const url = network.getAbiApiUrl(address, contractName);
 
-  return fetchPrivate(url, options).then(async response => {
-    if (response.ok) {
-      return JSON.parse(await response.text());
-    } else {
-      return response.text();
-    }
-  });
+  const response = await fetchPrivate(url, options);
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error fetching ABI. Response ${response.status}: ${response.statusText} fetching ${url} - ${msg}`
+    );
+  }
+
+  return JSON.parse(await response.text());
 }
 
 /**
