@@ -340,9 +340,11 @@ export function validateContractCall(payload: ContractCallPayload, abi: ClarityA
     }
 
     return true;
+  } else if (filtered.length === 0) {
+    throw new Error(`ABI doesn't contain a function with the name ${payload.functionName.content}`);
+  } else {
+    throw new Error(
+      `Malformed ABI. Contains multiple functions with the name ${payload.functionName.content}`
+    );
   }
-
-  throw new Error(
-    `Malformed ABI. Contains multiple functions with the name ${payload.functionName.content}`
-  );
 }
