@@ -473,7 +473,7 @@ test('Make contract-call with network ABI validation', async () => {
   const abi = fs.readFileSync('./tests/src/abi/kv-store-abi.json').toString();
   fetchMock.mockOnce(abi);
 
-  const transaction = await makeContractCall({
+  await makeContractCall({
     contractAddress,
     contractName,
     functionName,
@@ -503,7 +503,7 @@ test('Make contract-call with provided ABI validation', async () => {
     fs.readFileSync('./tests/src/abi/kv-store-abi.json').toString()
   );
 
-  const transaction = await makeContractCall({
+  await makeContractCall({
     contractAddress,
     contractName,
     functionName,
@@ -514,4 +514,44 @@ test('Make contract-call with provided ABI validation', async () => {
     validateWithAbi: abi,
     postConditionMode: PostConditionMode.Allow,
   });
+});
+
+test('Make contract-call with network ABI validation failure', async () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const buffer = bufferCV(Buffer.from('foo'));
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+
+  const fee = new BigNum(0);
+
+  const network = new StacksTestnet();
+
+  const abi = fs.readFileSync('./tests/src/abi/kv-store-abi.json').toString();
+  // fetchMock.mockOnce(abi);
+  fetchMock.mockOnce('failed', { status: 404 });
+
+  let error;
+  try {
+    await makeContractCall({
+      contractAddress,
+      contractName,
+      functionName,
+      senderKey,
+      functionArgs: [buffer],
+      fee,
+      nonce: new BigNum(1),
+      network: new StacksTestnet(),
+      validateWithAbi: true,
+      postConditionMode: PostConditionMode.Allow,
+    });
+  } catch (e) {
+    error = e;
+  }
+
+  expect(error).toEqual(
+    new Error(
+      'Error fetching contract ABI for contract "kv-store" at address ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE. Response 404: Not Found. Attempted to fetch http://neon.blockstack.org:20443/v2/contracts/interface/ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE/kv-store and failed with the message: "failed"'
+    )
+  );
 });
