@@ -63,3 +63,4 @@ export * from './builders';
 export * from './network';
 export * from './types';
 export * from './constants';
+export * from './contract-abi';
