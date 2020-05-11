@@ -177,7 +177,7 @@ export async function getAbi(
       msg = await response.text();
     } catch (error) {}
     throw new Error(
-      `Error fetching ABI. Response ${response.status}: ${response.statusText} fetching ${url} - ${msg}`
+      `Error fetching contract ABI for contract "${contractName}" at address ${address}. Response ${response.status}: ${response.statusText}. Attempted to fetch ${url} and failed with the message: "${msg}"`
     );
   }
 
