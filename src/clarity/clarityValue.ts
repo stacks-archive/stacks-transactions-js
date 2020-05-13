@@ -13,6 +13,7 @@ import {
 } from '.';
 import { principalToString } from './types/principalCV';
 import { CLARITY_INT_SIZE } from '../constants';
+import { isClarityName } from '../utils';
 
 /**
  * Type IDs corresponding to each of the Clarity value types as described here:
@@ -47,7 +48,7 @@ export type ClarityValue =
   | ListCV
   | TupleCV;
 
-export function cvToString(val: ClarityValue, encoding?: 'ascii' | 'hex'): string {
+export function cvToString(val: ClarityValue, encoding: 'tryAscii' | 'hex' = 'tryAscii'): string {
   switch (val.type) {
     case ClarityType.BoolTrue:
       return 'true';
@@ -58,9 +59,12 @@ export function cvToString(val: ClarityValue, encoding?: 'ascii' | 'hex'): strin
     case ClarityType.UInt:
       return val.value.toString();
     case ClarityType.Buffer:
-      const bufferString =
-        encoding === 'hex' ? val.buffer.toString('hex') : val.buffer.toString('ascii');
-      return `"${bufferString}"`;
+      if (encoding === 'tryAscii') {
+        try {
+          return `"${val.buffer.toString('ascii')}"`;
+        } catch (e) {}
+      }
+      return `0x${val.buffer.toString('hex')}`;
     case ClarityType.OptionalNone:
       return 'none';
     case ClarityType.OptionalSome:
