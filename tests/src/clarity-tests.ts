@@ -1,3 +1,4 @@
+import { oneLineTrim } from 'common-tags';
 import { deserializeAddress } from '../../src/types';
 import {
   ClarityValue,
@@ -23,6 +24,7 @@ import {
 } from '../../src/clarity';
 import { contractPrincipalCVFromStandard } from '../../src/clarity/types/principalCV';
 import { BufferReader } from '../../src/bufferReader';
+import { cvToString } from '../../src/clarity/clarityValue';
 
 const ADDRESS = 'SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B';
 
@@ -263,5 +265,44 @@ describe('Clarity Types', () => {
       const serialized = serializeCV(tuple).toString('hex');
       expect(serialized).toEqual('0c000000020362617a0906666f6f62617203');
     });
+  });
+
+  test('Clarity Value To String', () => {
+    const tuple = tupleCV({
+      a: intCV(-1),
+      b: uintCV(1),
+      c: bufferCV(Buffer.from('test')),
+      d: trueCV(),
+      e: someCV(trueCV()),
+      f: noneCV(),
+      g: standardPrincipalCV(ADDRESS),
+      h: contractPrincipalCV(ADDRESS, 'test'),
+      i: responseOkCV(trueCV()),
+      j: responseErrorCV(falseCV()),
+      k: listCV([trueCV(), falseCV()]),
+      l: tupleCV({
+        a: trueCV(),
+        b: falseCV(),
+      }),
+    });
+
+    const tupleString = cvToString(tuple);
+
+    expect(tupleString).toEqual(
+      oneLineTrim`
+      (tuple 
+        (a -1) 
+        (b 1) 
+        (c "test") 
+        (d true) 
+        (e (some true)) 
+        (f none) 
+        (g SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B) 
+        (h SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B.test) 
+        (i (ok true)) 
+        (j (err false)) 
+        (k (list true false)) 
+        (l (tuple (a true) (b false))))`
+    );
   });
 });
