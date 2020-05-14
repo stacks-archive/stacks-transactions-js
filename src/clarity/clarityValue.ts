@@ -61,7 +61,10 @@ export function cvToString(val: ClarityValue, encoding: 'tryAscii' | 'hex' = 'tr
     case ClarityType.Buffer:
       if (encoding === 'tryAscii') {
         try {
-          return `"${val.buffer.toString('ascii')}"`;
+          const ascii = val.buffer.toString('ascii');
+          if (/[ -~]/.test(ascii)) {
+            return `"${ascii}"`;
+          }
         } catch (e) {}
       }
       return `0x${val.buffer.toString('hex')}`;
