@@ -1,4 +1,4 @@
-# Stacks Transactions JS ![npm](https://img.shields.io/npm/v/@blockstack/stacks-transactions?color=red)
+# Stacks Transactions JS [![npm](https://img.shields.io/npm/v/@blockstack/stacks-transactions?color=red)](https://www.npmjs.com/package/@blockstack/stacks-transactions)
 The JavaScript library for generating Stacks 2.0 transactions. 
 
 ## Installation
