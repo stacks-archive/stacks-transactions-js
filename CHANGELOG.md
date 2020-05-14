@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add cvToString() method for converting ClarityValue objects to their string (source code) representation
 
+### Changed
+
 ## v0.4.1 
 
 ### Added
 - ABI validation for contract-call transactions
 - Additional methods added to the StacksNetwork interface
+
+### Changed
 
