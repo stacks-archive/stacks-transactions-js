@@ -92,27 +92,27 @@ export function getCVTypeString(val: ClarityValue): string {
     case ClarityType.BoolFalse:
       return 'bool';
     case ClarityType.Int:
-      return 'int128';
+      return 'int';
     case ClarityType.UInt:
-      return 'uint128';
+      return 'uint';
     case ClarityType.Buffer:
-      return `buffer(${val.buffer.length})`;
+      return `(buff ${val.buffer.length})`;
     case ClarityType.OptionalNone:
-      return 'optional(none)';
+      return '(optional none)';
     case ClarityType.OptionalSome:
-      return `optional(${getCVTypeString(val.value)})`;
+      return `(optional ${getCVTypeString(val.value)})`;
     case ClarityType.ResponseErr:
-      return `responseError(${getCVTypeString(val.value)})`;
+      return `(responseError ${getCVTypeString(val.value)})`;
     case ClarityType.ResponseOk:
-      return `responseOk(${getCVTypeString(val.value)})`;
+      return `(responseOk ${getCVTypeString(val.value)})`;
     case ClarityType.PrincipalStandard:
     case ClarityType.PrincipalContract:
       return 'principal';
     case ClarityType.List:
-      return `list(${getCVTypeString(val.list[0])},${val.list.length})`;
+      return `(list ${val.list.length} ${getCVTypeString(val.list[0])})`;
     case ClarityType.Tuple:
-      return `tuple(${Object.keys(val.data)
-        .map(key => JSON.stringify(key) + ':' + getCVTypeString(val.data[key]))
-        .join(',')})`;
+      return `(tuple ${Object.keys(val.data)
+        .map(key => `(${key} ${getCVTypeString(val.data[key])})`)
+        .join(' ')})`;
   }
 }
