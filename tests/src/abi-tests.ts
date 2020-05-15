@@ -15,6 +15,7 @@ import {
   noneCV,
 } from '../../src';
 import { validateContractCall, ClarityAbi } from '../../src/contract-abi';
+import { oneLineTrim } from 'common-tags';
 
 const TEST_ABI: ClarityAbi = JSON.parse(readFileSync('./tests/src/abi/test-abi.json').toString());
 
@@ -70,27 +71,26 @@ test('ABI validation fail, tuple mistyped', () => {
   );
 
   expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
-    // prettier-ignore
-    'Clarity function `tuple-test` expects argument 1 to be of type ' +
-      'tuple(' +
-        '"key1":bool,' +
-        '"key2":int128,' +
-        '"key3":uint128,' +
-        '"key4":principal,' +
-        '"key5":buffer(3),' +
-        '"key6":optional(bool),' +
-        '"key7":response(bool,bool),' +
-        '"key8":list(bool,2)), ' +
-      'not ' +
-      'tuple(' +
-        '"key1":bool,' +
-        '"key2":int128,' +
-        '"key3":uint128,' +
-        '"key4":principal,' +
-        '"key5":buffer(3),' +
-        '"key6":optional(none),' +
-        '"key7":responseError(bool),' +
-        '"key8":bool)'
+    oneLineTrim`
+    Clarity function \`tuple-test\` expects argument 1 to be of type 
+      (tuple 
+        (key1 bool) 
+        (key2 int) 
+        (key3 uint) 
+        (key4 principal) 
+        (key5 (buff 3)) 
+        (key6 (optional bool)) 
+        (key7 (response bool bool)) 
+        (key8 (list 2 bool))), not 
+      (tuple 
+        (key1 bool) 
+        (key2 int) 
+        (key3 uint) 
+        (key4 principal) 
+        (key5 (buff 3)) 
+        (key6 (optional none)) 
+        (key7 (responseError bool)) 
+        (key8 bool))`
   );
 });
 
@@ -119,26 +119,27 @@ test('ABI validation fail, tuple wrong key', () => {
   );
 
   expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
-    // prettier-ignore
-    'Clarity function `tuple-test` expects argument 1 to be of type ' +
-      'tuple(' +
-        '"key1":bool,' +
-        '"key2":int128,' +
-        '"key3":uint128,' +
-        '"key4":principal,' +
-        '"key5":buffer(3),' +
-        '"key6":optional(bool),' +
-        '"key7":response(bool,bool),' +
-        '"key8":list(bool,2)), ' +
-      'not ' +
-      'tuple("wrong-key":bool,' +
-        '"key2":int128,' +
-        '"key3":uint128,' +
-        '"key4":principal,' +
-        '"key5":buffer(3),' +
-        '"key6":optional(bool),' +
-        '"key7":responseOk(bool),' +
-        '"key9":list(bool,2))'
+    oneLineTrim`
+    Clarity function \`tuple-test\` expects argument 1 to be of type 
+    (tuple 
+      (key1 bool) 
+      (key2 int) 
+      (key3 uint) 
+      (key4 principal) 
+      (key5 (buff 3)) 
+      (key6 (optional bool)) 
+      (key7 (response bool bool)) 
+      (key8 (list 2 bool))), not 
+    (tuple 
+      (wrong-key bool) 
+      (key2 int) 
+      (key3 uint) 
+      (key4 principal) 
+      (key5 (buff 3)) 
+      (key6 (optional bool)) 
+      (key7 (responseOk bool)) 
+      (key9 (list 2 bool)))
+    `
   );
 });
 
