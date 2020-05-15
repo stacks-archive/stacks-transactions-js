@@ -16,6 +16,14 @@
         ]}}
       ],
       "outputs": { "type": { "response": { "ok": "bool", "error": "none" } } }
+    },
+    {
+      "name": "hello",
+      "access": "public",
+      "args": [
+        { "name": "arg1", "type": "int128" }
+      ],
+      "outputs": { "type": { "response": { "ok": "bool", "error": "none" } } }
     }
   ],
   "variables": [],

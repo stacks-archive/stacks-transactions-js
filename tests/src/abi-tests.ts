@@ -14,7 +14,7 @@ import {
   responseErrorCV,
   noneCV,
 } from '../../src';
-import { validateContractCall, ClarityAbi } from '../../src/contract-abi';
+import { validateContractCall, ClarityAbi, abiFunctionToString } from '../../src/contract-abi';
 import { oneLineTrim } from 'common-tags';
 
 const TEST_ABI: ClarityAbi = JSON.parse(readFileSync('./tests/src/abi/test-abi.json').toString());
@@ -220,4 +220,8 @@ test('Validation fails when abi is missing specified function', () => {
   expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
     "ABI doesn't contain a function with the name get-value"
   );
+});
+
+test('ABI function to repr string', () => {
+  expect(abiFunctionToString(TEST_ABI.functions[1])).toEqual('(define-public (hello (arg1 int)))');
 });
