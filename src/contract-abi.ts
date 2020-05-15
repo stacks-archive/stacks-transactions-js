@@ -204,6 +204,13 @@ export interface ClarityAbiFunction {
   };
 }
 
+export function abiFunctionToString(func: ClarityAbiFunction): string {
+  const access = func.access === 'read_only' ? 'read-only' : func.access;
+  return `(define-${access} (${func.name} ${func.args
+    .map(arg => `(${arg.name} ${getTypeString(arg.type)})`)
+    .join(' ')}))`;
+}
+
 export interface ClarityAbiVariable {
   name: string;
   access: 'variable' | 'constant';
