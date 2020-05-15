@@ -171,19 +171,22 @@ export { encodeClarityValue };
 
 export function getTypeString(val: ClarityAbiType): string {
   if (isClarityAbiPrimitive(val)) {
+    if (val === 'int128') {
+      return 'int';
+    } else if (val === 'uint128') {
+      return 'uint';
+    }
     return val;
   } else if (isClarityAbiBuffer(val)) {
-    return `buffer(${val.buffer.length})`;
+    return `(buff ${val.buffer.length})`;
   } else if (isClarityAbiResponse(val)) {
-    return `response(${getTypeString(val.response.ok)},${getTypeString(val.response.error)})`;
+    return `(response ${getTypeString(val.response.ok)} ${getTypeString(val.response.error)})`;
   } else if (isClarityAbiOptional(val)) {
-    return `optional(${getTypeString(val.optional)})`;
+    return `(optional ${getTypeString(val.optional)})`;
   } else if (isClarityAbiTuple(val)) {
-    return `tuple(${val.tuple
-      .map(t => JSON.stringify(t.name) + ':' + getTypeString(t.type))
-      .join(',')})`;
+    return `(tuple ${val.tuple.map(t => `(${t.name} ${getTypeString(t.type)})`).join(' ')})`;
   } else if (isClarityAbiList(val)) {
-    return `list(${getTypeString(val.list.type)},${val.list.length})`;
+    return `(list ${val.list.length} ${getTypeString(val.list.type)})`;
   } else {
     throw new Error(`Type string unsupported for Clarity type: ${JSON.stringify(val)}`);
   }
