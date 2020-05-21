@@ -1,5 +1,7 @@
 import { sha256, sha512 } from 'sha.js';
 
+import { ClarityValue, serializeCV } from './clarity';
+
 import * as RIPEMD160 from 'ripemd160';
 
 import * as randombytes from 'randombytes';
@@ -134,4 +136,9 @@ export async function fetchPrivate(input: RequestInfo, init?: RequestInit): Prom
   // eslint-disable-next-line no-restricted-globals
   const fetchResult = await fetch(input, fetchOpts);
   return fetchResult;
+}
+
+export function cvToHex(cv: ClarityValue) {
+  const serialized = serializeCV(cv);
+  return `0x${serialized.toString('hex')}`;
 }
