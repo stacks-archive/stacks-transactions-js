@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- ability to broadcast raw transactions using `broadcastRawTransaction()`
 - abiFunctionToString() method for converting ABI function typedef to Clarity repr string
 
 ### Changed

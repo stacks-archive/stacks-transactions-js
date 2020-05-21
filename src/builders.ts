@@ -122,8 +122,21 @@ export async function broadcastTransaction(
   transaction: StacksTransaction,
   network: StacksNetwork
 ): Promise<string> {
-  const tx = transaction.serialize();
+  const rawTx = transaction.serialize();
+  const url = network.getBroadcastApiUrl();
 
+  return broadcastRawTransaction(rawTx, url);
+}
+
+/**
+ * Broadcast the signed transaction to a core node
+ *
+ * @param {Buffer} rawTx - the raw serialized transaction buffer to broadcast
+ * @param {string} url - the broadcast endpoint URL
+ *
+ * @returns {Promise} that resolves to a response if the operation succeeds
+ */
+export async function broadcastRawTransaction(rawTx: Buffer, url: string) {
   const requestHeaders = {
     'Content-Type': 'application/octet-stream',
   };
@@ -131,10 +144,8 @@ export async function broadcastTransaction(
   const options = {
     method: 'POST',
     headers: requestHeaders,
-    body: tx,
+    body: rawTx,
   };
-
-  const url = network.getBroadcastApiUrl();
 
   const response = await fetchPrivate(url, options);
   if (!response.ok) {
