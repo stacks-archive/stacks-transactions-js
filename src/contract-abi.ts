@@ -12,6 +12,7 @@ import {
   trueCV,
   ClarityType,
   getCVTypeString,
+  bufferCVFromString,
 } from './clarity';
 import { ContractCallPayload, createContractCallPayload } from './payload';
 
@@ -356,5 +357,49 @@ export function validateContractCall(payload: ContractCallPayload, abi: ClarityA
     throw new Error(
       `Malformed ABI. Contains multiple functions with the name ${payload.functionName.content}`
     );
+  }
+}
+
+export interface ClarityFunctionArg {
+  name: string;
+  type: ClarityAbiType;
+}
+
+/**
+ * Convert string input to Clarity value based on contract ABI data
+ *
+ * @param {string} input - string to be parsed into Clarity value
+ * @param {ClarityFunctionArg} arg - the contract function argument object
+ *
+ * @returns {ClarityValue} returns a Clarity value
+ */
+export function inputToClarityValue(input: string, arg: ClarityFunctionArg): ClarityValue {
+  const type = arg.type;
+  const typeString = getTypeString(type);
+  if (isClarityAbiPrimitive(type)) {
+    if (type === 'uint128') {
+      return uintCV(input);
+    } else if (type === 'int128') {
+      return intCV(input);
+    } else if (type === 'bool') {
+      return input == 'True' ? trueCV() : falseCV();
+    } else if (type === 'principal') {
+      // TODO handle contract principals
+      return standardPrincipalCV(input);
+    } else {
+      throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
+    }
+  } else if (isClarityAbiBuffer(type)) {
+    return bufferCVFromString(input);
+  } else if (isClarityAbiResponse(type)) {
+    throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
+  } else if (isClarityAbiOptional(type)) {
+    throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
+  } else if (isClarityAbiTuple(type)) {
+    throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
+  } else if (isClarityAbiList(type)) {
+    throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
+  } else {
+    throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
   }
 }
