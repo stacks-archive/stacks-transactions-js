@@ -6,6 +6,7 @@ import {
   tupleCV,
   uintCV,
   standardPrincipalCV,
+  contractPrincipalCV,
   bufferCVFromString,
   someCV,
   falseCV,
@@ -14,7 +15,13 @@ import {
   responseErrorCV,
   noneCV,
 } from '../../src';
-import { validateContractCall, ClarityAbi, abiFunctionToString } from '../../src/contract-abi';
+import {
+  validateContractCall,
+  ClarityAbi,
+  abiFunctionToString,
+  parseToCV,
+  ClarityAbiType,
+} from '../../src/contract-abi';
 import { oneLineTrim } from 'common-tags';
 
 const TEST_ABI: ClarityAbi = JSON.parse(readFileSync('./tests/src/abi/test-abi.json').toString());
@@ -224,4 +231,42 @@ test('Validation fails when abi is missing specified function', () => {
 
 test('ABI function to repr string', () => {
   expect(abiFunctionToString(TEST_ABI.functions[1])).toEqual('(define-public (hello (arg1 int)))');
+});
+
+test('Parse string input using ABI arg type', () => {
+  const uintString = '123';
+  const intString = '234';
+  const boolStringTrue = 'True';
+  const boolStringFalse = 'False';
+  const standardPrincipalString = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const address = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const contractPrincipalString = `${address}.${contractName}`;
+  const bufferString = 'test 321';
+
+  const uintFunctionArgType: ClarityAbiType = 'uint128';
+  const intFunctionArgType: ClarityAbiType = 'int128';
+  const boolFunctionArgType: ClarityAbiType = 'bool';
+  const principalFunctionArgType: ClarityAbiType = 'principal';
+  const bufferFunctionArgType: ClarityAbiType = {
+    buffer: {
+      length: Buffer.from(bufferString).byteLength,
+    },
+  };
+
+  const uintCVResult = parseToCV(uintString, uintFunctionArgType);
+  const intCVResult = parseToCV(intString, intFunctionArgType);
+  const boolCVTrueResult = parseToCV(boolStringTrue, boolFunctionArgType);
+  const boolCVFalseResult = parseToCV(boolStringFalse, boolFunctionArgType);
+  const standardPrincipalCVResult = parseToCV(standardPrincipalString, principalFunctionArgType);
+  const contractPrincipalCVResult = parseToCV(contractPrincipalString, principalFunctionArgType);
+  const bufferCVResult = parseToCV(bufferString, bufferFunctionArgType);
+
+  expect(uintCVResult).toEqual(uintCV(uintString));
+  expect(intCVResult).toEqual(intCV(intString));
+  expect(boolCVTrueResult).toEqual(trueCV());
+  expect(boolCVFalseResult).toEqual(falseCV());
+  expect(standardPrincipalCVResult).toEqual(standardPrincipalCV(standardPrincipalString));
+  expect(contractPrincipalCVResult).toEqual(contractPrincipalCV(address, contractName));
+  expect(bufferCVResult).toEqual(bufferCVFromString(bufferString));
 });
