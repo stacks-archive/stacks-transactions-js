@@ -360,21 +360,16 @@ export function validateContractCall(payload: ContractCallPayload, abi: ClarityA
   }
 }
 
-export interface ClarityFunctionArg {
-  name: string;
-  type: ClarityAbiType;
-}
-
 /**
- * Convert string input to Clarity value based on contract ABI data
+ * Convert string input to Clarity value based on contract ABI data. Only handles Clarity
+ * primitives and buffers. Responses, optionals, tuples and lists are not supported.
  *
  * @param {string} input - string to be parsed into Clarity value
- * @param {ClarityFunctionArg} arg - the contract function argument object
+ * @param {ClarityAbiType} type - the contract function argument object
  *
  * @returns {ClarityValue} returns a Clarity value
  */
-export function inputToClarityValue(input: string, arg: ClarityFunctionArg): ClarityValue {
-  const type = arg.type;
+export function parseToAbiType(input: string, type: ClarityAbiType): ClarityValue {
   const typeString = getTypeString(type);
   if (isClarityAbiPrimitive(type)) {
     if (type === 'uint128') {
@@ -384,8 +379,12 @@ export function inputToClarityValue(input: string, arg: ClarityFunctionArg): Cla
     } else if (type === 'bool') {
       return input == 'True' ? trueCV() : falseCV();
     } else if (type === 'principal') {
-      // TODO handle contract principals
-      return standardPrincipalCV(input);
+      if (input.includes('.')) {
+        const [address, contractName] = input.split('.');
+        return contractPrincipalCV(address, contractName);
+      } else {
+        return standardPrincipalCV(input);
+      }
     } else {
       throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
     }
