@@ -29,6 +29,7 @@ import { c32addressDecode, c32address } from 'c32check';
 import { BufferReader } from './bufferReader';
 import { PostCondition, serializePostCondition, deserializePostCondition } from './postcondition';
 import { Payload, deserializePayload, serializePayload } from './payload';
+import { DeserializationError } from './errors';
 
 export type StacksMessage =
   | Address
@@ -88,7 +89,7 @@ export function deserializeStacksMessage(
       return deserializePayload(bufferReader);
     case StacksMessageType.LengthPrefixedList:
       if (!listType) {
-        throw new Error('No List Type specified');
+        throw new DeserializationError('No List Type specified');
       }
       return deserializeLPList(bufferReader, listType);
   }
@@ -276,7 +277,7 @@ export function serializePrincipal(principal: PostConditionPrincipal): Buffer {
 
 export function deserializePrincipal(bufferReader: BufferReader): PostConditionPrincipal {
   const prefix = bufferReader.readUInt8Enum(PostConditionPrincipalID, n => {
-    throw new Error('Unexpected Principal payload type: ${n}');
+    throw new DeserializationError('Unexpected Principal payload type: ${n}');
   });
   const address = deserializeAddress(bufferReader);
   if (prefix === PostConditionPrincipalID.Standard) {

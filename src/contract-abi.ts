@@ -15,17 +15,7 @@ import {
   bufferCVFromString,
 } from './clarity';
 import { ContractCallPayload, createContractCallPayload } from './payload';
-
-class NotImplementedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.message = message;
-    this.name = this.constructor.name;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-  }
-}
+import { NotImplementedError } from './errors';
 
 // From https://github.com/blockstack/stacks-blockchain-sidecar/blob/master/src/event-stream/contract-abi.ts
 

@@ -22,6 +22,7 @@ import {
 
 import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
+import { SerializationError, NotImplementedError, DeserializationError } from './errors';
 
 abstract class Deserializable {
   abstract serialize(): Buffer;
@@ -62,7 +63,7 @@ export class MessageSignature extends Deserializable {
   serialize(): Buffer {
     const bufferArray: BufferArray = new BufferArray();
     if (this.signature === undefined) {
-      throw new Error('"signature" is undefined');
+      throw new SerializationError('"signature" is undefined');
     }
     bufferArray.appendHexString(this.signature);
     return bufferArray.concatBuffer();
@@ -198,19 +199,19 @@ export class SpendingCondition extends Deserializable {
     const bufferArray: BufferArray = new BufferArray();
 
     if (this.addressHashMode === undefined) {
-      throw new Error('"addressHashMode" is undefined');
+      throw new SerializationError('"addressHashMode" is undefined');
     }
     if (this.signerAddress === undefined) {
-      throw new Error('"signerAddress" is undefined');
+      throw new SerializationError('"signerAddress" is undefined');
     }
     if (this.signerAddress.hash160 === undefined) {
-      throw new Error('"signerAddress.data" is undefined');
+      throw new SerializationError('"signerAddress.data" is undefined');
     }
     if (this.nonce === undefined) {
-      throw new Error('"nonce" is undefined');
+      throw new SerializationError('"nonce" is undefined');
     }
     if (this.fee === undefined) {
-      throw new Error('"fee" is undefined');
+      throw new SerializationError('"fee" is undefined');
     }
     bufferArray.appendByte(this.addressHashMode);
     bufferArray.appendHexString(this.signerAddress.hash160);
@@ -222,7 +223,7 @@ export class SpendingCondition extends Deserializable {
       this.addressHashMode === AddressHashMode.SerializeP2WPKH
     ) {
       if (this.pubKeyEncoding === undefined) {
-        throw new Error('"pubKeyEncoding" is undefined');
+        throw new SerializationError('"pubKeyEncoding" is undefined');
       }
       bufferArray.appendByte(this.pubKeyEncoding);
       bufferArray.push(this.signature.serialize());
@@ -231,7 +232,9 @@ export class SpendingCondition extends Deserializable {
       this.addressHashMode === AddressHashMode.SerializeP2WSH
     ) {
       // TODO
-      throw new Error(`Not yet implemented: serializing AddressHashMode: ${this.addressHashMode}`);
+      throw new NotImplementedError(
+        `Not yet implemented: serializing AddressHashMode: ${this.addressHashMode}`
+      );
     }
 
     return bufferArray.concatBuffer();
@@ -239,7 +242,7 @@ export class SpendingCondition extends Deserializable {
 
   deserialize(bufferReader: BufferReader) {
     this.addressHashMode = bufferReader.readUInt8Enum(AddressHashMode, n => {
-      throw new Error(`Could not parse ${n} as AddressHashMode`);
+      throw new DeserializationError(`Could not parse ${n} as AddressHashMode`);
     });
     const signerPubKeyHash = bufferReader.readBuffer(20).toString('hex');
     this.signerAddress = addressFromVersionHash(0, signerPubKeyHash);
@@ -251,14 +254,14 @@ export class SpendingCondition extends Deserializable {
       this.addressHashMode === AddressHashMode.SerializeP2WPKH
     ) {
       this.pubKeyEncoding = bufferReader.readUInt8Enum(PubKeyEncoding, n => {
-        throw new Error(`Could not parse ${n} as PubKeyEncoding`);
+        throw new DeserializationError(`Could not parse ${n} as PubKeyEncoding`);
       });
       this.signature = MessageSignature.deserialize(bufferReader);
     } else if (
       this.addressHashMode === AddressHashMode.SerializeP2SH ||
       this.addressHashMode === AddressHashMode.SerializeP2WSH
     ) {
-      throw new Error('not implemented');
+      throw new DeserializationError('not implemented');
       // TODO
     }
   }
@@ -308,22 +311,22 @@ export class Authorization extends Deserializable {
   serialize(): Buffer {
     const bufferArray: BufferArray = new BufferArray();
     if (this.authType === undefined) {
-      throw new Error('"authType" is undefined');
+      throw new SerializationError('"authType" is undefined');
     }
     bufferArray.appendByte(this.authType);
 
     switch (this.authType) {
       case AuthType.Standard:
         if (this.spendingCondition === undefined) {
-          throw new Error('"spendingCondition" is undefined');
+          throw new SerializationError('"spendingCondition" is undefined');
         }
         bufferArray.push(this.spendingCondition.serialize());
         break;
       case AuthType.Sponsored:
         // TODO
-        throw new Error('Not yet implemented: serializing sponsored transactions');
+        throw new SerializationError('Not yet implemented: serializing sponsored transactions');
       default:
-        throw new Error(`Unexpected transaction AuthType while serializing: ${this.authType}`);
+        throw new SerializationError(`Unexpected transaction AuthType while serializing: ${this.authType}`);
     }
 
     return bufferArray.concatBuffer();
@@ -331,7 +334,7 @@ export class Authorization extends Deserializable {
 
   deserialize(bufferReader: BufferReader) {
     this.authType = bufferReader.readUInt8Enum(AuthType, n => {
-      throw new Error(`Could not parse ${n} as AuthType`);
+      throw new DeserializationError(`Could not parse ${n} as AuthType`);
     });
 
     switch (this.authType) {
@@ -340,9 +343,9 @@ export class Authorization extends Deserializable {
         break;
       case AuthType.Sponsored:
         // TODO
-        throw new Error('Not yet implemented: deserializing sponsored transactions');
+        throw new DeserializationError('Not yet implemented: deserializing sponsored transactions');
       default:
-        throw new Error(`Unexpected transaction AuthType while deserializing: ${this.authType}`);
+        throw new DeserializationError(`Unexpected transaction AuthType while deserializing: ${this.authType}`);
     }
   }
 }

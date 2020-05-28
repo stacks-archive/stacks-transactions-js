@@ -21,6 +21,7 @@ import {
 import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
 import { ClarityValue, serializeCV, deserializeCV } from './clarity';
+import { DeserializationError } from './errors';
 
 export type PostCondition = STXPostCondition | FungiblePostCondition | NonFungiblePostCondition;
 
@@ -146,7 +147,7 @@ export function serializePostCondition(postCondition: PostCondition): Buffer {
 
 export function deserializePostCondition(bufferReader: BufferReader): PostCondition {
   const postConditionType = bufferReader.readUInt8Enum(PostConditionType, n => {
-    throw new Error(`Could not read ${n} as PostConditionType`);
+    throw new DeserializationError(`Could not read ${n} as PostConditionType`);
   });
 
   const principal = deserializePrincipal(bufferReader);
@@ -157,7 +158,7 @@ export function deserializePostCondition(bufferReader: BufferReader): PostCondit
   switch (postConditionType) {
     case PostConditionType.STX:
       conditionCode = bufferReader.readUInt8Enum(FungibleConditionCode, n => {
-        throw new Error(`Could not read ${n} as FungibleConditionCode`);
+        throw new DeserializationError(`Could not read ${n} as FungibleConditionCode`);
       });
       amount = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
       return {
@@ -170,7 +171,7 @@ export function deserializePostCondition(bufferReader: BufferReader): PostCondit
     case PostConditionType.Fungible:
       assetInfo = deserializeAssetInfo(bufferReader);
       conditionCode = bufferReader.readUInt8Enum(FungibleConditionCode, n => {
-        throw new Error(`Could not read ${n} as FungibleConditionCode`);
+        throw new DeserializationError(`Could not read ${n} as FungibleConditionCode`);
       });
       amount = new BigNum(bufferReader.readBuffer(8).toString('hex'), 16);
       return {
@@ -185,7 +186,7 @@ export function deserializePostCondition(bufferReader: BufferReader): PostCondit
       assetInfo = deserializeAssetInfo(bufferReader);
       const assetName = deserializeCV(bufferReader);
       conditionCode = bufferReader.readUInt8Enum(NonFungibleConditionCode, n => {
-        throw new Error(`Could not read ${n} as FungibleConditionCode`);
+        throw new DeserializationError(`Could not read ${n} as FungibleConditionCode`);
       });
       return {
         type: StacksMessageType.PostCondition,
