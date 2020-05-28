@@ -13,7 +13,8 @@ import {
   estimateTransfer,
   broadcastTransaction,
   getNonce,
-  callReadOnlyFunction,
+  TxBroadcastResult,
+  TxBroadcastResultOk,
 } from '../../src/builders';
 
 import { createAssetInfo } from '../../src/types';
@@ -23,6 +24,7 @@ import {
   FungibleConditionCode,
   NonFungibleConditionCode,
   PostConditionMode,
+  TxBroadcastError,
 } from '../../src/constants';
 
 import { StacksTestnet, StacksMainnet } from '../../src/network';
@@ -432,7 +434,7 @@ test('Make STX token transfer with fetch account nonce', async () => {
   expect(transaction.auth.spendingCondition?.nonce?.toNumber()).toEqual(nonce);
 });
 
-test('Transaction broadcast', async () => {
+test('Transaction broadcast success', async () => {
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
   const amount = new BigNum(12345);
   const fee = new BigNum(0);
@@ -453,11 +455,74 @@ test('Transaction broadcast', async () => {
 
   fetchMock.mockOnce('mock core node API response');
 
-  broadcastTransaction(transaction, network);
+  const response: TxBroadcastResult = await broadcastTransaction(transaction, network);
 
   expect(fetchMock.mock.calls.length).toEqual(1);
   expect(fetchMock.mock.calls[0][0]).toEqual(network.getBroadcastApiUrl());
   expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
+  expect((response as TxBroadcastResultOk).ok).toEqual('mock core node API response');
+});
+
+test('Transaction broadcast returns error', async () => {
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(0);
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const memo = 'test memo';
+
+  const network = new StacksMainnet();
+
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
+    fee,
+    nonce,
+    memo,
+  });
+
+  const rejection = {
+    error: 'transaction rejected',
+    reason: 'BadNonce',
+    reason_data: {
+      actual: 3,
+      expected: 0,
+      is_origin: true,
+      principal: 'ST2MVNFYF6H9DCMAV3HVNHTJVVE3CFWT1JYMH1EZB',
+    },
+    txid: '0x4068179cb9169b969c80518d83890f8b808a70ab998dd227149221be9480a616',
+  };
+
+  fetchMock.mockOnce(JSON.stringify(rejection), { status: 400 });
+
+  const result = await broadcastTransaction(transaction, network);
+  expect((result as TxBroadcastResultError).error.reason).toEqual(TxBroadcastError.BadNonce);
+  expect((result as TxBroadcastResultError).error.data).toEqual(rejection.reason_data);
+});
+
+test('Transaction broadcast fails', async () => {
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(0);
+  const nonce = new BigNum(0);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const memo = 'test memo';
+
+  const network = new StacksMainnet();
+
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
+    fee,
+    nonce,
+    memo,
+  });
+
+  fetchMock.mockOnce('test', { status: 400 });
+
+  await expect(broadcastTransaction(transaction, network)).rejects.toThrow();
 });
 
 test('Make contract-call with network ABI validation', async () => {
