@@ -248,7 +248,11 @@ test('Parse string input using ABI arg type', () => {
   const intFunctionArgType: ClarityAbiType = 'int128';
   const boolFunctionArgType: ClarityAbiType = 'bool';
   const principalFunctionArgType: ClarityAbiType = 'principal';
-  const bufferFunctionArgType: ClarityAbiType = { buffer: { length: 1 } };
+  const bufferFunctionArgType: ClarityAbiType = {
+    buffer: {
+      length: Buffer.from(bufferString).byteLength,
+    },
+  };
 
   const uintCVResult = parseToCV(uintString, uintFunctionArgType);
   const intCVResult = parseToCV(intString, intFunctionArgType);

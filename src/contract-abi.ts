@@ -377,7 +377,13 @@ export function parseToCV(input: string, type: ClarityAbiType): ClarityValue {
     } else if (type === 'int128') {
       return intCV(input);
     } else if (type === 'bool') {
-      return input == 'True' ? trueCV() : falseCV();
+      if (input.toLowerCase() === 'true') {
+        return trueCV();
+      } else if (input.toLowerCase() === 'false') {
+        return falseCV();
+      } else {
+        throw new Error(`Invalid bool value: ${input}`);
+      }
     } else if (type === 'principal') {
       if (input.includes('.')) {
         const [address, contractName] = input.split('.');
@@ -389,6 +395,10 @@ export function parseToCV(input: string, type: ClarityAbiType): ClarityValue {
       throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
     }
   } else if (isClarityAbiBuffer(type)) {
+    const inputLength = Buffer.from(input).byteLength
+    if (inputLength > type.buffer.length) {
+      throw new Error(`Input exceeds specified buffer length limit of ${type.buffer.length}`);
+    }
     return bufferCVFromString(input);
   } else if (isClarityAbiResponse(type)) {
     throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
