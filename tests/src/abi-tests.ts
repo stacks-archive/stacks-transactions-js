@@ -19,7 +19,7 @@ import {
   validateContractCall,
   ClarityAbi,
   abiFunctionToString,
-  parseToAbiType,
+  parseToCV,
   ClarityAbiType,
 } from '../../src/contract-abi';
 import { oneLineTrim } from 'common-tags';
@@ -250,13 +250,13 @@ test('Parse string input using ABI arg type', () => {
   const principalFunctionArgType: ClarityAbiType = 'principal';
   const bufferFunctionArgType: ClarityAbiType = { buffer: { length: 1 } };
 
-  const uintCVResult = parseToAbiType(uintString, uintFunctionArgType);
-  const intCVResult = parseToAbiType(intString, intFunctionArgType);
-  const boolCVTrueResult = parseToAbiType(boolStringTrue, boolFunctionArgType);
-  const boolCVFalseResult = parseToAbiType(boolStringFalse, boolFunctionArgType);
-  const standardPrincipalCVResult = parseToAbiType(standardPrincipalString, principalFunctionArgType);
-  const contractPrincipalCVResult = parseToAbiType(contractPrincipalString, principalFunctionArgType);
-  const bufferCVResult = parseToAbiType(bufferString, bufferFunctionArgType);
+  const uintCVResult = parseToCV(uintString, uintFunctionArgType);
+  const intCVResult = parseToCV(intString, intFunctionArgType);
+  const boolCVTrueResult = parseToCV(boolStringTrue, boolFunctionArgType);
+  const boolCVFalseResult = parseToCV(boolStringFalse, boolFunctionArgType);
+  const standardPrincipalCVResult = parseToCV(standardPrincipalString, principalFunctionArgType);
+  const contractPrincipalCVResult = parseToCV(contractPrincipalString, principalFunctionArgType);
+  const bufferCVResult = parseToCV(bufferString, bufferFunctionArgType);
 
   expect(uintCVResult).toEqual(uintCV(uintString));
   expect(intCVResult).toEqual(intCV(intString));

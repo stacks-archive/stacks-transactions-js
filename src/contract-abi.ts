@@ -369,7 +369,7 @@ export function validateContractCall(payload: ContractCallPayload, abi: ClarityA
  *
  * @returns {ClarityValue} returns a Clarity value
  */
-export function parseToAbiType(input: string, type: ClarityAbiType): ClarityValue {
+export function parseToCV(input: string, type: ClarityAbiType): ClarityValue {
   const typeString = getTypeString(type);
   if (isClarityAbiPrimitive(type)) {
     if (type === 'uint128') {
