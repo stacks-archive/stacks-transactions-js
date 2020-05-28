@@ -25,6 +25,7 @@ import { StacksPrivateKey } from './keys';
 import { BufferReader } from './bufferReader';
 
 import * as BigNum from 'bn.js';
+import { SerializationError } from './errors';
 
 export class StacksTransaction {
   version: TransactionVersion;
@@ -139,19 +140,19 @@ export class StacksTransaction {
 
   serialize(): Buffer {
     if (this.version === undefined) {
-      throw new Error('"version" is undefined');
+      throw new SerializationError('"version" is undefined');
     }
     if (this.chainId === undefined) {
-      throw new Error('"chainId" is undefined');
+      throw new SerializationError('"chainId" is undefined');
     }
     if (this.auth === undefined) {
-      throw new Error('"auth" is undefined');
+      throw new SerializationError('"auth" is undefined');
     }
     if (this.anchorMode === undefined) {
-      throw new Error('"anchorMode" is undefined');
+      throw new SerializationError('"anchorMode" is undefined');
     }
     if (this.payload === undefined) {
-      throw new Error('"payload" is undefined');
+      throw new SerializationError('"payload" is undefined');
     }
 
     const bufferArray: BufferArray = new BufferArray();

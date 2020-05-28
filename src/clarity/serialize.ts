@@ -14,6 +14,7 @@ import {
   ClarityValue,
 } from '.';
 import { BufferArray } from '../utils';
+import { SerializationError } from '../errors';
 
 function bufferWithTypeID(typeId: ClarityType, buffer: Buffer): Buffer {
   const id = Buffer.from([typeId]);
@@ -122,6 +123,6 @@ export function serializeCV(value: ClarityValue): Buffer {
     case ClarityType.Tuple:
       return serializeTupleCV(value);
     default:
-      throw new Error('Unable to serialize. Invalid Clarity Value.');
+      throw new SerializationError('Unable to serialize. Invalid Clarity Value.');
   }
 }

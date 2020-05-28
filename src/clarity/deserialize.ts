@@ -17,11 +17,12 @@ import {
 } from '.';
 import { BufferReader } from '../bufferReader';
 import { deserializeAddress, deserializeLPString } from '../types';
+import { DeserializationError } from '../errors';
 
 export default function deserializeCV(buffer: BufferReader | Buffer): ClarityValue {
   const bufferReader = Buffer.isBuffer(buffer) ? new BufferReader(buffer) : buffer;
   const type = bufferReader.readUInt8Enum(ClarityType, n => {
-    throw new Error(`Cannot recognize Clarity Type: ${n}`);
+    throw new DeserializationError(`Cannot recognize Clarity Type: ${n}`);
   });
 
   switch (type) {
@@ -76,14 +77,14 @@ export default function deserializeCV(buffer: BufferReader | Buffer): ClarityVal
       for (let i = 0; i < tupleLength; i++) {
         const clarityName = deserializeLPString(bufferReader).content;
         if (clarityName === undefined) {
-          throw new Error('"content" is undefined');
+          throw new DeserializationError('"content" is undefined');
         }
         tupleContents[clarityName] = deserializeCV(bufferReader);
       }
       return tupleCV(tupleContents);
 
     default:
-      throw new Error(
+      throw new DeserializationError(
         'Unable to deserialize Clarity Value from buffer. Could not find valid Clarity Type.'
       );
   }
