@@ -135,6 +135,27 @@ enum ClarityType {
   Tuple = 0x0c,
 }
 
+enum TxBroadcastError {
+  Serialization,
+  Deserialization,
+  SignatureValidation,
+  FeeTooLow,
+  BadNonce,
+  NotEnoughFunds,
+  NoSuchContract,
+  NoSuchPublicFunction,
+  BadFunctionArgument,
+  ContractAlreadyExists,
+  PoisonMicroblocksDoNotConflict,
+  PoisonMicroblockHasUnknownPubKeyHash,
+  PoisonMicroblockIsInvalid,
+  BadAddressVersionByte,
+  NoCoinbaseViaMempool,
+  ServerFailureNoSuchChainTip,
+  ServerFailureDatabase,
+  ServerFailureOther,
+}
+
 export {
   MAX_STRING_LENGTH_BYTES,
   CLARITY_INT_SIZE,
@@ -161,4 +182,5 @@ export {
   FungibleConditionCode,
   NonFungibleConditionCode,
   AssetType,
+  TxBroadcastError,
 };
