@@ -326,7 +326,9 @@ export class Authorization extends Deserializable {
         // TODO
         throw new SerializationError('Not yet implemented: serializing sponsored transactions');
       default:
-        throw new SerializationError(`Unexpected transaction AuthType while serializing: ${this.authType}`);
+        throw new SerializationError(
+          `Unexpected transaction AuthType while serializing: ${this.authType}`
+        );
     }
 
     return bufferArray.concatBuffer();
@@ -345,7 +347,9 @@ export class Authorization extends Deserializable {
         // TODO
         throw new DeserializationError('Not yet implemented: deserializing sponsored transactions');
       default:
-        throw new DeserializationError(`Unexpected transaction AuthType while deserializing: ${this.authType}`);
+        throw new DeserializationError(
+          `Unexpected transaction AuthType while deserializing: ${this.authType}`
+        );
     }
   }
 }
