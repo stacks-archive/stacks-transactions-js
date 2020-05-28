@@ -38,6 +38,7 @@ import {
   PayloadType,
   AnchorMode,
   TransactionVersion,
+  TxBroadcastError,
 } from './constants';
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
@@ -110,6 +111,17 @@ export function estimateTransfer(
     });
 }
 
+export type TxBroadcastResultOk = { ok: string };
+export type TxBroadcastResultError = { error: { reason: TxBroadcastError; data: string } };
+export type TxBroadcastResult = TxBroadcastResultOk | TxBroadcastResultError;
+
+export type TxBroadcastErrorResponseData = {
+  error: string;
+  reason: keyof typeof TxBroadcastError;
+  reason_data: any;
+  txid: string;
+};
+
 /**
  * Broadcast the signed transaction to a core node
  *
@@ -121,7 +133,7 @@ export function estimateTransfer(
 export async function broadcastTransaction(
   transaction: StacksTransaction,
   network: StacksNetwork
-): Promise<string> {
+): Promise<TxBroadcastResult> {
   const rawTx = transaction.serialize();
   const url = network.getBroadcastApiUrl();
 
@@ -136,7 +148,10 @@ export async function broadcastTransaction(
  *
  * @returns {Promise} that resolves to a response if the operation succeeds
  */
-export async function broadcastRawTransaction(rawTx: Buffer, url: string) {
+export async function broadcastRawTransaction(
+  rawTx: Buffer,
+  url: string
+): Promise<TxBroadcastResult> {
   const requestHeaders = {
     'Content-Type': 'application/octet-stream',
   };
@@ -149,16 +164,20 @@ export async function broadcastRawTransaction(rawTx: Buffer, url: string) {
 
   const response = await fetchPrivate(url, options);
   if (!response.ok) {
-    let msg = '';
     try {
-      msg = await response.text();
-    } catch (error) {}
-    throw new Error(
-      `Error broadcasting transaction. Response ${response.status}: ${response.statusText} fetching ${url} - ${msg}`
-    );
+      const responseData: TxBroadcastErrorResponseData = await response.json();
+      return {
+        error: {
+          reason: TxBroadcastError[responseData.reason],
+          data: responseData.reason_data,
+        },
+      };
+    } catch (e) {
+      throw Error(`Failed to broadcast transaction: ${e.message}`);
+    }
   }
 
-  return response.text();
+  return { ok: await response.text() };
 }
 
 /**
