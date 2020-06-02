@@ -8,10 +8,16 @@ export interface StacksNetwork {
   transferFeeEstimateEndpoint: string;
   accountEndpoint: string;
   contractAbiEndpoint: string;
+  readOnlyFunctionCallEndpoint: string;
   getBroadcastApiUrl: () => string;
   getTransferFeeEstimateApiUrl: () => string;
   getAccountApiUrl: (address: string) => string;
   getAbiApiUrl: (address: string, contract: string) => string;
+  getReadOnlyFunctionCallApiUrl: (
+    contractAddress: string,
+    contractName: string,
+    functionName: string
+  ) => string;
 }
 
 export class StacksMainnet implements StacksNetwork {
@@ -22,12 +28,19 @@ export class StacksMainnet implements StacksNetwork {
   transferFeeEstimateEndpoint = '/v2/fees/transfer';
   accountEndpoint = '/v2/accounts';
   contractAbiEndpoint = '/v2/contracts/interface';
+  readOnlyFunctionCallEndpoint = '/v2/contracts/call-read';
   getBroadcastApiUrl = () => `${this.coreApiUrl}${this.broadcastEndpoint}`;
   getTransferFeeEstimateApiUrl = () => `${this.coreApiUrl}${this.transferFeeEstimateEndpoint}`;
   getAccountApiUrl = (address: string) =>
     `${this.coreApiUrl}${this.accountEndpoint}/${address}?proof=0`;
   getAbiApiUrl = (address: string, contract: string) =>
     `${this.coreApiUrl}${this.contractAbiEndpoint}/${address}/${contract}`;
+  getReadOnlyFunctionCallApiUrl = (
+    contractAddress: string,
+    contractName: string,
+    functionName: string
+  ) =>
+    `${this.coreApiUrl}${this.readOnlyFunctionCallEndpoint}/${contractAddress}/${contractName}/${functionName}`;
 }
 
 export class StacksTestnet extends StacksMainnet implements StacksNetwork {

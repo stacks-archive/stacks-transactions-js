@@ -42,7 +42,7 @@ import {
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
 
-import { fetchPrivate, cvToHex } from './utils';
+import { fetchPrivate, cvToHex, parseReadOnlyResponse } from './utils';
 
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
@@ -775,18 +775,6 @@ export function makeContractNonFungiblePostCondition(
 }
 
 /**
- * Read only function response object
- *
- * @param {Boolean} okay - the status of the response
- * @param {string} result - serialized hex clarity value
- */
-
-export interface ReadOnlyFunctionResponse {
-  okay: boolean;
-  result: string;
-}
-
-/**
  * Read only function options
  *
  * @param  {String} contractAddress - the c32check address of the contract
@@ -813,11 +801,11 @@ export interface ReadOnlyFunctionOptions {
  *
  * Returns an object with a status bool (okay) and a result string that is a serialized clarity value in hex format.
  *
- * @return {ReadOnlyFunctionResponse}
+ * @return {ClarityValue}
  */
 export async function callReadOnlyFunction(
   readOnlyFunctionOptions: ReadOnlyFunctionOptions
-): Promise<ReadOnlyFunctionResponse> {
+): Promise<ClarityValue> {
   const defaultOptions = {
     network: new StacksMainnet(),
   };
@@ -833,7 +821,7 @@ export async function callReadOnlyFunction(
     senderAddress,
   } = options;
 
-  const url = `${network.coreApiUrl}/v2/contracts/call-read/${contractAddress}/${contractName}/${functionName}`;
+  const url = network.getReadOnlyFunctionCallApiUrl(contractAddress, contractName, functionName);
 
   const args = functionArgs.map(arg => cvToHex(arg));
 
@@ -850,5 +838,5 @@ export async function callReadOnlyFunction(
     },
   });
 
-  return response.json();
+  return response.json().then(responseJson => parseReadOnlyResponse(responseJson));
 }
