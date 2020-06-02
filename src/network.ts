@@ -40,7 +40,9 @@ export class StacksMainnet implements StacksNetwork {
     contractName: string,
     functionName: string
   ) =>
-    `${this.coreApiUrl}${this.readOnlyFunctionCallEndpoint}/${contractAddress}/${contractName}/${functionName}`;
+    `${this.coreApiUrl}${
+      this.readOnlyFunctionCallEndpoint
+    }/${contractAddress}/${contractName}/${encodeURIComponent(functionName)}`;
 }
 
 export class StacksTestnet extends StacksMainnet implements StacksNetwork {
