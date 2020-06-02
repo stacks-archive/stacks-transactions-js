@@ -28,7 +28,7 @@ import {
 import { serializeDeserialize } from './macros';
 
 import * as BigNum from 'bn.js';
-import { bufferCVFromString, BufferCV } from '../../src';
+import { bufferCVFromString, BufferCV } from '../../src/clarity';
 
 test('STX post condition serialization and deserialization', () => {
   const postConditionType = PostConditionType.STX;
