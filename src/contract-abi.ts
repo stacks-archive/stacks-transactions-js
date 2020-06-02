@@ -344,8 +344,11 @@ export function validateContractCall(payload: ContractCallPayload, abi: ClarityA
       if (!matchType(payloadArg, abiArg.type)) {
         const argNum = i + 1;
         throw new Error(
-          `Clarity function \`${payload.functionName.content}\` expects argument ${argNum} 
-          to be of type ${getTypeString(abiArg.type)}, not ${getCVTypeString(payloadArg)}`
+          `Clarity function \`${
+            payload.functionName.content
+          }\` expects argument ${argNum} to be of type ${getTypeString(
+            abiArg.type
+          )}, not ${getCVTypeString(payloadArg)}`
         );
       }
     }
