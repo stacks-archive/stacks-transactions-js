@@ -4,6 +4,9 @@ All notable changes to the project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.4.6
+- Updates the testnet network config to use stable `testnet-master.blockstack.org` URL
+
 ## v0.4.5 
 - Add `parseToCV()` utility function to convert string input to the appropriate Clarity value based on the Clarity ABI type specified by the contract function
 

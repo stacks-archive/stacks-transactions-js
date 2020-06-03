@@ -48,5 +48,5 @@ export class StacksMainnet implements StacksNetwork {
 export class StacksTestnet extends StacksMainnet implements StacksNetwork {
   version = TransactionVersion.Testnet;
   chainId = ChainID.Testnet;
-  coreApiUrl = 'http://neon.blockstack.org:20443';
+  coreApiUrl = 'http://testnet-master.blockstack.org:20443';
 }
