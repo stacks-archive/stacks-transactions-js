@@ -14,7 +14,7 @@ import {
   responseOkCV,
   responseErrorCV,
   noneCV,
-} from '../../src';
+} from '../../src/clarity';
 import {
   validateContractCall,
   ClarityAbi,
