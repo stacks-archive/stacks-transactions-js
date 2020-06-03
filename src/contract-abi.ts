@@ -399,7 +399,7 @@ export function parseToCV(input: string, type: ClarityAbiType): ClarityValue {
       throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
     }
   } else if (isClarityAbiBuffer(type)) {
-    const inputLength = Buffer.from(input).byteLength
+    const inputLength = Buffer.from(input).byteLength;
     if (inputLength > type.buffer.length) {
       throw new Error(`Input exceeds specified buffer length limit of ${type.buffer.length}`);
     }
