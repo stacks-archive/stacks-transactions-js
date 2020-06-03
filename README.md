@@ -125,6 +125,30 @@ import { readFileSync } from 'fs';
 const abi: ClarityAbi = JSON.parse(readFileSync('abi.json').toString());
 ```
 
+## Calling Read-only Contract Functions
+
+Read-only contract functions can be called without generating or broadcasting a transaction. Instead it works via a direct API call to a Stacks node.
+
+```typescript
+const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+const contractName = 'kv-store';
+const functionName = 'get-value';
+const buffer = bufferCVFromString('foo');
+const network = new StacksTestnet();
+const senderAddress = 'ST2F4BK4GZH6YFBNHYDDGN4T1RKBA7DA1BJZPJEJJ';
+
+const options = {
+  contractAddress,
+  contractName,
+  functionName,
+  functionArgs: [buffer],
+  network,
+  senderAddress,
+};
+
+const result = await callReadOnlyFunction(options);
+```
+
 ## Constructing Clarity Values
 
 Building transactions that call functions in deployed clarity contracts requires you to construct valid Clarity Values to pass to the function as arguments. The [Clarity type system](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-002-smart-contract-language.md#clarity-type-system) contains the following types:

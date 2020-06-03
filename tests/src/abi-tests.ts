@@ -13,7 +13,7 @@ import {
   responseOkCV,
   responseErrorCV,
   noneCV,
-} from '../../src';
+} from '../../src/clarity';
 import { validateContractCall, ClarityAbi, abiFunctionToString } from '../../src/contract-abi';
 import { oneLineTrim } from 'common-tags';
 
