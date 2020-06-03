@@ -550,9 +550,10 @@ test('Make contract-call with network ABI validation failure', async () => {
     error = e;
   }
 
+  const abiUrl = network.getAbiApiUrl(contractAddress, contractName);
   expect(error).toEqual(
     new Error(
-      'Error fetching contract ABI for contract "kv-store" at address ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE. Response 404: Not Found. Attempted to fetch http://neon.blockstack.org:20443/v2/contracts/interface/ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE/kv-store and failed with the message: "failed"'
+      `Error fetching contract ABI for contract "kv-store" at address ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE. Response 404: Not Found. Attempted to fetch ${abiUrl} and failed with the message: "failed"`
     )
   );
 });
