@@ -13,6 +13,7 @@ import {
   estimateTransfer,
   broadcastTransaction,
   getNonce,
+  callReadOnlyFunction,
 } from '../../src/builders';
 
 import { createAssetInfo } from '../../src/types';
@@ -26,7 +27,7 @@ import {
 
 import { StacksTestnet, StacksMainnet } from '../../src/network';
 
-import { bufferCV, standardPrincipalCV, bufferCVFromString, falseCV } from '../../src/clarity';
+import { bufferCV, standardPrincipalCV, bufferCVFromString, serializeCV } from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
@@ -554,4 +555,32 @@ test('Make contract-call with network ABI validation failure', async () => {
       'Error fetching contract ABI for contract "kv-store" at address ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE. Response 404: Not Found. Attempted to fetch http://neon.blockstack.org:20443/v2/contracts/interface/ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE/kv-store and failed with the message: "failed"'
     )
   );
+});
+
+test('Call read-only function', async () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value?';
+  const buffer = bufferCVFromString('foo');
+  const network = new StacksTestnet();
+  const senderAddress = 'ST2F4BK4GZH6YFBNHYDDGN4T1RKBA7DA1BJZPJEJJ';
+  const mockResult = bufferCVFromString('test');
+
+  const options = {
+    contractAddress,
+    contractName,
+    functionName,
+    functionArgs: [buffer],
+    network,
+    senderAddress,
+  };
+
+  const apiUrl = network.getReadOnlyFunctionCallApiUrl(contractAddress, contractName, functionName);
+  fetchMock.mockOnce(`{"okay": true, "result": "0x${serializeCV(mockResult).toString('hex')}"}`);
+
+  const result = await callReadOnlyFunction(options);
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
+  expect(result).toEqual(mockResult);
 });

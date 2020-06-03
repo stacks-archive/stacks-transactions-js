@@ -14,7 +14,7 @@ import {
   responseOkCV,
   responseErrorCV,
   noneCV,
-} from '../../src';
+} from '../../src/clarity';
 import {
   validateContractCall,
   ClarityAbi,
@@ -22,6 +22,7 @@ import {
   parseToCV,
   ClarityAbiType,
 } from '../../src/contract-abi';
+
 import { oneLineTrim } from 'common-tags';
 
 const TEST_ABI: ClarityAbi = JSON.parse(readFileSync('./tests/src/abi/test-abi.json').toString());

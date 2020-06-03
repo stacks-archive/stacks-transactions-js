@@ -1,8 +1,12 @@
 import { sha256, sha512 } from 'sha.js';
 
+import { ClarityValue, serializeCV } from './clarity';
+
 import * as RIPEMD160 from 'ripemd160';
 
 import * as randombytes from 'randombytes';
+
+import { deserializeCV } from './clarity';
 
 // eslint-disable-next-line import/no-unassigned-import
 import 'cross-fetch/polyfill';
@@ -135,3 +139,26 @@ export async function fetchPrivate(input: RequestInfo, init?: RequestInit): Prom
   const fetchResult = await fetch(input, fetchOpts);
   return fetchResult;
 }
+
+export function cvToHex(cv: ClarityValue) {
+  const serialized = serializeCV(cv);
+  return `0x${serialized.toString('hex')}`;
+}
+
+/**
+ * Read only function response object
+ *
+ * @param {Boolean} okay - the status of the response
+ * @param {string} result - serialized hex clarity value
+ */
+
+export interface ReadOnlyFunctionResponse {
+  okay: boolean;
+  result: string;
+}
+
+export const parseReadOnlyResponse = ({ result }: ReadOnlyFunctionResponse): ClarityValue => {
+  const hex = result.slice(2);
+  const bufferCV = Buffer.from(hex, 'hex');
+  return deserializeCV(bufferCV);
+};

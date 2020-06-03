@@ -44,3 +44,6 @@ docs
 
 # VSCode
 .vscode/
+
+# Webstorm
+.idea

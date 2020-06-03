@@ -42,7 +42,7 @@ import {
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
 
-import { fetchPrivate } from './utils';
+import { fetchPrivate, cvToHex, parseReadOnlyResponse } from './utils';
 
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
@@ -166,7 +166,7 @@ export async function broadcastRawTransaction(rawTx: Buffer, url: string) {
  *
  * @param {string} address - the contracts address
  * @param {string} contractName - the contracts name
- * @param {Stacks} network - the Stacks network to broadcast transaction to
+ * @param {StacksNetwork} network - the Stacks network to broadcast transaction to
  *
  * @returns {Promise} that resolves to a ClarityAbi if the operation succeeds
  */
@@ -208,7 +208,7 @@ export async function getAbi(
  * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
  * @param  {String} memo - an arbitrary string to include with the transaction, must be less than
  *                          34 bytes
- * @param  {PostconditionMode} postConditionMode - whether post conditions must fully cover all
+ * @param  {PostConditionMode} postConditionMode - whether post conditions must fully cover all
  *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
@@ -231,7 +231,7 @@ export interface TokenTransferOptions {
  *
  * Returns a signed Stacks token transfer transaction.
  *
- * @param  {TokenTransferOptions} options - an options object for the token transfer
+ * @param  {TokenTransferOptions} txOptions - an options object for the token transfer
  *
  * @return {StacksTransaction}
  */
@@ -313,7 +313,7 @@ export async function makeSTXTokenTransfer(
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
  * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
- * @param  {PostconditionMode} postConditionMode - whether post conditions must fully cover all
+ * @param  {PostConditionMode} postConditionMode - whether post conditions must fully cover all
  *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
@@ -378,7 +378,7 @@ export function estimateContractDeploy(
 /**
  * Generates a Clarity smart contract deploy transaction
  *
- * @param  {ContractDeployOptions} options - an options object for the contract deploy
+ * @param  {ContractDeployOptions} txOptions - an options object for the contract deploy
  *
  * Returns a signed Stacks smart contract deploy transaction.
  *
@@ -462,7 +462,7 @@ export async function makeSmartContractDeploy(
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
  * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
- * @param  {PostconditionMode} postConditionMode - whether post conditions must fully cover all
+ * @param  {PostConditionMode} postConditionMode - whether post conditions must fully cover all
  *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
@@ -531,7 +531,7 @@ export function estimateContractFunctionCall(
 /**
  * Generates a Clarity smart contract function call transaction
  *
- * @param  {ContractCallOptions} options - an options object for the contract function call
+ * @param  {ContractCallOptions} txOptions - an options object for the contract function call
  *
  * Returns a signed Stacks smart contract function call transaction.
  *
@@ -728,6 +728,7 @@ export function makeContractFungiblePostCondition(
  * @param  {String} address - the c32check address
  * @param  {FungibleConditionCode} conditionCode - the condition code
  * @param  {AssetInfo} assetInfo - asset info describing the non-fungible token
+ * @param  {ClarityValue} assetName - asset name describing the non-fungible token
  *
  * @return {NonFungiblePostCondition}
  */
@@ -754,6 +755,7 @@ export function makeStandardNonFungiblePostCondition(
  * @param  {String} contractName - the name of the contract
  * @param  {FungibleConditionCode} conditionCode - the condition code
  * @param  {AssetInfo} assetInfo - asset info describing the non-fungible token
+ * @param  {ClarityValue} assetName - asset name describing the non-fungible token
  *
  * @return {NonFungiblePostCondition}
  */
@@ -770,4 +772,71 @@ export function makeContractNonFungiblePostCondition(
     assetInfo,
     assetName
   );
+}
+
+/**
+ * Read only function options
+ *
+ * @param  {String} contractAddress - the c32check address of the contract
+ * @param  {String} contractName - the contract name
+ * @param  {String} functionName - name of the function to be called
+ * @param  {[ClarityValue]} functionArgs - an array of Clarity values as arguments to the function call
+ * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
+ * @param  {String} senderAddress - the c32check address of the sender
+ */
+
+export interface ReadOnlyFunctionOptions {
+  contractName: string;
+  contractAddress: string;
+  functionName: string;
+  functionArgs: ClarityValue[];
+  network?: StacksNetwork;
+  senderAddress: string;
+}
+
+/**
+ * Calls a read only function from a contract interface
+ *
+ * @param  {ReadOnlyFunctionOptions} readOnlyFunctionOptions - the options object
+ *
+ * Returns an object with a status bool (okay) and a result string that is a serialized clarity value in hex format.
+ *
+ * @return {ClarityValue}
+ */
+export async function callReadOnlyFunction(
+  readOnlyFunctionOptions: ReadOnlyFunctionOptions
+): Promise<ClarityValue> {
+  const defaultOptions = {
+    network: new StacksMainnet(),
+  };
+
+  const options = Object.assign(defaultOptions, readOnlyFunctionOptions);
+
+  const {
+    contractName,
+    contractAddress,
+    functionName,
+    functionArgs,
+    network,
+    senderAddress,
+  } = options;
+
+  const url = network.getReadOnlyFunctionCallApiUrl(contractAddress, contractName, functionName);
+
+  const args = functionArgs.map(arg => cvToHex(arg));
+
+  const body = JSON.stringify({
+    sender: senderAddress,
+    arguments: args,
+  });
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return response.json().then(responseJson => parseReadOnlyResponse(responseJson));
 }

@@ -343,9 +343,13 @@ export function validateContractCall(payload: ContractCallPayload, abi: ClarityA
       const abiArg = abiArgs[i];
 
       if (!matchType(payloadArg, abiArg.type)) {
+        const argNum = i + 1;
         throw new Error(
-          `Clarity function \`${payload.functionName.content}\` expects argument ${i +
-            1} to be of type ${getTypeString(abiArg.type)}, not ${getCVTypeString(payloadArg)}`
+          `Clarity function \`${
+            payload.functionName.content
+          }\` expects argument ${argNum} to be of type ${getTypeString(
+            abiArg.type
+          )}, not ${getCVTypeString(payloadArg)}`
         );
       }
     }
@@ -395,7 +399,7 @@ export function parseToCV(input: string, type: ClarityAbiType): ClarityValue {
       throw new Error(`Contract function contains unsupported Clarity ABI type: ${typeString}`);
     }
   } else if (isClarityAbiBuffer(type)) {
-    const inputLength = Buffer.from(input).byteLength
+    const inputLength = Buffer.from(input).byteLength;
     if (inputLength > type.buffer.length) {
       throw new Error(`Input exceeds specified buffer length limit of ${type.buffer.length}`);
     }
