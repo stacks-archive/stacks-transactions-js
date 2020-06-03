@@ -7,11 +7,7 @@
     "sourceMap": true,
     "outDir": "lib",
     "esModuleInterop": false,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": false
   },
-  "include": [
-    "src/index.ts",
-    "src/**/*",
-    "tests/**/*"
-  ]
+  "include": ["src/index.ts", "src/**/*", "tests/**/*"]
 }
