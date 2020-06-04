@@ -38,7 +38,7 @@ import {
   PayloadType,
   AnchorMode,
   TransactionVersion,
-  TxBroadcastError,
+  TxRejectedReason,
 } from './constants';
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
@@ -111,16 +111,14 @@ export function estimateTransfer(
     });
 }
 
-export type TxBroadcastResultOk = { ok: string };
-export type TxBroadcastResultError = { error: { reason: TxBroadcastError; data: string } };
-export type TxBroadcastResult = TxBroadcastResultOk | TxBroadcastResultError;
-
-export type TxBroadcastErrorResponseData = {
+export type TxBroadcastResultOk = string;
+export type TxBroadcastResultRejected = {
   error: string;
-  reason: keyof typeof TxBroadcastError;
+  reason: TxRejectedReason;
   reason_data: any;
   txid: string;
 };
+export type TxBroadcastResult = TxBroadcastResultOk | TxBroadcastResultRejected;
 
 /**
  * Broadcast the signed transaction to a core node
@@ -165,19 +163,13 @@ export async function broadcastRawTransaction(
   const response = await fetchPrivate(url, options);
   if (!response.ok) {
     try {
-      const responseData: TxBroadcastErrorResponseData = await response.json();
-      return {
-        error: {
-          reason: TxBroadcastError[responseData.reason],
-          data: responseData.reason_data,
-        },
-      };
+      return await response.json();
     } catch (e) {
       throw Error(`Failed to broadcast transaction: ${e.message}`);
     }
   }
 
-  return { ok: await response.text() };
+  return await response.text();
 }
 
 /**

@@ -135,25 +135,25 @@ enum ClarityType {
   Tuple = 0x0c,
 }
 
-enum TxBroadcastError {
-  Serialization,
-  Deserialization,
-  SignatureValidation,
-  FeeTooLow,
-  BadNonce,
-  NotEnoughFunds,
-  NoSuchContract,
-  NoSuchPublicFunction,
-  BadFunctionArgument,
-  ContractAlreadyExists,
-  PoisonMicroblocksDoNotConflict,
-  PoisonMicroblockHasUnknownPubKeyHash,
-  PoisonMicroblockIsInvalid,
-  BadAddressVersionByte,
-  NoCoinbaseViaMempool,
-  ServerFailureNoSuchChainTip,
-  ServerFailureDatabase,
-  ServerFailureOther,
+enum TxRejectedReason {
+  Serialization = 'Serialization',
+  Deserialization = 'Deserialization',
+  SignatureValidation = 'SignatureValidation',
+  FeeTooLow = 'FeeTooLow',
+  BadNonce = 'BadNonce',
+  NotEnoughFunds = 'NotEnoughFunds',
+  NoSuchContract = 'NoSuchContract',
+  NoSuchPublicFunction = 'NoSuchPublicFunction',
+  BadFunctionArgument = 'BadFunctionArgument',
+  ContractAlreadyExists = 'ContractAlreadyExists',
+  PoisonMicroblocksDoNotConflict = 'PoisonMicroblocksDoNotConflict',
+  PoisonMicroblockHasUnknownPubKeyHash = 'PoisonMicroblockHasUnknownPubKeyHash',
+  PoisonMicroblockIsInvalid = 'PoisonMicroblockIsInvalid',
+  BadAddressVersionByte = 'BadAddressVersionByte',
+  NoCoinbaseViaMempool = 'NoCoinbaseViaMempool',
+  ServerFailureNoSuchChainTip = 'ServerFailureNoSuchChainTip',
+  ServerFailureDatabase = 'ServerFailureDatabase',
+  ServerFailureOther = 'ServerFailureOther',
 }
 
 export {
@@ -182,5 +182,5 @@ export {
   FungibleConditionCode,
   NonFungibleConditionCode,
   AssetType,
-  TxBroadcastError,
+  TxRejectedReason,
 };
