@@ -15,6 +15,7 @@ import {
   getNonce,
   TxBroadcastResult,
   TxBroadcastResultOk,
+  TxBroadcastResultRejected,
 } from '../../src/builders';
 
 import { createAssetInfo } from '../../src/types';
@@ -24,7 +25,7 @@ import {
   FungibleConditionCode,
   NonFungibleConditionCode,
   PostConditionMode,
-  TxBroadcastError,
+  TxRejectedReason,
 } from '../../src/constants';
 
 import { StacksTestnet, StacksMainnet } from '../../src/network';
@@ -453,14 +454,14 @@ test('Transaction broadcast success', async () => {
     memo,
   });
 
-  fetchMock.mockOnce('mock core node API response');
+  fetchMock.mockOnce('success');
 
   const response: TxBroadcastResult = await broadcastTransaction(transaction, network);
 
   expect(fetchMock.mock.calls.length).toEqual(1);
   expect(fetchMock.mock.calls[0][0]).toEqual(network.getBroadcastApiUrl());
   expect(fetchMock.mock.calls[0][1]?.body).toEqual(transaction.serialize());
-  expect((response as TxBroadcastResultOk).ok).toEqual('mock core node API response');
+  expect(response as TxBroadcastResultOk).toEqual('success');
 });
 
 test('Transaction broadcast returns error', async () => {
@@ -497,8 +498,8 @@ test('Transaction broadcast returns error', async () => {
   fetchMock.mockOnce(JSON.stringify(rejection), { status: 400 });
 
   const result = await broadcastTransaction(transaction, network);
-  expect((result as TxBroadcastResultError).error.reason).toEqual(TxBroadcastError.BadNonce);
-  expect((result as TxBroadcastResultError).error.data).toEqual(rejection.reason_data);
+  expect((result as TxBroadcastResultRejected).reason).toEqual(TxRejectedReason.BadNonce);
+  expect((result as TxBroadcastResultRejected).reason_data).toEqual(rejection.reason_data);
 });
 
 test('Transaction broadcast fails', async () => {
