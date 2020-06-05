@@ -16,6 +16,7 @@ import {
   TxBroadcastResult,
   TxBroadcastResultOk,
   TxBroadcastResultRejected,
+  callReadOnlyFunction,
 } from '../../src/builders';
 
 import { createAssetInfo } from '../../src/types';
