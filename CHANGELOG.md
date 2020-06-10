@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Changed
 - tx broadcast now returns a response type which may contain an error
+- fixed contract deploy auto fee estimation
 
 ## v0.4.6
 - Updates the testnet network config to use stable `testnet-master.blockstack.org` URL
