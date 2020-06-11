@@ -251,7 +251,7 @@ function matchType(cv: ClarityValue, abiType: ClarityAbiType): boolean {
     case ClarityType.Buffer:
       return (
         union.id === ClarityAbiTypeId.ClarityAbiTypeBuffer &&
-        union.type.buffer.length === cv.buffer.length
+        union.type.buffer.length >= cv.buffer.length
       );
     case ClarityType.OptionalNone:
       return (

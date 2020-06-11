@@ -54,6 +54,32 @@ test('ABI validation', () => {
   validateContractCall(payload, TEST_ABI);
 });
 
+test('ABI validation buffer', () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'test';
+  const functionName = 'buffer-test';
+
+  const payloadCorrectBuffer = createContractCallPayload(
+    contractAddress,
+    contractName,
+    functionName,
+    [bufferCVFromString('test')]
+  );
+
+  validateContractCall(payloadCorrectBuffer, TEST_ABI);
+
+  const payloadBufferTooBig = createContractCallPayload(
+    contractAddress,
+    contractName,
+    functionName,
+    [bufferCVFromString('too large')]
+  );
+
+  expect(() => validateContractCall(payloadBufferTooBig, TEST_ABI)).toThrow(
+    'Clarity function `buffer-test` expects argument 1 to be of type (buff 6), not (buff 9)'
+  );
+});
+
 test('ABI validation fail, tuple mistyped', () => {
   const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
   const contractName = 'test';
@@ -169,7 +195,7 @@ test('ABI validation fail, wrong number of args', () => {
   );
 });
 
-test('Validation fails when ABI has multiple functions with the same nam', () => {
+test('Validation fails when ABI has multiple functions with the same name', () => {
   const abi: ClarityAbi = {
     functions: [
       {
