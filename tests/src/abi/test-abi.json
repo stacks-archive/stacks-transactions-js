@@ -24,6 +24,14 @@
         { "name": "arg1", "type": "int128" }
       ],
       "outputs": { "type": { "response": { "ok": "bool", "error": "none" } } }
+    },
+    {
+      "name": "buffer-test",
+      "access": "public",
+      "args": [
+        { "name": "arg1", "type": { "buffer": { "length": 6 } } }
+      ],
+      "outputs": { "type": { "response": { "ok": "bool", "error": "none" } } }
     }
   ],
   "variables": [],
