@@ -440,7 +440,7 @@ export async function makeSmartContractDeploy(
   );
 
   if (!txOptions.fee) {
-    const txFee = await estimateTransfer(transaction, options.network);
+    const txFee = await estimateContractDeploy(transaction, options.network);
     transaction.setFee(txFee);
   }
 
