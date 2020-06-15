@@ -33,6 +33,7 @@ export {
   ContractPrincipalCV,
   ListCV,
   TupleCV,
+  cvToString,
 } from './clarity';
 
 // Clarity Value Construction Functions
