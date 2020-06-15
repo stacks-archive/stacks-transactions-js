@@ -15,50 +15,7 @@ export {
   CoinbasePayload,
 } from './payload';
 
-// Clarity Value Types
-export {
-  ClarityType,
-  ClarityValue,
-  BooleanCV,
-  TrueCV,
-  FalseCV,
-  IntCV,
-  UIntCV,
-  BufferCV,
-  OptionalCV,
-  ResponseCV,
-  ResponseOkCV,
-  ResponseErrorCV,
-  StandardPrincipalCV,
-  ContractPrincipalCV,
-  ListCV,
-  TupleCV,
-  cvToString,
-} from './clarity';
-
-// Clarity Value Construction Functions
-export {
-  trueCV,
-  falseCV,
-  intCV,
-  uintCV,
-  bufferCV,
-  bufferCVFromString,
-  noneCV,
-  someCV,
-  responseOkCV,
-  responseErrorCV,
-  standardPrincipalCV,
-  standardPrincipalCVFromAddress,
-  contractPrincipalCV,
-  contractPrincipalCVFromAddress,
-  listCV,
-  tupleCV,
-} from './clarity';
-
-// Clarity Value Serialization/Deserialization
-export { serializeCV, deserializeCV } from './clarity';
-
+export * from './clarity';
 export * from './keys';
 export * from './builders';
 export * from './network';

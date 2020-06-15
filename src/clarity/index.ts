@@ -18,6 +18,7 @@ import {
   standardPrincipalCVFromAddress,
   contractPrincipalCVFromAddress,
   PrincipalCV,
+  contractPrincipalCVFromStandard,
 } from './types/principalCV';
 import { ListCV, listCV } from './types/listCV';
 import { TupleCV, tupleCV } from './types/tupleCV';
@@ -61,6 +62,7 @@ export {
   standardPrincipalCVFromAddress,
   contractPrincipalCV,
   contractPrincipalCVFromAddress,
+  contractPrincipalCVFromStandard,
   listCV,
   tupleCV,
   getCVTypeString,

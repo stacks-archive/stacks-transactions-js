@@ -21,8 +21,8 @@ import {
   tupleCV,
   TupleCV,
   standardPrincipalCVFromAddress,
+  contractPrincipalCVFromStandard,
 } from '../../src/clarity';
-import { contractPrincipalCVFromStandard } from '../../src/clarity/types/principalCV';
 import { BufferReader } from '../../src/bufferReader';
 import { cvToString } from '../../src/clarity/clarityValue';
 
