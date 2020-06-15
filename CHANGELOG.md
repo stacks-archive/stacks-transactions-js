@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - tx broadcast now returns a response type which may contain an error
 - fixed contract deploy auto fee estimation
+- allow buffers to be less than or equal to the size specified in the ABI when validating contract-call args
+
 
 ## v0.4.6
 - Updates the testnet network config to use stable `testnet-master.blockstack.org` URL
