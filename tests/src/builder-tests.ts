@@ -2,7 +2,7 @@ import * as fs from 'fs';
 
 import {
   makeSTXTokenTransfer,
-  makeSmartContractDeploy,
+  makeContractDeploy,
   makeContractCall,
   makeStandardSTXPostCondition,
   makeContractSTXPostCondition,
@@ -185,7 +185,7 @@ test('Make smart contract deploy', async () => {
   const fee = new BigNum(0);
   const nonce = new BigNum(0);
 
-  const transaction = await makeSmartContractDeploy({
+  const transaction = await makeContractDeploy({
     contractName,
     codeBody,
     senderKey,

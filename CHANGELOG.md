@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Changed
+- renamed `makeSmartContractDeploy()` to `makeContractDeploy()`
 - tx broadcast now returns a response type which may contain an error
 - fixed contract deploy auto fee estimation
 - allow buffers to be less than or equal to the size specified in the ABI when validating contract-call args
