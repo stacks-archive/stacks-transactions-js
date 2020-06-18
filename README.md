@@ -63,7 +63,7 @@ broadcastTransaction(transaction, network);
 ## Smart Contract Deploy Transaction
 
 ```javascript
-import { makeSmartContractDeploy, StacksMainnet, broadcastTransaction } from '@blockstack/stacks-transactions';
+import { makeContractDeploy, StacksMainnet, broadcastTransaction } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
 const network = new StacksMainnet();
@@ -75,7 +75,7 @@ const txOptions = {
   network,
 };
 
-const transaction = await makeSmartContractDeploy(txOptions);
+const transaction = await makeContractDeploy(txOptions);
 
 broadcastTransaction(transaction, network);
 ```

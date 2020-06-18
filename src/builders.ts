@@ -395,7 +395,7 @@ export function estimateContractDeploy(
  *
  * @return {StacksTransaction}
  */
-export async function makeSmartContractDeploy(
+export async function makeContractDeploy(
   txOptions: ContractDeployOptions
 ): Promise<StacksTransaction> {
   const defaultOptions = {
