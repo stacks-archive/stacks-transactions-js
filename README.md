@@ -152,7 +152,7 @@ The serialized transaction can now be passed to the sponsoring party which will 
 import { sponsorTransaction, BufferReader, deserializeTransaction, broadcastTransaction } from '@blockstack/stacks-transactions';
 const BigNum = require('bn.js');
 
-const bufferReader = new BufferReader(serializedTx);
+const bufferReader = new BufferReader(Buffer.from(serializedTx));
 const deserializedTx = deserializeTransaction(bufferReader);
 const sponsorKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
 const fee = BigNum(1000);
