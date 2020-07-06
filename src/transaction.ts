@@ -1,7 +1,6 @@
 import * as _ from 'lodash';
 
 import {
-  DEFAULT_CORE_NODE_API_URL,
   DEFAULT_CHAIN_ID,
   TransactionVersion,
   PayloadType,
@@ -10,22 +9,23 @@ import {
   AuthType,
   StacksMessageType,
   ChainID,
+  AddressHashMode,
 } from './constants';
 
-import { Authorization, SpendingCondition } from './authorization';
+import { Authorization, SpendingCondition, SingleSigSpendingCondition } from './authorization';
 
-import { BufferArray, txidFromData, sha512_256, fetchPrivate } from './utils';
+import { BufferArray, txidFromData } from './utils';
 
 import { Payload, serializePayload, deserializePayload } from './payload';
 
 import { LengthPrefixedList, serializeLPList, deserializeLPList, createLPList } from './types';
 
-import { StacksPrivateKey } from './keys';
+import { StacksPrivateKey, publicKeyToString, pubKeyfromPrivKey } from './keys';
 
 import { BufferReader } from './bufferReader';
 
 import * as BigNum from 'bn.js';
-import { SerializationError } from './errors';
+import { SerializationError, SigningError } from './errors';
 
 export class StacksTransaction {
   version: TransactionVersion;
@@ -77,6 +77,16 @@ export class StacksTransaction {
     return tx.txid();
   }
 
+  verifyBegin() {
+    const tx = _.cloneDeep(this);
+    tx.auth = tx.auth.intoInitialSighashAuth();
+    return tx.txid();
+  }
+
+  verifyOrigin(): string {
+    return this.auth.verifyOrigin(this.verifyBegin());
+  }
+
   signNextOrigin(sigHash: string, privateKey: StacksPrivateKey): string {
     if (this.auth.spendingCondition === undefined) {
       throw new Error('"auth.spendingCondition" is undefined');
@@ -84,7 +94,17 @@ export class StacksTransaction {
     if (this.auth.authType === undefined) {
       throw new Error('"auth.authType" is undefined');
     }
-    return this.signAndAppend(this.auth.spendingCondition, sigHash, this.auth.authType, privateKey);
+    return this.signAndAppend(this.auth.spendingCondition, sigHash, AuthType.Standard, privateKey);
+  }
+
+  signNextSponsor(sigHash: string, privateKey: StacksPrivateKey): string {
+    if (this.auth.sponsorSpendingCondition === undefined) {
+      throw new Error('"auth.spendingCondition" is undefined');
+    }
+    if (this.auth.authType === undefined) {
+      throw new Error('"auth.authType" is undefined');
+    }
+    return this.signAndAppend(this.auth.sponsorSpendingCondition, sigHash, AuthType.Sponsored, privateKey);
   }
 
   signAndAppend(
@@ -120,6 +140,16 @@ export class StacksTransaction {
     return txidFromData(serialized);
   }
 
+  setSponsor(
+    sponsorSpendingCondition: SpendingCondition,
+  ) {
+    if (this.auth.authType != AuthType.Sponsored) {
+      throw new SigningError('Cannot sponsor sign a non-sponsored transaction');
+    }
+
+    this.auth.setSponsor(sponsorSpendingCondition);
+  }
+  
   /**
    * Set the total fee to be paid for this transaction
    *
@@ -136,6 +166,15 @@ export class StacksTransaction {
    */
   setNonce(nonce: BigNum) {
     this.auth.setNonce(nonce);
+  }
+
+  /**
+   * Set the transaction sponsor nonce
+   *
+   * @param {BigNum} nonce - the sponsor nonce value
+   */
+  setSponsorNonce(nonce: BigNum) {
+    this.auth.setSponsorNonce(nonce);
   }
 
   serialize(): Buffer {

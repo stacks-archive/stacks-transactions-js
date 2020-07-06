@@ -1,6 +1,6 @@
 import { StacksTransaction } from './transaction';
 
-import { StacksNetwork, StacksMainnet } from './network';
+import { StacksNetwork, StacksMainnet, StacksTestnet } from './network';
 
 import {
   createTokenTransferPayload,
@@ -8,13 +8,19 @@ import {
   createContractCallPayload,
 } from './payload';
 
-import { SingleSigSpendingCondition, StandardAuthorization } from './authorization';
+import { 
+  SingleSigSpendingCondition, 
+  StandardAuthorization, 
+  SponsoredAuthorization,
+  SpendingCondition 
+} from './authorization';
 
 import {
   publicKeyToString,
   createStacksPrivateKey,
   getPublicKey,
   publicKeyToAddress,
+  pubKeyfromPrivKey,
 } from './keys';
 
 import { TransactionSigner } from './signer';
@@ -223,6 +229,7 @@ export async function getAbi(
  *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
+ * @param  {Boolean} sponsored - true if another account is sponsoring the transaction fees
  */
 export interface TokenTransferOptions {
   recipient: string | PrincipalCV;
@@ -235,6 +242,7 @@ export interface TokenTransferOptions {
   memo?: string;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
+  sponsored?: boolean;
 }
 
 /**
@@ -256,6 +264,7 @@ export async function makeSTXTokenTransfer(
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
     memo: '',
+    sponsored: false,
   };
 
   const options = Object.assign(defaultOptions, txOptions);
@@ -265,13 +274,20 @@ export async function makeSTXTokenTransfer(
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
+  var authorization = null;
+
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
     options.fee
   );
-  const authorization = new StandardAuthorization(spendingCondition);
+
+  if (options.sponsored) {
+    authorization = new SponsoredAuthorization(spendingCondition);
+  } else {
+    authorization = new StandardAuthorization(spendingCondition);
+  }
 
   const postConditions: PostCondition[] = [];
   if (options.postConditions && options.postConditions.length > 0) {
@@ -328,6 +344,7 @@ export async function makeSTXTokenTransfer(
  *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
+ * @param  {Boolean} sponsored - true if another account is sponsoring the transaction fees
  */
 export interface ContractDeployOptions {
   contractName: string;
@@ -339,6 +356,7 @@ export interface ContractDeployOptions {
   anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
+  sponsored?: boolean;
 }
 
 /**
@@ -404,6 +422,7 @@ export async function makeContractDeploy(
     network: new StacksMainnet(),
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
+    sponsored: false,
   };
 
   const options = Object.assign(defaultOptions, txOptions);
@@ -413,13 +432,21 @@ export async function makeContractDeploy(
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
+
+  var authorization = null;
+
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
     options.fee
   );
-  const authorization = new StandardAuthorization(spendingCondition);
+
+  if (options.sponsored) {
+    authorization = new SponsoredAuthorization(spendingCondition);
+  } else {
+    authorization = new StandardAuthorization(spendingCondition);
+  }
 
   const postConditions: PostCondition[] = [];
   if (options.postConditions && options.postConditions.length > 0) {
@@ -477,6 +504,7 @@ export async function makeContractDeploy(
  *                                                 transferred assets
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
+ * @param  {Boolean} sponsored - true if another account is sponsoring the transaction fees
  */
 export interface ContractCallOptions {
   contractAddress: string;
@@ -492,6 +520,7 @@ export interface ContractCallOptions {
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
   validateWithAbi?: boolean | ClarityAbi;
+  sponsored?: boolean;
 }
 
 /**
@@ -555,6 +584,7 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
     network: new StacksMainnet(),
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Deny,
+    sponsored: false,
   };
 
   const options = Object.assign(defaultOptions, txOptions);
@@ -584,13 +614,21 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
+
+  var authorization = null;
+
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
     options.fee
   );
-  const authorization = new StandardAuthorization(spendingCondition);
+
+  if (options.sponsored) {
+    authorization = new SponsoredAuthorization(spendingCondition);
+  } else {
+    authorization = new StandardAuthorization(spendingCondition);
+  }
 
   const postConditions: PostCondition[] = [];
   if (options.postConditions && options.postConditions.length > 0) {
@@ -850,4 +888,91 @@ export async function callReadOnlyFunction(
   });
 
   return response.json().then(responseJson => parseReadOnlyResponse(responseJson));
+}
+
+/**
+ * Sponsored transaction options
+ *
+ * @param  {StacksTransaction} transaction - the origin-signed transaction to sponsor
+ * @param  {String} sponsorPrivateKey - the sponsor's private key
+ * @param  {BigNum} fee - the transaction fee amount to sponsor
+ * @param  {BigNum} sponsorNonce - the nonce of the sponsor account
+ * @param  {AddressHashMode} sponsorAddressHashmode - the sponsor address hashmode
+ */
+export interface SponsorOptions {
+  transaction: StacksTransaction;
+  sponsorPrivateKey: string;
+  fee?: BigNum;
+  sponsorNonce?: BigNum;
+  sponsorAddressHashmode?: AddressHashMode;
+}
+
+/**
+ * Constructs and signs a sponsored transaction as the sponsor
+ *
+ * @param  {SponsorOptions} sponsorOptions - the sponsor options object
+ *
+ * Returns a signed sponsored transaction.
+ *
+ * @return {ClarityValue}
+ */
+export async function sponsorTransaction(
+  sponsorOptions: SponsorOptions
+): Promise<StacksTransaction> {
+  const defaultOptions = {
+    fee: new BigNum(0),
+    sponsorNonce: new BigNum(0),
+    sponsorAddressHashmode: AddressHashMode.SerializeP2PKH,
+  };
+
+  const options = Object.assign(defaultOptions, sponsorOptions);
+  const network = options.transaction.version === TransactionVersion.Mainnet 
+    ? new StacksMainnet() : new StacksTestnet()
+  const sponsorPubKey = pubKeyfromPrivKey(options.sponsorPrivateKey);
+
+  if (!sponsorOptions.fee) {
+    var txFee = new BigNum(0);
+    switch (options.transaction.payload.payloadType) {
+      case PayloadType.TokenTransfer:
+        txFee = await estimateTransfer(options.transaction, network);
+        break;
+      case PayloadType.SmartContract:
+        txFee = await estimateContractDeploy(options.transaction, network);
+        break;
+      case PayloadType.ContractCall:
+        txFee = await estimateContractFunctionCall(options.transaction, network);
+        break;
+    }      
+    options.transaction.setFee(txFee);
+    options.fee = txFee;
+  }
+
+  if (!sponsorOptions.sponsorNonce) {
+    const addressVersion =
+      network.version === TransactionVersion.Mainnet
+        ? AddressVersion.MainnetSingleSig
+        : AddressVersion.TestnetSingleSig;
+    
+    const senderAddress = publicKeyToAddress(addressVersion, sponsorPubKey);
+    const sponsorNonce = await getNonce(senderAddress, network);
+    options.sponsorNonce = sponsorNonce;
+  }
+  
+  const sponsorSpendingCondition = new SingleSigSpendingCondition(
+    options.sponsorAddressHashmode,
+    publicKeyToString(sponsorPubKey),
+    options.sponsorNonce,
+    options.fee,
+  );
+  
+  options.transaction.setSponsor(sponsorSpendingCondition);
+  
+  const privKey = createStacksPrivateKey(options.sponsorPrivateKey);
+  const signer = TransactionSigner.createSponsorSigner(
+    options.transaction, 
+    sponsorSpendingCondition
+  );
+  signer.signSponsor(privKey);
+
+  return options.transaction;
 }

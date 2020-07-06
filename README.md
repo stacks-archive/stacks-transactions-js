@@ -125,6 +125,50 @@ import { readFileSync } from 'fs';
 const abi: ClarityAbi = JSON.parse(readFileSync('abi.json').toString());
 ```
 
+## Sponsoring Transactions
+To generate a sponsored transaction, first create and sign the transaction as the origin. The `sponsored` property in the options object must be set to true.
+
+```javascript
+import { makeContractCall, BufferCV } from '@blockstack/stacks-transactions';
+const BigNum = require('bn.js');
+
+const txOptions = {
+  contractAddress: 'SPBMRFRPPGCDE3F384WCJPK8PQJGZ8K9QKK7F59X',
+  contractName: 'contract_name',
+  functionName: 'contract_function',
+  functionArgs: [bufferCVFromString('foo')],
+  senderKey: 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01',
+  validateWithAbi: true,
+  sponsored: true,
+};
+
+const transaction = await makeContractCall(txOptions);
+const serializedTx = transaction.serialize().toString('hex'); 
+```
+
+The serialized transaction can now be passed to the sponsoring party which will sign the sponsor portion of the transaction and set the fee.
+
+```javascript
+import { sponsorTransaction, BufferReader, deserializeTransaction, broadcastTransaction } from '@blockstack/stacks-transactions';
+const BigNum = require('bn.js');
+
+const bufferReader = new BufferReader(serializedTx);
+const deserializedTx = deserializeTransaction(bufferReader);
+const sponsorKey = 'b244296d5907de9864c0b0d51f98a13c52890be0404e83f273144cd5b9960eed01';
+const fee = BigNum(1000);
+
+const sponsorOptions = {
+  transaction: deserializedTx,
+  sponsorPrivateKey: sponsorKey,
+  fee,
+}
+
+const sponsoredTx = sponsorTransaction(sponsorOptions);
+
+const network = new StacksMainnet();
+broadcastTransaction(sponsoredTx, network);
+```
+
 ## Calling Read-only Contract Functions
 
 Read-only contract functions can be called without generating or broadcasting a transaction. Instead it works via a direct API call to a Stacks node.

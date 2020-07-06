@@ -23,6 +23,7 @@ import {
   exceedsMaxLengthBytes,
   hash_p2pkh,
   rightPadHexToLength,
+  hash160,
 } from './utils';
 
 import { c32addressDecode, c32address } from 'c32check';
@@ -108,6 +109,14 @@ export function createAddress(c32AddressString: string): Address {
     version: addressData[0],
     hash160: addressData[1],
   };
+}
+
+export function createEmptyAddress(): Address {
+  return {
+    type: StacksMessageType.Address,
+    version: AddressVersion.MainnetSingleSig,
+    hash160: "0".repeat(40),
+  }
 }
 
 export function addressFromVersionHash(version: AddressVersion, hash: string): Address {
