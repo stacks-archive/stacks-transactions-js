@@ -163,7 +163,7 @@ const sponsorOptions = {
   fee,
 }
 
-const sponsoredTx = sponsorTransaction(sponsorOptions);
+const sponsoredTx = await sponsorTransaction(sponsorOptions);
 
 const network = new StacksMainnet();
 broadcastTransaction(sponsoredTx, network);
