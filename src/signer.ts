@@ -82,7 +82,7 @@ export class TransactionSigner {
       throw new Error('Sponsor would have too many signatures');
     }
 
-    const nextSighash = this.transaction.signNextSponsor(this.sigHash, privateKey);    
+    const nextSighash = this.transaction.signNextSponsor(this.sigHash, privateKey);
     this.sigHash = nextSighash;
     this.originDone = true;
   }

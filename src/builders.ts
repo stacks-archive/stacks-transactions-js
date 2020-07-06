@@ -8,11 +8,11 @@ import {
   createContractCallPayload,
 } from './payload';
 
-import { 
-  SingleSigSpendingCondition, 
-  StandardAuthorization, 
+import {
+  SingleSigSpendingCondition,
+  StandardAuthorization,
   SponsoredAuthorization,
-  SpendingCondition 
+  SpendingCondition,
 } from './authorization';
 
 import {
@@ -274,7 +274,7 @@ export async function makeSTXTokenTransfer(
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
-  var authorization = null;
+  let authorization = null;
 
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
@@ -433,7 +433,7 @@ export async function makeContractDeploy(
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
 
-  var authorization = null;
+  let authorization = null;
 
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
@@ -615,7 +615,7 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
 
-  var authorization = null;
+  let authorization = null;
 
   const spendingCondition = new SingleSigSpendingCondition(
     addressHashMode,
@@ -926,12 +926,14 @@ export async function sponsorTransaction(
   };
 
   const options = Object.assign(defaultOptions, sponsorOptions);
-  const network = options.transaction.version === TransactionVersion.Mainnet 
-    ? new StacksMainnet() : new StacksTestnet()
+  const network =
+    options.transaction.version === TransactionVersion.Mainnet
+      ? new StacksMainnet()
+      : new StacksTestnet();
   const sponsorPubKey = pubKeyfromPrivKey(options.sponsorPrivateKey);
 
   if (!sponsorOptions.fee) {
-    var txFee = new BigNum(0);
+    let txFee = new BigNum(0);
     switch (options.transaction.payload.payloadType) {
       case PayloadType.TokenTransfer:
         txFee = await estimateTransfer(options.transaction, network);
@@ -942,7 +944,7 @@ export async function sponsorTransaction(
       case PayloadType.ContractCall:
         txFee = await estimateContractFunctionCall(options.transaction, network);
         break;
-    }      
+    }
     options.transaction.setFee(txFee);
     options.fee = txFee;
   }
@@ -952,24 +954,24 @@ export async function sponsorTransaction(
       network.version === TransactionVersion.Mainnet
         ? AddressVersion.MainnetSingleSig
         : AddressVersion.TestnetSingleSig;
-    
+
     const senderAddress = publicKeyToAddress(addressVersion, sponsorPubKey);
     const sponsorNonce = await getNonce(senderAddress, network);
     options.sponsorNonce = sponsorNonce;
   }
-  
+
   const sponsorSpendingCondition = new SingleSigSpendingCondition(
     options.sponsorAddressHashmode,
     publicKeyToString(sponsorPubKey),
     options.sponsorNonce,
-    options.fee,
+    options.fee
   );
-  
+
   options.transaction.setSponsor(sponsorSpendingCondition);
-  
+
   const privKey = createStacksPrivateKey(options.sponsorPrivateKey);
   const signer = TransactionSigner.createSponsorSigner(
-    options.transaction, 
+    options.transaction,
     sponsorSpendingCondition
   );
   signer.signSponsor(privKey);

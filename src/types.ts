@@ -115,8 +115,8 @@ export function createEmptyAddress(): Address {
   return {
     type: StacksMessageType.Address,
     version: AddressVersion.MainnetSingleSig,
-    hash160: "0".repeat(40),
-  }
+    hash160: '0'.repeat(40),
+  };
 }
 
 export function addressFromVersionHash(version: AddressVersion, hash: string): Address {

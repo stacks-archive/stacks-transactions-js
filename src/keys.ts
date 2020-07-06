@@ -62,13 +62,18 @@ export function createStacksPublicKey(key: string): StacksPublicKey {
 
 export function publicKeyFromSignature(message: string, signature: MessageSignature) {
   const ec = new EC('secp256k1');
-  const messageBN = ec.keyFromPrivate(message, "hex").getPrivate().toString(10);
+  const messageBN = ec.keyFromPrivate(message, 'hex').getPrivate().toString(10);
 
   const parsedSignature = parseRecoverableSignature(signature.toString());
 
-  const publicKey = ec.recoverPubKey(messageBN, parsedSignature, parsedSignature.recoveryParam, 'hex');
+  const publicKey = ec.recoverPubKey(
+    messageBN,
+    parsedSignature,
+    parsedSignature.recoveryParam,
+    'hex'
+  );
 
-  return publicKey.encodeCompressed("hex");
+  return publicKey.encodeCompressed('hex');
 }
 
 export function publicKeyFromBuffer(data: Buffer): StacksPublicKey {
@@ -176,7 +181,7 @@ export function parseRecoverableSignature(signature: string) {
     recoveryParam: hexStringToInt(recoveryParamHex),
     r,
     s,
-  }
+  };
 }
 
 export function getPublicKey(privateKey: StacksPrivateKey): StacksPublicKey {

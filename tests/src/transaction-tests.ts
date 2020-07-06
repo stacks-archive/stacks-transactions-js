@@ -1,6 +1,10 @@
 import { StacksTransaction, deserializeTransaction } from '../../src/transaction';
 
-import { StandardAuthorization, SingleSigSpendingCondition, SponsoredAuthorization } from '../../src/authorization';
+import {
+  StandardAuthorization,
+  SingleSigSpendingCondition,
+  SponsoredAuthorization,
+} from '../../src/authorization';
 
 import { TokenTransferPayload, createTokenTransferPayload } from '../../src/payload';
 
@@ -200,16 +204,17 @@ test('Sponsored STX token transfer transaction serialization and deserialization
   const sponsorPubKey = '02b6cfeae7cdcd7ae9229e2decc7d75fe727f8dc9f0d81e58aaf46de550d8e3f58';
   const sponsorSecretKey = '3372fdabb09819bb6c9446da8a067840c81dcf8d229d048de36caac3562c5f7301';
   const spendingCondition = new SingleSigSpendingCondition(addressHashMode, pubKey, nonce, fee);
-  const sponsorSpendingCondition = new SingleSigSpendingCondition(addressHashMode, sponsorPubKey, sponsorNonce, fee);
+  const sponsorSpendingCondition = new SingleSigSpendingCondition(
+    addressHashMode,
+    sponsorPubKey,
+    sponsorNonce,
+    fee
+  );
 
   const authType = AuthType.Sponsored;
   const authorization = new SponsoredAuthorization(spendingCondition, sponsorSpendingCondition);
 
-  const transaction = new StacksTransaction(
-    transactionVersion,
-    authorization,
-    payload
-  );
+  const transaction = new StacksTransaction(transactionVersion, authorization, payload);
 
   const signer = new TransactionSigner(transaction);
   signer.signOrigin(createStacksPrivateKey(secretKey));
@@ -224,7 +229,9 @@ test('Sponsored STX token transfer transaction serialization and deserialization
   expect(deserialized.auth.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
   expect(deserialized.auth.spendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
   expect(deserialized.auth.sponsorSpendingCondition!.addressHashMode).toBe(addressHashMode);
-  expect(deserialized.auth.sponsorSpendingCondition!.nonce!.toNumber()).toBe(sponsorNonce.toNumber());
+  expect(deserialized.auth.sponsorSpendingCondition!.nonce!.toNumber()).toBe(
+    sponsorNonce.toNumber()
+  );
   expect(deserialized.auth.sponsorSpendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
   expect(deserialized.anchorMode).toBe(anchorMode);
   expect(deserialized.postConditionMode).toBe(postConditionMode);

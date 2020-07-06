@@ -104,7 +104,12 @@ export class StacksTransaction {
     if (this.auth.authType === undefined) {
       throw new Error('"auth.authType" is undefined');
     }
-    return this.signAndAppend(this.auth.sponsorSpendingCondition, sigHash, AuthType.Sponsored, privateKey);
+    return this.signAndAppend(
+      this.auth.sponsorSpendingCondition,
+      sigHash,
+      AuthType.Sponsored,
+      privateKey
+    );
   }
 
   signAndAppend(
@@ -140,16 +145,14 @@ export class StacksTransaction {
     return txidFromData(serialized);
   }
 
-  setSponsor(
-    sponsorSpendingCondition: SpendingCondition,
-  ) {
+  setSponsor(sponsorSpendingCondition: SpendingCondition) {
     if (this.auth.authType != AuthType.Sponsored) {
       throw new SigningError('Cannot sponsor sign a non-sponsored transaction');
     }
 
     this.auth.setSponsor(sponsorSpendingCondition);
   }
-  
+
   /**
    * Set the total fee to be paid for this transaction
    *
