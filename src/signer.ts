@@ -38,17 +38,17 @@ export class TransactionSigner {
 
   signOrigin(privateKey: StacksPrivateKey) {
     if (this.checkOverlap && this.originDone) {
-      throw Error('Cannot sign origin after sponsor key');
+      throw new SigningError('Cannot sign origin after sponsor key');
     }
 
     if (this.transaction.auth === undefined) {
-      throw new Error('"transaction.auth" is undefined');
+      throw new SigningError('"transaction.auth" is undefined');
     }
     if (this.transaction.auth.spendingCondition === undefined) {
-      throw new Error('"transaction.auth.spendingCondition" is undefined');
+      throw new SigningError('"transaction.auth.spendingCondition" is undefined');
     }
     if (this.transaction.auth.spendingCondition.signaturesRequired === undefined) {
-      throw new Error('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
+      throw new SigningError('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
     }
 
     if (
@@ -56,7 +56,7 @@ export class TransactionSigner {
       this.transaction.auth.spendingCondition.numSignatures() >=
         this.transaction.auth.spendingCondition.signaturesRequired
     ) {
-      throw new Error('Origin would have too many signatures');
+      throw new SigningError('Origin would have too many signatures');
     }
 
     const nextSighash = this.transaction.signNextOrigin(this.sigHash, privateKey);
@@ -65,13 +65,13 @@ export class TransactionSigner {
 
   signSponsor(privateKey: StacksPrivateKey) {
     if (this.transaction.auth === undefined) {
-      throw new Error('"transaction.auth" is undefined');
+      throw new SigningError('"transaction.auth" is undefined');
     }
     if (this.transaction.auth.sponsorSpendingCondition === undefined) {
-      throw new Error('"transaction.auth.spendingCondition" is undefined');
+      throw new SigningError('"transaction.auth.spendingCondition" is undefined');
     }
     if (this.transaction.auth.sponsorSpendingCondition.signaturesRequired === undefined) {
-      throw new Error('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
+      throw new SigningError('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
     }
 
     if (
@@ -79,7 +79,7 @@ export class TransactionSigner {
       this.transaction.auth.sponsorSpendingCondition.numSignatures() >=
         this.transaction.auth.sponsorSpendingCondition.signaturesRequired
     ) {
-      throw new Error('Sponsor would have too many signatures');
+      throw new SigningError('Sponsor would have too many signatures');
     }
 
     const nextSighash = this.transaction.signNextSponsor(this.sigHash, privateKey);
