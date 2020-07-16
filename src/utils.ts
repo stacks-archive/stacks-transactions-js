@@ -10,6 +10,7 @@ import { deserializeCV } from './clarity';
 
 // eslint-disable-next-line import/no-unassigned-import
 import 'cross-fetch/polyfill';
+import { c32addressDecode } from 'c32check';
 
 export { randombytes as randomBytes };
 
@@ -161,4 +162,13 @@ export const parseReadOnlyResponse = ({ result }: ReadOnlyFunctionResponse): Cla
   const hex = result.slice(2);
   const bufferCV = Buffer.from(hex, 'hex');
   return deserializeCV(bufferCV);
+};
+
+export const validateStacksAddress = (stacksAddress: string): boolean => {
+  try {
+    c32addressDecode(stacksAddress);
+    return true;
+  } catch (e) {
+    return false;
+  }
 };

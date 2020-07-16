@@ -70,13 +70,13 @@ describe('Clarity Types', () => {
     test('IntCV', () => {
       const int = intCV(10);
       const serializedDeserialized = serializeDeserialize(int) as IntCV;
-      expect(serializedDeserialized.value.toString()).toEqual(int.value.toString());
+      expect(cvToString(serializedDeserialized)).toEqual(cvToString(int));
     });
 
     test('UIntCV', () => {
       const uint = uintCV(10);
       const serializedDeserialized = serializeDeserialize(uint) as UIntCV;
-      expect(serializedDeserialized.value.toString()).toEqual(uint.value.toString());
+      expect(cvToString(serializedDeserialized)).toEqual(cvToString(uint));
     });
 
     test('Standard Principal', () => {
@@ -293,7 +293,7 @@ describe('Clarity Types', () => {
         oneLineTrim`
         (tuple 
           (a -1) 
-          (b 1) 
+          (b u1) 
           (c "test") 
           (d true) 
           (e (some true)) 

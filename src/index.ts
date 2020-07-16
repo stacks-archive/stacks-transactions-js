@@ -15,6 +15,13 @@ export {
   CoinbasePayload,
 } from './payload';
 
+export {
+  PostCondition,
+  createFungiblePostCondition,
+  createNonFungiblePostCondition,
+  createSTXPostCondition,
+} from './postcondition';
+
 export * from './clarity';
 export * from './keys';
 export * from './builders';

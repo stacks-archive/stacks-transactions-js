@@ -57,7 +57,7 @@ export function cvToString(val: ClarityValue, encoding: 'tryAscii' | 'hex' = 'tr
     case ClarityType.Int:
       return val.value.fromTwos(CLARITY_INT_SIZE).toString();
     case ClarityType.UInt:
-      return val.value.toString();
+      return `u${val.value.toString()}`;
     case ClarityType.Buffer:
       if (encoding === 'tryAscii') {
         const str = val.buffer.toString('ascii');
