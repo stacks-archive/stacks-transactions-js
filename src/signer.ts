@@ -48,7 +48,9 @@ export class TransactionSigner {
       throw new SigningError('"transaction.auth.spendingCondition" is undefined');
     }
     if (this.transaction.auth.spendingCondition.signaturesRequired === undefined) {
-      throw new SigningError('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
+      throw new SigningError(
+        '"transaction.auth.spendingCondition.signaturesRequired" is undefined'
+      );
     }
 
     if (
@@ -71,7 +73,9 @@ export class TransactionSigner {
       throw new SigningError('"transaction.auth.spendingCondition" is undefined');
     }
     if (this.transaction.auth.sponsorSpendingCondition.signaturesRequired === undefined) {
-      throw new SigningError('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
+      throw new SigningError(
+        '"transaction.auth.spendingCondition.signaturesRequired" is undefined'
+      );
     }
 
     if (
