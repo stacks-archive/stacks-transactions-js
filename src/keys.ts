@@ -23,7 +23,6 @@ import { BufferReader } from './bufferReader';
 import { AddressVersion } from './constants';
 import { c32address } from 'c32check';
 import { addressHashModeToVersion, addressToString, addressFromVersionHash } from '.';
-import { sign } from 'crypto';
 
 export interface StacksPublicKey {
   readonly type: StacksMessageType.PublicKey;
