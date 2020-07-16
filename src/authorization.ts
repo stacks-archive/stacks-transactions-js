@@ -33,6 +33,7 @@ import {
   NotImplementedError,
   DeserializationError,
   SigningError,
+  VerificationError,
 } from './errors';
 import { create } from 'domain';
 
@@ -243,6 +244,22 @@ export class SpendingCondition extends Deserializable {
   }
 
   verify(initialSigHash: string, authType: AuthType): string {
+    if (this.fee === undefined) {
+      throw new VerificationError('"Spending condition fee" is undefined');
+    }
+
+    if (this.nonce === undefined) {
+      throw new VerificationError('"Spending condition nonce" is undefined');
+    }
+
+    if (this.pubKeyEncoding === undefined) {
+      throw new VerificationError('"Spending condition pub key encoding" is undefined');
+    }
+
+    if (this.signature === undefined) {
+      throw new VerificationError('"Spending condition signature" is undefined');
+    }
+
     if (this.singleSig()) {
       return this.verifySingleSig(initialSigHash, authType);
     } else {
