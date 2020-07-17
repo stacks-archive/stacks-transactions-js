@@ -169,7 +169,11 @@ export async function broadcastRawTransaction(
     }
   }
 
-  return await response.text();
+  try {
+    return await response.clone().json();
+  } catch (e) {
+    return await response.clone().text();
+  }
 }
 
 /**
