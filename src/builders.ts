@@ -898,6 +898,7 @@ export async function callReadOnlyFunction(
  * @param  {BigNum} fee - the transaction fee amount to sponsor
  * @param  {BigNum} sponsorNonce - the nonce of the sponsor account
  * @param  {AddressHashMode} sponsorAddressHashmode - the sponsor address hashmode
+ * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
  */
 export interface SponsorOptions {
   transaction: StacksTransaction;
@@ -905,6 +906,7 @@ export interface SponsorOptions {
   fee?: BigNum;
   sponsorNonce?: BigNum;
   sponsorAddressHashmode?: AddressHashMode;
+  network?: StacksNetwork;
 }
 
 /**
@@ -927,9 +929,10 @@ export async function sponsorTransaction(
 
   const options = Object.assign(defaultOptions, sponsorOptions);
   const network =
-    options.transaction.version === TransactionVersion.Mainnet
+    sponsorOptions.network ??
+    (options.transaction.version === TransactionVersion.Mainnet
       ? new StacksMainnet()
-      : new StacksTestnet();
+      : new StacksTestnet());
   const sponsorPubKey = pubKeyfromPrivKey(options.sponsorPrivateKey);
 
   if (!sponsorOptions.fee) {
