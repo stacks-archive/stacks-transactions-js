@@ -219,8 +219,6 @@ export async function getAbi(
  *                                                  principal clarity value
  * @param  {BigNum} amount - number of tokens to transfer in microstacks
  * @param  {String} senderKey - hex string sender private key used to sign transaction
- * @param  {BigNum} fee - transaction fee in microstacks
- * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
  * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
  * @param  {String} memo - an arbitrary string to include with the transaction, must be less than
@@ -235,14 +233,19 @@ export interface TokenTransferOptions {
   recipient: string | PrincipalCV;
   amount: BigNum;
   senderKey: string;
-  fee?: BigNum;
-  nonce?: BigNum;
   network?: StacksNetwork;
   anchorMode?: AnchorMode;
   memo?: string;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
   sponsored?: boolean;
+}
+
+export interface TokenTransferOptionsSynchronous extends TokenTransferOptions {
+  /** transaction fee in microstacks */
+  fee: BigNum;
+  /** a nonce must be increased monotonically with each new transaction */
+  nonce: BigNum;
 }
 
 /**
@@ -254,9 +257,11 @@ export interface TokenTransferOptions {
  *
  * @return {StacksTransaction}
  */
-export async function makeSTXTokenTransfer(
-  txOptions: TokenTransferOptions
-): Promise<StacksTransaction> {
+async function makeSTXTokenTransfer(txOptions: TokenTransferOptions): Promise<StacksTransaction>;
+function makeSTXTokenTransfer(txOptions: TokenTransferOptionsSynchronous): StacksTransaction;
+function makeSTXTokenTransfer(
+  txOptions: TokenTransferOptions | TokenTransferOptionsSynchronous
+): Promise<StacksTransaction> | StacksTransaction {
   const defaultOptions = {
     fee: new BigNum(0),
     nonce: new BigNum(0),
@@ -307,28 +312,41 @@ export async function makeSTXTokenTransfer(
     options.network.chainId
   );
 
-  if (!txOptions.fee) {
-    const txFee = await estimateTransfer(transaction, options.network);
-    transaction.setFee(txFee);
-  }
+  const syncOptions = txOptions as TokenTransferOptionsSynchronous;
+  if (!syncOptions.fee || !syncOptions.nonce) {
+    return Promise.resolve().then(async () => {
+      if (!syncOptions.fee) {
+        const txFee = await estimateTransfer(transaction, options.network);
+        transaction.setFee(txFee);
+      }
 
-  if (!txOptions.nonce) {
-    const addressVersion =
-      options.network.version === TransactionVersion.Mainnet
-        ? AddressVersion.MainnetSingleSig
-        : AddressVersion.TestnetSingleSig;
-    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
-    const txNonce = await getNonce(senderAddress, options.network);
-    transaction.setNonce(txNonce);
-  }
+      if (!syncOptions.nonce) {
+        const addressVersion =
+          options.network.version === TransactionVersion.Mainnet
+            ? AddressVersion.MainnetSingleSig
+            : AddressVersion.TestnetSingleSig;
+        const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+        const txNonce = await getNonce(senderAddress, options.network);
+        transaction.setNonce(txNonce);
+      }
 
-  if (options.senderKey) {
-    const signer = new TransactionSigner(transaction);
-    signer.signOrigin(privKey);
-  }
+      if (options.senderKey) {
+        const signer = new TransactionSigner(transaction);
+        signer.signOrigin(privKey);
+      }
 
-  return transaction;
+      return transaction;
+    });
+  } else {
+    if (options.senderKey) {
+      const signer = new TransactionSigner(transaction);
+      signer.signOrigin(privKey);
+    }
+    return transaction;
+  }
 }
+
+export { makeSTXTokenTransfer };
 
 /**
  * Contract deploy transaction options
@@ -336,8 +354,6 @@ export async function makeSTXTokenTransfer(
  * @param  {String} contractName - the contract name
  * @param  {String} codeBody - the code body string
  * @param  {String} senderKey - hex string sender private key used to sign transaction
- * @param  {BigNum} fee - transaction fee in microstacks
- * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
  * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
  * @param  {PostConditionMode} postConditionMode - whether post conditions must fully cover all
@@ -350,13 +366,18 @@ export interface ContractDeployOptions {
   contractName: string;
   codeBody: string;
   senderKey: string;
-  fee?: BigNum;
-  nonce?: BigNum;
   network?: StacksNetwork;
   anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
   sponsored?: boolean;
+}
+
+export interface ContractDeployOptionsSynchronous extends ContractDeployOptions {
+  /** transaction fee in microstacks */
+  fee: BigNum;
+  /** a nonce must be increased monotonically with each new transaction */
+  nonce: BigNum;
 }
 
 /**
@@ -413,9 +434,11 @@ export function estimateContractDeploy(
  *
  * @return {StacksTransaction}
  */
-export async function makeContractDeploy(
-  txOptions: ContractDeployOptions
-): Promise<StacksTransaction> {
+async function makeContractDeploy(txOptions: ContractDeployOptions): Promise<StacksTransaction>;
+function makeContractDeploy(txOptions: ContractDeployOptionsSynchronous): StacksTransaction;
+function makeContractDeploy(
+  txOptions: ContractDeployOptions | ContractDeployOptionsSynchronous
+): Promise<StacksTransaction> | StacksTransaction {
   const defaultOptions = {
     fee: new BigNum(0),
     nonce: new BigNum(0),
@@ -466,28 +489,41 @@ export async function makeContractDeploy(
     options.network.chainId
   );
 
-  if (!txOptions.fee) {
-    const txFee = await estimateContractDeploy(transaction, options.network);
-    transaction.setFee(txFee);
-  }
+  const syncOptions = txOptions as ContractDeployOptionsSynchronous;
+  if (!syncOptions.fee || !syncOptions.nonce) {
+    return Promise.resolve().then(async () => {
+      if (!syncOptions.fee) {
+        const txFee = await estimateContractDeploy(transaction, options.network);
+        transaction.setFee(txFee);
+      }
 
-  if (!txOptions.nonce) {
-    const addressVersion =
-      options.network.version === TransactionVersion.Mainnet
-        ? AddressVersion.MainnetSingleSig
-        : AddressVersion.TestnetSingleSig;
-    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
-    const txNonce = await getNonce(senderAddress, options.network);
-    transaction.setNonce(txNonce);
-  }
+      if (!syncOptions.nonce) {
+        const addressVersion =
+          options.network.version === TransactionVersion.Mainnet
+            ? AddressVersion.MainnetSingleSig
+            : AddressVersion.TestnetSingleSig;
+        const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+        const txNonce = await getNonce(senderAddress, options.network);
+        transaction.setNonce(txNonce);
+      }
 
-  if (options.senderKey) {
-    const signer = new TransactionSigner(transaction);
-    signer.signOrigin(privKey);
-  }
+      if (options.senderKey) {
+        const signer = new TransactionSigner(transaction);
+        signer.signOrigin(privKey);
+      }
 
-  return transaction;
+      return transaction;
+    });
+  } else {
+    if (options.senderKey) {
+      const signer = new TransactionSigner(transaction);
+      signer.signOrigin(privKey);
+    }
+    return transaction;
+  }
 }
+
+export { makeContractDeploy };
 
 /**
  * Contract function call transaction options
@@ -496,8 +532,6 @@ export async function makeContractDeploy(
  * @param  {String} functionName - name of the function to be called
  * @param  {[ClarityValue]} functionArgs - an array of Clarity values as arguments to the function call
  * @param  {String} senderKey - hex string sender private key used to sign transaction
- * @param  {BigNum} fee - transaction fee in microstacks
- * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
  * @param  {anchorMode} anchorMode - identify how the the transaction should be mined
  * @param  {PostConditionMode} postConditionMode - whether post conditions must fully cover all
@@ -512,15 +546,20 @@ export interface ContractCallOptions {
   functionName: string;
   functionArgs: ClarityValue[];
   senderKey: string;
-  fee?: BigNum;
   feeEstimateApiUrl?: string;
-  nonce?: BigNum;
   network?: StacksNetwork;
   anchorMode?: AnchorMode;
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
   validateWithAbi?: boolean | ClarityAbi;
   sponsored?: boolean;
+}
+
+export interface ContractCallOptionsSynchronous extends ContractCallOptions {
+  /** transaction fee in microstacks */
+  fee: BigNum;
+  /** a nonce must be increased monotonically with each new transaction */
+  nonce: BigNum;
 }
 
 /**
@@ -577,7 +616,11 @@ export function estimateContractFunctionCall(
  *
  * @return {StacksTransaction}
  */
-export async function makeContractCall(txOptions: ContractCallOptions): Promise<StacksTransaction> {
+async function makeContractCall(txOptions: ContractCallOptions): Promise<StacksTransaction>;
+function makeContractCall(txOptions: ContractCallOptionsSynchronous): StacksTransaction;
+function makeContractCall(
+  txOptions: ContractCallOptions | ContractCallOptionsSynchronous
+): Promise<StacksTransaction> | StacksTransaction {
   const defaultOptions = {
     fee: new BigNum(0),
     nonce: new BigNum(0),
@@ -595,21 +638,6 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
     options.functionName,
     options.functionArgs
   );
-
-  if (options?.validateWithAbi) {
-    let abi: ClarityAbi;
-    if (typeof options.validateWithAbi === 'boolean') {
-      if (options?.network) {
-        abi = await getAbi(options.contractAddress, options.contractName, options.network);
-      } else {
-        throw new Error('Network option must be provided in order to validate with ABI');
-      }
-    } else {
-      abi = options.validateWithAbi;
-    }
-
-    validateContractCall(payload, abi);
-  }
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
@@ -648,28 +676,54 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
     options.network.chainId
   );
 
-  if (!txOptions.fee) {
-    const txFee = await estimateContractFunctionCall(transaction, options.network);
-    transaction.setFee(txFee);
-  }
+  const syncOptions = txOptions as ContractCallOptionsSynchronous;
 
-  if (!txOptions.nonce) {
-    const addressVersion =
-      options.network.version === TransactionVersion.Mainnet
-        ? AddressVersion.MainnetSingleSig
-        : AddressVersion.TestnetSingleSig;
-    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
-    const txNonce = await getNonce(senderAddress, options.network);
-    transaction.setNonce(txNonce);
-  }
+  if (
+    !syncOptions.fee ||
+    !syncOptions.nonce ||
+    (txOptions.validateWithAbi && typeof txOptions.validateWithAbi === 'boolean')
+  ) {
+    return Promise.resolve().then(async () => {
+      if (options.validateWithAbi) {
+        const abi = await getAbi(options.contractAddress, options.contractName, options.network);
+        validateContractCall(payload, abi);
+      }
 
-  if (options.senderKey) {
-    const signer = new TransactionSigner(transaction);
-    signer.signOrigin(privKey);
-  }
+      if (!syncOptions.fee) {
+        const txFee = await estimateContractFunctionCall(transaction, options.network);
+        transaction.setFee(txFee);
+      }
 
-  return transaction;
+      if (!syncOptions.nonce) {
+        const addressVersion =
+          options.network.version === TransactionVersion.Mainnet
+            ? AddressVersion.MainnetSingleSig
+            : AddressVersion.TestnetSingleSig;
+        const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+        const txNonce = await getNonce(senderAddress, options.network);
+        transaction.setNonce(txNonce);
+      }
+
+      if (options.senderKey) {
+        const signer = new TransactionSigner(transaction);
+        signer.signOrigin(privKey);
+      }
+
+      return transaction;
+    });
+  } else {
+    if (options.validateWithAbi && typeof options.validateWithAbi !== 'boolean') {
+      validateContractCall(payload, options.validateWithAbi);
+    }
+    if (options.senderKey) {
+      const signer = new TransactionSigner(transaction);
+      signer.signOrigin(privKey);
+    }
+    return transaction;
+  }
 }
+
+export { makeContractCall };
 
 /**
  * Generates a STX post condition with a standard principal
@@ -895,18 +949,21 @@ export async function callReadOnlyFunction(
  *
  * @param  {StacksTransaction} transaction - the origin-signed transaction to sponsor
  * @param  {String} sponsorPrivateKey - the sponsor's private key
- * @param  {BigNum} fee - the transaction fee amount to sponsor
- * @param  {BigNum} sponsorNonce - the nonce of the sponsor account
  * @param  {AddressHashMode} sponsorAddressHashmode - the sponsor address hashmode
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
  */
 export interface SponsorOptions {
   transaction: StacksTransaction;
   sponsorPrivateKey: string;
-  fee?: BigNum;
-  sponsorNonce?: BigNum;
   sponsorAddressHashmode?: AddressHashMode;
   network?: StacksNetwork;
+}
+
+export interface SponsorOptionsSynchronous extends SponsorOptions {
+  /** the transaction fee amount to sponsor */
+  fee: BigNum;
+  /** the nonce of the sponsor account */
+  sponsorNonce: BigNum;
 }
 
 /**
@@ -918,9 +975,11 @@ export interface SponsorOptions {
  *
  * @return {ClarityValue}
  */
-export async function sponsorTransaction(
-  sponsorOptions: SponsorOptions
-): Promise<StacksTransaction> {
+async function sponsorTransaction(sponsorOptions: SponsorOptions): Promise<StacksTransaction>;
+function sponsorTransaction(sponsorOptions: SponsorOptionsSynchronous): StacksTransaction;
+function sponsorTransaction(
+  sponsorOptions: SponsorOptions | SponsorOptionsSynchronous
+): Promise<StacksTransaction> | StacksTransaction {
   const defaultOptions = {
     fee: new BigNum(0),
     sponsorNonce: new BigNum(0),
@@ -935,49 +994,63 @@ export async function sponsorTransaction(
       : new StacksTestnet());
   const sponsorPubKey = pubKeyfromPrivKey(options.sponsorPrivateKey);
 
-  if (!sponsorOptions.fee) {
-    let txFee = new BigNum(0);
-    switch (options.transaction.payload.payloadType) {
-      case PayloadType.TokenTransfer:
-        txFee = await estimateTransfer(options.transaction, network);
-        break;
-      case PayloadType.SmartContract:
-        txFee = await estimateContractDeploy(options.transaction, network);
-        break;
-      case PayloadType.ContractCall:
-        txFee = await estimateContractFunctionCall(options.transaction, network);
-        break;
-    }
-    options.transaction.setFee(txFee);
-    options.fee = txFee;
+  const signSponsor = () => {
+    const sponsorSpendingCondition = new SingleSigSpendingCondition(
+      options.sponsorAddressHashmode,
+      publicKeyToString(sponsorPubKey),
+      options.sponsorNonce,
+      options.fee
+    );
+
+    options.transaction.setSponsor(sponsorSpendingCondition);
+
+    const privKey = createStacksPrivateKey(options.sponsorPrivateKey);
+    const signer = TransactionSigner.createSponsorSigner(
+      options.transaction,
+      sponsorSpendingCondition
+    );
+    signer.signSponsor(privKey);
+  };
+
+  const syncOptions = sponsorOptions as SponsorOptionsSynchronous;
+
+  if (!syncOptions.fee || !syncOptions.sponsorNonce) {
+    return Promise.resolve().then(async () => {
+      if (!syncOptions.fee) {
+        let txFee = new BigNum(0);
+        switch (options.transaction.payload.payloadType) {
+          case PayloadType.TokenTransfer:
+            txFee = await estimateTransfer(options.transaction, network);
+            break;
+          case PayloadType.SmartContract:
+            txFee = await estimateContractDeploy(options.transaction, network);
+            break;
+          case PayloadType.ContractCall:
+            txFee = await estimateContractFunctionCall(options.transaction, network);
+            break;
+        }
+        options.transaction.setFee(txFee);
+        options.fee = txFee;
+      }
+
+      if (!syncOptions.sponsorNonce) {
+        const addressVersion =
+          network.version === TransactionVersion.Mainnet
+            ? AddressVersion.MainnetSingleSig
+            : AddressVersion.TestnetSingleSig;
+
+        const senderAddress = publicKeyToAddress(addressVersion, sponsorPubKey);
+        const sponsorNonce = await getNonce(senderAddress, network);
+        options.sponsorNonce = sponsorNonce;
+      }
+
+      signSponsor();
+      return options.transaction;
+    });
+  } else {
+    signSponsor();
+    return options.transaction;
   }
-
-  if (!sponsorOptions.sponsorNonce) {
-    const addressVersion =
-      network.version === TransactionVersion.Mainnet
-        ? AddressVersion.MainnetSingleSig
-        : AddressVersion.TestnetSingleSig;
-
-    const senderAddress = publicKeyToAddress(addressVersion, sponsorPubKey);
-    const sponsorNonce = await getNonce(senderAddress, network);
-    options.sponsorNonce = sponsorNonce;
-  }
-
-  const sponsorSpendingCondition = new SingleSigSpendingCondition(
-    options.sponsorAddressHashmode,
-    publicKeyToString(sponsorPubKey),
-    options.sponsorNonce,
-    options.fee
-  );
-
-  options.transaction.setSponsor(sponsorSpendingCondition);
-
-  const privKey = createStacksPrivateKey(options.sponsorPrivateKey);
-  const signer = TransactionSigner.createSponsorSigner(
-    options.transaction,
-    sponsorSpendingCondition
-  );
-  signer.signSponsor(privKey);
-
-  return options.transaction;
 }
+
+export { sponsorTransaction };
