@@ -947,6 +947,12 @@ export async function sponsorTransaction(
       case PayloadType.ContractCall:
         txFee = await estimateContractFunctionCall(options.transaction, network);
         break;
+      default:
+        throw new Error(
+          `Spnsored transactions not supported for transaction type ${
+            PayloadType[options.transaction.payload.payloadType]
+          }`
+        );
     }
     options.transaction.setFee(txFee);
     options.fee = txFee;
