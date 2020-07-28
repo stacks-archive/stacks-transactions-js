@@ -17,7 +17,14 @@ import {
   TxBroadcastResultOk,
   TxBroadcastResultRejected,
   callReadOnlyFunction,
+  sponsorTransaction,
 } from '../../src/builders';
+
+import { deserializeTransaction } from '../../src/transaction';
+
+import { TokenTransferPayload } from '../../src/payload';
+
+import { BufferReader } from '../../src/bufferReader';
 
 import { createAssetInfo } from '../../src/types';
 
@@ -27,6 +34,8 @@ import {
   NonFungibleConditionCode,
   PostConditionMode,
   TxRejectedReason,
+  AuthType,
+  AddressHashMode,
 } from '../../src/constants';
 
 import { StacksTestnet, StacksMainnet } from '../../src/network';
@@ -434,6 +443,295 @@ test('Make STX token transfer with fetch account nonce', async () => {
   expect(fetchMock.mock.calls[1][0]).toEqual(apiUrl);
   expect(fetchNonce.toNumber()).toEqual(nonce);
   expect(transaction.auth.spendingCondition?.nonce?.toNumber()).toEqual(nonce);
+});
+
+test('Make sponsored STX token transfer', async () => {
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(50);
+  const nonce = new BigNum(2);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const memo = 'test memo';
+
+  const sponsorKey = '9888d734e6e80a943a6544159e31d6c7e342f695ec867d549c569fa0028892d401';
+  const sponsorFee = new BigNum(123);
+  const sponsorNonce = new BigNum(55);
+
+  const authType = AuthType.Sponsored;
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
+    fee,
+    nonce,
+    memo: memo,
+    sponsored: true,
+  });
+
+  const preSponsorSerialized = transaction.serialize().toString('hex');
+  const preSponsorTx =
+    '0000000001050015c31b8c1c11c515e244b75806bac48d1399c77500000000000000020000000000000032' +
+    '000012f0e0f7eec8657e814bdcde9352920dd9416dd757f1ada573ef268cc93001fd76db462508ffd90dec' +
+    '57bd977c3b8517f7cbc7d31b3a80aee6068c35714f83e40029cfc6376255a78451eeb4b129ed8eacffa2fe' +
+    'ef000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+    '00000000000000000000000000000000000000000000000000000000000000000000000000000000030200' +
+    '000000000516df0ba3e79792be7be5e50a370289accfc8c9e032000000000000303974657374206d656d6f' +
+    '00000000000000000000000000000000000000000000000000';
+
+  expect(preSponsorSerialized).toBe(preSponsorTx);
+  const sponsorOptions = {
+    transaction,
+    sponsorPrivateKey: sponsorKey,
+    fee: sponsorFee,
+    sponsorNonce,
+  };
+
+  const sponsorSignedTx = await sponsorTransaction(sponsorOptions);
+  const sponsorSignedTxSerialized = sponsorSignedTx.serialize();
+
+  const bufferReader = new BufferReader(sponsorSignedTxSerialized);
+  const deserializedSponsorTx = deserializeTransaction(bufferReader);
+
+  expect(deserializedSponsorTx.auth.authType).toBe(authType);
+
+  expect(deserializedSponsorTx.auth.spendingCondition!.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorTx.auth.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(deserializedSponsorTx.auth.spendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
+
+  const deserializedSponsorSpendingCondition = deserializedSponsorTx.auth.sponsorSpendingCondition!;
+  expect(deserializedSponsorSpendingCondition.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorSpendingCondition.nonce!.toNumber()).toBe(sponsorNonce.toNumber());
+  expect(deserializedSponsorSpendingCondition.fee!.toNumber()).toBe(sponsorFee.toNumber());
+
+  const deserializedPayload = deserializedSponsorTx.payload as TokenTransferPayload;
+  expect(deserializedPayload.amount.toNumber()).toBe(amount.toNumber());
+});
+
+test('Make sponsored STX token transfer with sponsor fee estimate', async () => {
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(50);
+  const estimateFeeRate = 2;
+  const nonce = new BigNum(2);
+  const senderKey = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc01';
+  const memo = 'test memo';
+  const network = new StacksMainnet();
+
+  const sponsorKey = '9888d734e6e80a943a6544159e31d6c7e342f695ec867d549c569fa0028892d401';
+  const sponsorNonce = new BigNum(55);
+
+  const authType = AuthType.Sponsored;
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
+    fee,
+    nonce,
+    memo: memo,
+    sponsored: true,
+  });
+
+  const sponsorFee = new BigNum(transaction.serialize().byteLength * estimateFeeRate);
+
+  const sponsorOptions = {
+    transaction,
+    sponsorPrivateKey: sponsorKey,
+    sponsorNonce,
+  };
+
+  fetchMock.mockOnce(`${estimateFeeRate}`);
+
+  const sponsorSignedTx = await sponsorTransaction(sponsorOptions);
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(network.getTransferFeeEstimateApiUrl());
+
+  const sponsorSignedTxSerialized = sponsorSignedTx.serialize();
+
+  const bufferReader = new BufferReader(sponsorSignedTxSerialized);
+  const deserializedSponsorTx = deserializeTransaction(bufferReader);
+
+  expect(deserializedSponsorTx.auth.authType).toBe(authType);
+
+  expect(deserializedSponsorTx.auth.spendingCondition!.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorTx.auth.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(deserializedSponsorTx.auth.spendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
+
+  const deserializedSponsorSpendingCondition = deserializedSponsorTx.auth.sponsorSpendingCondition!;
+  expect(deserializedSponsorSpendingCondition.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorSpendingCondition.nonce!.toNumber()).toBe(sponsorNonce.toNumber());
+  expect(deserializedSponsorSpendingCondition.fee!.toNumber()).toBe(sponsorFee.toNumber());
+
+  const deserializedPayload = deserializedSponsorTx.payload as TokenTransferPayload;
+  expect(deserializedPayload.amount.toNumber()).toBe(amount.toNumber());
+});
+
+test('Make sponsored STX token transfer with set tx fee', async () => {
+  const recipient = 'ST2HQE346DED7F58Z54EJ26M2B9MQQ3JZ7RW6MXRJ';
+  const amount = new BigNum(113);
+  const fee = new BigNum(0);
+  const nonce = new BigNum(0);
+  const senderKey = '8ca861519c4fa4a08de4beaa41688f60a24b575a976cf84099f38dc099a6d74401';
+  const senderAddress = 'ST2HTEQF50SW4X8077F8RSR8WCT57QG166TVG0GCE';
+  const network = new StacksTestnet();
+
+  const sponsorKey = '9888d734e6e80a943a6544159e31d6c7e342f695ec867d549c569fa0028892d401';
+  const sponsorAddress = 'ST2TPJ3NEZ63MMJ8AY9S45HZ10QSH51YF93GE89GQ';
+  const sponsorNonce = new BigNum(0);
+  const sponsorFee = new BigNum(500);
+
+  const transaction = await makeSTXTokenTransfer({
+    recipient,
+    amount,
+    senderKey,
+    fee,
+    nonce,
+    network,
+    sponsored: true,
+  });
+
+  const sponsorOptions = {
+    transaction,
+    sponsorPrivateKey: sponsorKey,
+    fee: sponsorFee,
+    sponsorNonce,
+  };
+
+  const sponsorSignedTx = await sponsorTransaction(sponsorOptions);
+
+  const sponsorSignedTxSerialized = sponsorSignedTx.serialize();
+
+  const bufferReader = new BufferReader(sponsorSignedTxSerialized);
+  const deserializedSponsorTx = deserializeTransaction(bufferReader);
+
+  expect(fetchMock.mock.calls.length).toEqual(0);
+  expect(deserializedSponsorTx.auth.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(deserializedSponsorTx.auth.spendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
+
+  const deserializedSponsorSpendingCondition = deserializedSponsorTx.auth.sponsorSpendingCondition!;
+  expect(deserializedSponsorSpendingCondition.nonce!.toNumber()).toBe(sponsorNonce.toNumber());
+  expect(deserializedSponsorSpendingCondition.fee!.toNumber()).toBe(sponsorFee.toNumber());
+
+  const deserializedPayload = deserializedSponsorTx.payload as TokenTransferPayload;
+  expect(deserializedPayload.amount.toNumber()).toBe(amount.toNumber());
+});
+
+test('Make sponsored contract deploy with sponsor fee estimate', async () => {
+  const contractName = 'kv-store';
+  const codeBody = fs.readFileSync('./tests/src/contracts/kv-store.clar').toString();
+  const senderKey = '8ca861519c4fa4a08de4beaa41688f60a24b575a976cf84099f38dc099a6d74401';
+  const fee = new BigNum(0);
+  const nonce = new BigNum(0);
+  const network = new StacksTestnet();
+
+  const sponsorKey = '9888d734e6e80a943a6544159e31d6c7e342f695ec867d549c569fa0028892d401';
+  const sponsorAddress = 'ST2TPJ3NEZ63MMJ8AY9S45HZ10QSH51YF93GE89GQ';
+  const sponsorNonce = new BigNum(56);
+  const sponsorFee = new BigNum(4000);
+
+  const authType = AuthType.Sponsored;
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+
+  const transaction = await makeContractDeploy({
+    contractName,
+    codeBody,
+    senderKey,
+    fee,
+    nonce,
+    network,
+    sponsored: true,
+  });
+
+  const sponsorOptions = {
+    transaction,
+    sponsorPrivateKey: sponsorKey,
+    fee: sponsorFee,
+    sponsorNonce,
+  };
+
+  const sponsorSignedTx = await sponsorTransaction(sponsorOptions);
+
+  expect(fetchMock.mock.calls.length).toEqual(0);
+
+  const sponsorSignedTxSerialized = sponsorSignedTx.serialize();
+
+  const bufferReader = new BufferReader(sponsorSignedTxSerialized);
+  const deserializedSponsorTx = deserializeTransaction(bufferReader);
+
+  expect(deserializedSponsorTx.auth.authType).toBe(authType);
+
+  expect(deserializedSponsorTx.auth.spendingCondition!.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorTx.auth.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(deserializedSponsorTx.auth.spendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
+
+  const deserializedSponsorSpendingCondition = deserializedSponsorTx.auth.sponsorSpendingCondition!;
+  expect(deserializedSponsorSpendingCondition.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorSpendingCondition.nonce!.toNumber()).toBe(sponsorNonce.toNumber());
+  expect(deserializedSponsorSpendingCondition.fee!.toNumber()).toBe(sponsorFee.toNumber());
+});
+
+test('Make sponsored contract call with sponsor nonce fetch', async () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const functionName = 'get-value';
+  const buffer = bufferCV(Buffer.from('foo'));
+  const senderKey = 'e494f188c2d35887531ba474c433b1e41fadd8eb824aca983447fd4bb8b277a801';
+  const nonce = new BigNum(0);
+  const network = new StacksTestnet();
+  const fee = new BigNum(0);
+  const sponsorFee = new BigNum(1000);
+
+  const sponsorKey = '9888d734e6e80a943a6544159e31d6c7e342f695ec867d549c569fa0028892d401';
+  const sponsorAddress = 'ST2TPJ3NEZ63MMJ8AY9S45HZ10QSH51YF93GE89GQ';
+  const sponsorNonce = new BigNum(55);
+
+  const authType = AuthType.Sponsored;
+  const addressHashMode = AddressHashMode.SerializeP2PKH;
+
+  const transaction = await makeContractCall({
+    contractAddress,
+    contractName,
+    functionName,
+    functionArgs: [buffer],
+    senderKey,
+    fee,
+    nonce,
+    network,
+    sponsored: true,
+  });
+
+  const sponsorOptions = {
+    transaction,
+    sponsorPrivateKey: sponsorKey,
+    fee: sponsorFee,
+  };
+
+  fetchMock.mockOnce(`{"balance":"100000", "nonce":${sponsorNonce}}`);
+
+  const sponsorSignedTx = await sponsorTransaction(sponsorOptions);
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(network.getAccountApiUrl(sponsorAddress));
+
+  const sponsorSignedTxSerialized = sponsorSignedTx.serialize();
+
+  const bufferReader = new BufferReader(sponsorSignedTxSerialized);
+  const deserializedSponsorTx = deserializeTransaction(bufferReader);
+
+  expect(deserializedSponsorTx.auth.authType).toBe(authType);
+
+  expect(deserializedSponsorTx.auth.spendingCondition!.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorTx.auth.spendingCondition!.nonce!.toNumber()).toBe(nonce.toNumber());
+  expect(deserializedSponsorTx.auth.spendingCondition!.fee!.toNumber()).toBe(fee.toNumber());
+
+  const deserializedSponsorSpendingCondition = deserializedSponsorTx.auth.sponsorSpendingCondition!;
+  expect(deserializedSponsorSpendingCondition.addressHashMode).toBe(addressHashMode);
+  expect(deserializedSponsorSpendingCondition.nonce!.toNumber()).toBe(sponsorNonce.toNumber());
+  expect(deserializedSponsorSpendingCondition.fee!.toNumber()).toBe(sponsorFee.toNumber());
 });
 
 test('Transaction broadcast success', async () => {

@@ -13,6 +13,7 @@ import {
   randomBytes,
   hash160,
   hash_p2pkh,
+  hexStringToInt,
 } from './utils';
 
 import { ec as EC } from 'elliptic';
@@ -56,6 +57,22 @@ export function createStacksPublicKey(key: string): StacksPublicKey {
     type: StacksMessageType.PublicKey,
     data: Buffer.from(key, 'hex'),
   };
+}
+
+export function publicKeyFromSignature(message: string, signature: MessageSignature) {
+  const ec = new EC('secp256k1');
+  const messageBN = ec.keyFromPrivate(message, 'hex').getPrivate().toString(10);
+
+  const parsedSignature = parseRecoverableSignature(signature.toString());
+
+  const publicKey = ec.recoverPubKey(
+    messageBN,
+    parsedSignature,
+    parsedSignature.recoveryParam,
+    'hex'
+  );
+
+  return publicKey.encodeCompressed('hex');
 }
 
 export function publicKeyFromBuffer(data: Buffer): StacksPublicKey {
@@ -138,7 +155,32 @@ export function signWithKey(privateKey: StacksPrivateKey, input: string): Messag
   const recoveryParam = intToHexString(signature.recoveryParam, 1);
   const recoverableSignatureString = recoveryParam + r + s;
   const recoverableSignature = new MessageSignature(recoverableSignatureString);
+
   return recoverableSignature;
+}
+
+export function getSignatureRecoveryParam(signature: string) {
+  const coordinateValueBytes = 32;
+  if (signature.length < coordinateValueBytes * 2 * 2 + 1) {
+    throw new Error('Invalid signature');
+  }
+  const recoveryParamHex = signature.substr(0, 2);
+  return hexStringToInt(recoveryParamHex);
+}
+
+export function parseRecoverableSignature(signature: string) {
+  const coordinateValueBytes = 32;
+  if (signature.length < coordinateValueBytes * 2 * 2 + 1) {
+    throw new Error('Invalid signature');
+  }
+  const recoveryParamHex = signature.substr(0, 2);
+  const r = signature.substr(2, coordinateValueBytes * 2);
+  const s = signature.substr(2 + coordinateValueBytes * 2, coordinateValueBytes * 2);
+  return {
+    recoveryParam: hexStringToInt(recoveryParamHex),
+    r,
+    s,
+  };
 }
 
 export function getPublicKey(privateKey: StacksPrivateKey): StacksPublicKey {
