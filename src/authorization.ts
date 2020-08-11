@@ -5,11 +5,15 @@ import {
   AddressHashMode,
   PubKeyEncoding,
   RECOVERABLE_ECDSA_SIG_LENGTH_BYTES,
+  SingleSigHashMode,
+  MultiSigHashMode,
+  AddressVersion,
+  StacksMessageType,
 } from './constants';
 
 import { BufferArray, txidFromData, sha512_256, leftPadHex } from './utils';
 
-import { Address, addressFromPublicKeys, addressFromVersionHash } from './types';
+import { addressFromPublicKeys, deserializeLPList, createLPList, serializeLPList } from './types';
 
 import {
   StacksPublicKey,
@@ -18,11 +22,13 @@ import {
   isCompressed,
   signWithKey,
   getPublicKey,
+  serializePublicKey,
+  deserializePublicKey,
 } from './keys';
 
 import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
-import { SerializationError, NotImplementedError, DeserializationError } from './errors';
+import { SerializationError, DeserializationError } from './errors';
 
 abstract class Deserializable {
   abstract serialize(): Buffer;
@@ -34,39 +40,41 @@ abstract class Deserializable {
   }
 }
 
-export class MessageSignature extends Deserializable {
-  signature?: string;
+export interface MessageSignature {
+  readonly type: StacksMessageType.MessageSignature;
+  signature: string;
+}
 
-  constructor(signature?: string) {
-    super();
-    if (signature) {
-      const length = Buffer.from(signature, 'hex').byteLength;
-      if (length != RECOVERABLE_ECDSA_SIG_LENGTH_BYTES) {
-        throw Error('Invalid signature');
-      }
-    }
-    this.signature = signature;
+export function createMessageSignature(signature: string): MessageSignature {
+  const length = Buffer.from(signature, 'hex').byteLength;
+  if (length != RECOVERABLE_ECDSA_SIG_LENGTH_BYTES) {
+    throw Error('Invalid signature');
   }
 
-  static empty(): MessageSignature {
-    const messageSignature = new this();
-    messageSignature.signature = Buffer.alloc(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES, 0x00).toString(
-      'hex'
-    );
-    return messageSignature;
-  }
+  return {
+    type: StacksMessageType.MessageSignature,
+    signature,
+  };
+}
 
-  toString(): string {
-    return this.signature ?? '';
-  }
+export function emptyMessageSignature(): MessageSignature {
+  return {
+    type: StacksMessageType.MessageSignature,
+    signature: Buffer.alloc(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES, 0x00).toString('hex'),
+  };
+}
 
-  serialize(): Buffer {
-    const bufferArray: BufferArray = new BufferArray();
-    if (this.signature === undefined) {
-      throw new SerializationError('"signature" is undefined');
-    }
-    bufferArray.appendHexString(this.signature);
-    return bufferArray.concatBuffer();
+export function serializeMessageSignature(messageSignature: MessageSignature): Buffer {
+  const bufferArray: BufferArray = new BufferArray();
+  bufferArray.appendHexString(messageSignature.signature);
+  return bufferArray.concatBuffer();
+}
+
+export function deserializeMessageSignature(bufferReader: BufferReader): MessageSignature {
+  return createMessageSignature(
+    bufferReader.readBuffer(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES).toString('hex')
+  );
+}
   }
 
   deserialize(bufferReader: BufferReader) {
