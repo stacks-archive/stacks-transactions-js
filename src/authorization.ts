@@ -13,7 +13,13 @@ import {
 
 import { BufferArray, txidFromData, sha512_256, leftPadHex } from './utils';
 
-import { addressFromPublicKeys, deserializeLPList, createLPList, serializeLPList } from './types';
+import {
+  addressFromPublicKeys,
+  deserializeLPList,
+  createLPList,
+  serializeLPList,
+  createEmptyAddress,
+} from './types';
 
 import {
   StacksPublicKey,
@@ -24,11 +30,12 @@ import {
   getPublicKey,
   serializePublicKey,
   deserializePublicKey,
+  publicKeyFromSignature,
 } from './keys';
 
 import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
-import { SerializationError, DeserializationError } from './errors';
+import { SerializationError, DeserializationError, SigningError } from './errors';
 
 abstract class Deserializable {
   abstract serialize(): Buffer;
@@ -334,7 +341,7 @@ export function makeSigHashPreSign(
 
 function makeSigHashPostSign(
   curSigHash: string,
-  publicKey: StacksPublicKey,
+  pubKeyEncoding: PubKeyEncoding,
   signature: MessageSignature
 ): string {
   // new hash combines the previous hash and all the new data this signature will add.  This
@@ -342,9 +349,6 @@ function makeSigHashPostSign(
   // * the public key compression flag
   // * the signature
   const hashLength = 32 + 1 + RECOVERABLE_ECDSA_SIG_LENGTH_BYTES;
-  const pubKeyEncoding = isCompressed(publicKey)
-    ? PubKeyEncoding.Compressed
-    : PubKeyEncoding.Uncompressed;
 
   const sigHash = curSigHash + leftPadHex(pubKeyEncoding.toString(16)) + signature.toString();
 
@@ -352,7 +356,7 @@ function makeSigHashPostSign(
     throw Error('Invalid signature hash length');
   }
 
-  return new sha512_256().update(sigHash).digest('hex');
+  return txidFromData(Buffer.from(sigHash, 'hex'));
 }
 
 export function nextSignature(
@@ -366,9 +370,13 @@ export function nextSignature(
   nextSigHash: string;
 } {
   const sigHashPreSign = makeSigHashPreSign(curSigHash, authType, fee, nonce);
+
   const signature = signWithKey(privateKey, sigHashPreSign);
   const publicKey = getPublicKey(privateKey);
-  const nextSigHash = makeSigHashPostSign(sigHashPreSign, publicKey, signature);
+  const publicKeyEncoding = isCompressed(publicKey)
+    ? PubKeyEncoding.Compressed
+    : PubKeyEncoding.Uncompressed;
+  const nextSigHash = makeSigHashPostSign(sigHashPreSign, publicKeyEncoding, signature);
 
   return {
     nextSig: signature,
@@ -376,22 +384,96 @@ export function nextSignature(
   };
 }
 
+export function nextVerification(
+  initialSigHash: string,
+  authType: AuthType,
+  fee: BigNum,
+  nonce: BigNum,
+  pubKeyEncoding: PubKeyEncoding,
+  signature: MessageSignature
+) {
+  const sigHashPreSign = makeSigHashPreSign(initialSigHash, authType, fee, nonce);
+
+  const publicKey = createStacksPublicKey(publicKeyFromSignature(sigHashPreSign, signature));
+
+  const nextSigHash = makeSigHashPostSign(sigHashPreSign, PubKeyEncoding.Compressed, signature);
+
+  return {
+    pubKey: publicKey,
+    nextSigHash,
+  };
+}
+
+function newInitialSigHash(): SpendingCondition {
+  const spendingCondition = createSingleSigSpendingCondition(
+    AddressHashMode.SerializeP2PKH,
+    '',
+    new BigNum(0),
+    new BigNum(0)
+  );
+  spendingCondition.signer = createEmptyAddress().hash160;
+  spendingCondition.keyEncoding = PubKeyEncoding.Compressed;
+  spendingCondition.signature = emptyMessageSignature();
+  return spendingCondition;
+}
+
+function verify(condition: SpendingCondition, initialSigHash: string, authType: AuthType): string {
+  if (isSingleSig(condition)) {
+    return verifySingleSig(condition as SingleSigSpendingCondition, initialSigHash, authType);
+  } else {
+    // TODO: verify multisig
+    return '';
+  }
+}
+
+function verifySingleSig(
+  condition: SingleSigSpendingCondition,
+  initialSigHash: string,
+  authType: AuthType
+): string {
+  const { pubKey, nextSigHash } = nextVerification(
+    initialSigHash,
+    authType,
+    condition.fee,
+    condition.nonce,
+    condition.keyEncoding,
+    condition.signature
+  );
+
+  // TODO: verify pub key
+
+  return nextSigHash;
+}
+
 export class Authorization extends Deserializable {
   authType?: AuthType;
   spendingCondition?: SpendingCondition;
+  sponsorSpendingCondition?: SpendingCondition;
 
-  constructor(authType?: AuthType, spendingConditions?: SpendingCondition) {
+  constructor(
+    authType?: AuthType,
+    spendingConditions?: SpendingCondition,
+    sponsorSpendingCondition?: SpendingCondition
+  ) {
     super();
     this.authType = authType;
     this.spendingCondition = spendingConditions;
+    this.sponsorSpendingCondition = sponsorSpendingCondition;
   }
 
   intoInitialSighashAuth(): Authorization {
     if (this.spendingCondition) {
-      if (this.authType === AuthType.Standard) {
-        return new Authorization(AuthType.Standard, clearCondition(this.spendingCondition));
-      } else {
-        return new Authorization(AuthType.Sponsored, clearCondition(this.spendingCondition));
+      switch (this.authType) {
+        case AuthType.Standard:
+          return new Authorization(AuthType.Standard, clearCondition(this.spendingCondition));
+        case AuthType.Sponsored:
+          return new Authorization(
+            AuthType.Sponsored,
+            clearCondition(this.spendingCondition),
+            newInitialSigHash()
+          );
+        default:
+          throw new SigningError('Unexpected authorization type for signing');
       }
     }
 
@@ -399,11 +481,46 @@ export class Authorization extends Deserializable {
   }
 
   setFee(amount: BigNum) {
-    this.spendingCondition!.fee = amount;
+    switch (this.authType) {
+      case AuthType.Standard:
+        this.spendingCondition!.fee = amount;
+        break;
+      case AuthType.Sponsored:
+        this.sponsorSpendingCondition!.fee = amount;
+        break;
+    }
+  }
+
+  getFee() {
+    switch (this.authType) {
+      case AuthType.Standard:
+        return this.spendingCondition!.fee;
+      case AuthType.Sponsored:
+        return this.sponsorSpendingCondition!.fee;
+    }
   }
 
   setNonce(nonce: BigNum) {
     this.spendingCondition!.nonce = nonce;
+  }
+
+  setSponsorNonce(nonce: BigNum) {
+    this.sponsorSpendingCondition!.nonce = nonce;
+  }
+
+  setSponsor(sponsorSpendingCondition: SpendingCondition) {
+    this.sponsorSpendingCondition = sponsorSpendingCondition;
+  }
+
+  verifyOrigin(initialSigHash: string): string {
+    switch (this.authType) {
+      case AuthType.Standard:
+        return verify(this.spendingCondition!, initialSigHash, AuthType.Standard);
+      case AuthType.Sponsored:
+        return verify(this.spendingCondition!, initialSigHash, AuthType.Standard);
+      default:
+        throw new SigningError('Invalid origin auth type');
+    }
   }
 
   serialize(): Buffer {
@@ -421,8 +538,15 @@ export class Authorization extends Deserializable {
         bufferArray.push(serializeSpendingCondition(this.spendingCondition));
         break;
       case AuthType.Sponsored:
-        // TODO
-        throw new SerializationError('Not yet implemented: serializing sponsored transactions');
+        if (this.spendingCondition === undefined) {
+          throw new SerializationError('"spendingCondition" is undefined');
+        }
+        if (this.sponsorSpendingCondition === undefined) {
+          throw new SerializationError('"spendingCondition" is undefined');
+        }
+        bufferArray.push(serializeSpendingCondition(this.spendingCondition));
+        bufferArray.push(serializeSpendingCondition(this.sponsorSpendingCondition));
+        break;
       default:
         throw new SerializationError(
           `Unexpected transaction AuthType while serializing: ${this.authType}`
@@ -442,8 +566,10 @@ export class Authorization extends Deserializable {
         this.spendingCondition = deserializeSpendingCondition(bufferReader);
         break;
       case AuthType.Sponsored:
-        // TODO
-        throw new DeserializationError('Not yet implemented: deserializing sponsored transactions');
+        this.spendingCondition = deserializeSpendingCondition(bufferReader);
+        this.sponsorSpendingCondition = deserializeSpendingCondition(bufferReader);
+        break;
+      // throw new DeserializationError('Not yet implemented: deserializing sponsored transactions');
       default:
         throw new DeserializationError(
           `Unexpected transaction AuthType while deserializing: ${this.authType}`
@@ -459,7 +585,19 @@ export class StandardAuthorization extends Authorization {
 }
 
 export class SponsoredAuthorization extends Authorization {
-  constructor(spendingCondition: SpendingCondition) {
-    super(AuthType.Sponsored, spendingCondition);
+  constructor(
+    originSpendingCondition: SpendingCondition,
+    sponsorSpendingCondition?: SpendingCondition
+  ) {
+    let sponsorSC = sponsorSpendingCondition;
+    if (!sponsorSC) {
+      sponsorSC = createSingleSigSpendingCondition(
+        AddressHashMode.SerializeP2PKH,
+        '0'.repeat(66),
+        new BigNum(0),
+        new BigNum(0)
+      );
+    }
+    super(AuthType.Sponsored, originSpendingCondition, sponsorSC);
   }
 }

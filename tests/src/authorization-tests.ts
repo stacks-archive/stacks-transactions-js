@@ -23,7 +23,6 @@ import {
   publicKeyToString,
   createStacksPublicKey,
 } from '../../src/keys';
-import { signature } from 'bitcoinjs-lib/types/script';
 
 test('ECDSA recoverable signature', () => {
   const privKeyString = 'edf9aee84d9b7abc145504dde6726c64f369d37ee34ded868fabd876c26570bc';
