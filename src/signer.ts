@@ -1,6 +1,7 @@
 import { StacksTransaction } from './transaction';
 
-import { StacksPrivateKey } from './keys';
+import { StacksPrivateKey, StacksPublicKey } from './keys';
+import { isSingleSig, MultiSigSpendingCondition } from './authorization';
 
 export class TransactionSigner {
   transaction: StacksTransaction;
@@ -28,19 +29,34 @@ export class TransactionSigner {
     if (this.transaction.auth.spendingCondition === undefined) {
       throw new Error('"transaction.auth.spendingCondition" is undefined');
     }
-    if (this.transaction.auth.spendingCondition.signaturesRequired === undefined) {
-      throw new Error('"transaction.auth.spendingCondition.signaturesRequired" is undefined');
-    }
 
-    if (
-      this.checkOversign &&
-      this.transaction.auth.spendingCondition.numSignatures() >=
-        this.transaction.auth.spendingCondition.signaturesRequired
-    ) {
-      throw new Error('Origin would have too many signatures');
+    if (!isSingleSig(this.transaction.auth.spendingCondition)) {
+      const spendingCondition = this.transaction.auth
+        .spendingCondition as MultiSigSpendingCondition;
+      if (
+        this.checkOversign &&
+        spendingCondition.fields.length >= spendingCondition.signaturesRequired
+      ) {
+        throw new Error('Origin would have too many signatures');
+      }
     }
 
     const nextSighash = this.transaction.signNextOrigin(this.sigHash, privateKey);
     this.sigHash = nextSighash;
+  }
+
+  appendOrigin(publicKey: StacksPublicKey) {
+    if (this.checkOverlap && this.originDone) {
+      throw Error('Cannot append public key to origin after sponsor key');
+    }
+
+    if (this.transaction.auth === undefined) {
+      throw new Error('"transaction.auth" is undefined');
+    }
+    if (this.transaction.auth.spendingCondition === undefined) {
+      throw new Error('"transaction.auth.spendingCondition" is undefined');
+    }
+
+    this.transaction.appendPubkey(publicKey);
   }
 }

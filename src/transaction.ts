@@ -12,7 +12,15 @@ import {
   ChainID,
 } from './constants';
 
-import { Authorization, SpendingCondition } from './authorization';
+import {
+  Authorization,
+  SpendingCondition,
+  nextSignature,
+  isSingleSig,
+  SingleSigSpendingCondition,
+  MultiSigSpendingCondition,
+  createTransactionAuthField,
+} from './authorization';
 
 import { BufferArray, txidFromData, sha512_256, fetchPrivate } from './utils';
 
@@ -20,7 +28,7 @@ import { Payload, serializePayload, deserializePayload } from './payload';
 
 import { LengthPrefixedList, serializeLPList, deserializeLPList, createLPList } from './types';
 
-import { StacksPrivateKey } from './keys';
+import { StacksPrivateKey, StacksPublicKey } from './keys';
 
 import { BufferReader } from './bufferReader';
 
@@ -87,29 +95,32 @@ export class StacksTransaction {
     return this.signAndAppend(this.auth.spendingCondition, sigHash, this.auth.authType, privateKey);
   }
 
+  appendPubkey(publicKey: StacksPublicKey) {
+    const cond = this.auth.spendingCondition;
+    if (cond && !isSingleSig(cond)) {
+      (cond as MultiSigSpendingCondition).fields.push(createTransactionAuthField(publicKey));
+    } else {
+      throw new Error(`Can't append public key to a singlesig condition`);
+    }
+  }
+
   signAndAppend(
     condition: SpendingCondition,
     curSigHash: string,
     authType: AuthType,
     privateKey: StacksPrivateKey
   ): string {
-    if (condition.fee === undefined) {
-      throw new Error('"condition.fee" is undefined');
-    }
-    if (condition.nonce === undefined) {
-      throw new Error('"condition.nonce" is undefined');
-    }
-    const { nextSig, nextSigHash } = SpendingCondition.nextSignature(
+    const { nextSig, nextSigHash } = nextSignature(
       curSigHash,
       authType,
       condition.fee,
       condition.nonce,
       privateKey
     );
-    if (condition.singleSig()) {
-      condition.signature = nextSig;
+    if (isSingleSig(condition)) {
+      (condition as SingleSigSpendingCondition).signature = nextSig;
     } else {
-      // condition.pushSignature();
+      (condition as MultiSigSpendingCondition).fields.push(createTransactionAuthField(nextSig));
     }
 
     return nextSigHash;
