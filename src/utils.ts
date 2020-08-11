@@ -83,14 +83,16 @@ export class sha512_256 extends sha512 {
 
 export const txidFromData = (data: Buffer): string => new sha512_256().update(data).digest('hex');
 
-export const hash160 = (input: string) => {
-  const inputBuffer = Buffer.from(input, 'hex');
-  const sha256Result = new sha256().update(inputBuffer).digest('hex');
-  return new RIPEMD160().update(Buffer.from(sha256Result, 'hex')).digest('hex');
+export const hash160 = (input: Buffer): Buffer => {
+  const sha256Result = new sha256().update(input).digest();
+  return new RIPEMD160().update(sha256Result).digest();
 };
 
-export const hash_p2pkh = (input: string) => {
-  return hash160(input);
+// Internally, the Stacks blockchain encodes address the same as Bitcoin
+// single-sig address (p2pkh)
+export const hashP2PKH = (input: Buffer): string => {
+  return hash160(input).toString('hex');
+};
 };
 
 export function isClarityName(name: string) {
