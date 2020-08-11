@@ -12,12 +12,12 @@ import {
   intToHexString,
   randomBytes,
   hash160,
-  hash_p2pkh,
+  hashP2PKH,
 } from './utils';
 
 import { ec as EC } from 'elliptic';
 
-import { MessageSignature } from './authorization';
+import { MessageSignature, createMessageSignature } from './authorization';
 import { BufferReader } from './bufferReader';
 import { AddressVersion } from './constants';
 import { c32address } from 'c32check';
@@ -46,7 +46,7 @@ export function getAddressFromPublicKey(
 ): string {
   publicKey = typeof publicKey === 'string' ? publicKey : publicKey.toString('hex');
   const addrVer = addressHashModeToVersion(AddressHashMode.SerializeP2PKH, transactionVersion);
-  const addr = addressFromVersionHash(addrVer, hash_p2pkh(publicKey));
+  const addr = addressFromVersionHash(addrVer, hashP2PKH(Buffer.from(publicKey, 'hex')));
   const addrString = addressToString(addr);
   return addrString;
 }
@@ -139,7 +139,7 @@ export function signWithKey(privateKey: StacksPrivateKey, input: string): Messag
   }
   const recoveryParam = intToHexString(signature.recoveryParam, 1);
   const recoverableSignatureString = recoveryParam + r + s;
-  const recoverableSignature = new MessageSignature(recoverableSignatureString);
+  const recoverableSignature = createMessageSignature(recoverableSignatureString);
   return recoverableSignature;
 }
 
@@ -152,5 +152,5 @@ export function privateKeyToString(privateKey: StacksPrivateKey): string {
 }
 
 export function publicKeyToAddress(version: AddressVersion, publicKey: StacksPublicKey): string {
-  return c32address(version, hash160(publicKey.data.toString('hex')));
+  return c32address(version, hash160(publicKey.data).toString('hex'));
 }

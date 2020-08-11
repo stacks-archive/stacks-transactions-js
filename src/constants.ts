@@ -26,6 +26,8 @@ enum StacksMessageType {
   PublicKey,
   LengthPrefixedList,
   Payload,
+  MessageSignature,
+  TransactionAuthField,
 }
 
 enum PayloadType {

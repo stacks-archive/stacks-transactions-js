@@ -8,7 +8,7 @@ import {
   createContractCallPayload,
 } from './payload';
 
-import { SingleSigSpendingCondition, StandardAuthorization } from './authorization';
+import { StandardAuthorization, createSingleSigSpendingCondition } from './authorization';
 
 import {
   publicKeyToString,
@@ -265,7 +265,7 @@ export async function makeSTXTokenTransfer(
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
-  const spendingCondition = new SingleSigSpendingCondition(
+  const spendingCondition = createSingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
@@ -413,7 +413,7 @@ export async function makeContractDeploy(
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
-  const spendingCondition = new SingleSigSpendingCondition(
+  const spendingCondition = createSingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
@@ -584,7 +584,7 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
   const addressHashMode = AddressHashMode.SerializeP2PKH;
   const privKey = createStacksPrivateKey(options.senderKey);
   const pubKey = getPublicKey(privKey);
-  const spendingCondition = new SingleSigSpendingCondition(
+  const spendingCondition = createSingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
