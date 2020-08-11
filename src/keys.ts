@@ -85,10 +85,12 @@ export function pubKeyfromPrivKey(privateKey: string | Buffer): StacksPublicKey 
 }
 
 export function deserializePublicKey(bufferReader: BufferReader): StacksPublicKey {
-  const compressed = bufferReader.readUInt8() !== 4;
-  bufferReader.readOffset = 0;
-  const keyLength = compressed ? COMPRESSED_PUBKEY_LENGTH_BYTES : UNCOMPRESSED_PUBKEY_LENGTH_BYTES;
-  return publicKeyFromBuffer(bufferReader.readBuffer(keyLength + 1));
+  const fieldId = bufferReader.readUInt8();
+  const keyLength =
+    fieldId !== 4 ? COMPRESSED_PUBKEY_LENGTH_BYTES : UNCOMPRESSED_PUBKEY_LENGTH_BYTES;
+  return publicKeyFromBuffer(
+    Buffer.concat([Buffer.from([fieldId]), bufferReader.readBuffer(keyLength)])
+  );
 }
 
 export interface StacksPrivateKey {
