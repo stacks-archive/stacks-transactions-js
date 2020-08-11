@@ -93,6 +93,31 @@ export const hash160 = (input: Buffer): Buffer => {
 export const hashP2PKH = (input: Buffer): string => {
   return hash160(input).toString('hex');
 };
+
+// Internally, the Stacks blockchain encodes address the same as Bitcoin
+// multi-sig address (p2sh)
+export const hashP2SH = (numSigs: number, pubKeys: Buffer[]): string => {
+  if (numSigs > 15 || pubKeys.length > 15) {
+    throw Error('P2SH multisig address can only contain up to 15 public keys');
+  }
+
+  // construct P2SH script
+  const bufferArray = new BufferArray();
+  // OP_n
+  bufferArray.appendByte(80 + numSigs);
+  // public keys prepended by their length
+  pubKeys.forEach(pubKey => {
+    bufferArray.appendByte(pubKey.length);
+    bufferArray.push(pubKey);
+  });
+  // OP_m
+  bufferArray.appendByte(80 + pubKeys.length);
+  // OP_CHECKMULTISIG
+  bufferArray.appendByte(174);
+
+  const redeemScript = bufferArray.concatBuffer();
+  const redeemScriptHash = hash160(redeemScript);
+  return redeemScriptHash.toString('hex');
 };
 
 export function isClarityName(name: string) {
