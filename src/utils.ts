@@ -31,37 +31,6 @@ export class BufferArray extends Array<Buffer> {
   }
 }
 
-export class BufferReader {
-  buffer: Buffer;
-  index: number;
-
-  constructor(buffer: Buffer) {
-    this.buffer = buffer;
-    this.index = 0;
-  }
-
-  read(bytes: number, incrementIndex = true): Buffer {
-    const readBuffer = Buffer.alloc(bytes);
-    this.buffer.copy(readBuffer, 0, this.index, this.index + bytes);
-    if (incrementIndex) {
-      this.index += bytes;
-    }
-    return readBuffer;
-  }
-
-  readByte(incrementIndex = true): number {
-    const val = this.buffer[this.index];
-    if (incrementIndex) {
-      this.index += 1;
-    }
-    return val;
-  }
-
-  setIndex(index: number) {
-    this.index = index;
-  }
-}
-
 export const leftPadHex = (hexString: string): string =>
   hexString.length % 2 == 0 ? hexString : `0${hexString}`;
 
