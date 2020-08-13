@@ -162,9 +162,8 @@ export function createSingleSigSpendingCondition(
   nonce: BigNum,
   fee: BigNum
 ): SingleSigSpendingCondition {
-  const signer = addressFromPublicKeys(AddressVersion.MainnetSingleSig, hashMode, 1, [
-    createStacksPublicKey(pubKey),
-  ]).hash160;
+  // address version arg doesn't matter for signer hash generation
+  const signer = addressFromPublicKeys(0, hashMode, 1, [createStacksPublicKey(pubKey)]).hash160;
   const keyEncoding = isCompressed(createStacksPublicKey(pubKey))
     ? PubKeyEncoding.Compressed
     : PubKeyEncoding.Uncompressed;
@@ -188,7 +187,7 @@ export function createMultiSigSpendingCondition(
 ): MultiSigSpendingCondition {
   const stacksPublicKeys = pubKeys.map(createStacksPublicKey);
 
-  // version arg does not matter for signer hash generation
+  // address version arg doesn't matter for signer hash generation
   const signer = addressFromPublicKeys(0, hashMode, numSigs, stacksPublicKeys).hash160;
 
   return {
