@@ -9,11 +9,10 @@ import {
 } from './payload';
 
 import {
-  SingleSigSpendingCondition,
   StandardAuthorization,
   SponsoredAuthorization,
-  SpendingCondition,
   createSingleSigSpendingCondition,
+  createMultiSigSpendingCondition,
 } from './authorization';
 
 import {
@@ -22,6 +21,7 @@ import {
   getPublicKey,
   publicKeyToAddress,
   pubKeyfromPrivKey,
+  publicKeyFromBuffer,
 } from './keys';
 
 import { TransactionSigner } from './signer';
@@ -56,6 +56,8 @@ import { fetchPrivate, cvToHex, parseReadOnlyResponse } from './utils';
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
 import { validateContractCall, ClarityAbi } from './contract-abi';
+import { add } from 'lodash';
+import { c32address } from 'c32check';
 
 /**
  * Lookup the nonce for an address from a core node
@@ -218,6 +220,12 @@ export async function getAbi(
   return JSON.parse(await response.text());
 }
 
+export interface MultiSigOptions {
+  numSignatures: number;
+  signerKeys: string[];
+  publicKeys: string[];
+}
+
 /**
  * STX token transfer transaction options
  *
@@ -236,11 +244,13 @@ export async function getAbi(
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
  * @param  {Boolean} sponsored - true if another account is sponsoring the transaction fees
+ *
+ * @param  {MultiSigOptions} multiSig - options for a multi-sig transaction
  */
 export interface TokenTransferOptions {
   recipient: string | PrincipalCV;
   amount: BigNum;
-  senderKey: string;
+  senderKey?: string;
   fee?: BigNum;
   nonce?: BigNum;
   network?: StacksNetwork;
@@ -249,6 +259,7 @@ export interface TokenTransferOptions {
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
   sponsored?: boolean;
+  multiSig?: MultiSigOptions;
 }
 
 /**
@@ -277,17 +288,29 @@ export async function makeSTXTokenTransfer(
 
   const payload = createTokenTransferPayload(options.recipient, options.amount, options.memo);
 
-  const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = createStacksPrivateKey(options.senderKey);
-  const pubKey = getPublicKey(privKey);
   let authorization = null;
+  let spendingCondition = null;
 
-  const spendingCondition = createSingleSigSpendingCondition(
-    addressHashMode,
-    publicKeyToString(pubKey),
-    options.nonce,
-    options.fee
-  );
+  if (options.multiSig) {
+    spendingCondition = createMultiSigSpendingCondition(
+      AddressHashMode.SerializeP2SH,
+      options.multiSig.numSignatures,
+      options.multiSig.publicKeys,
+      options.nonce,
+      options.fee
+    );
+  } else if (options.senderKey) {
+    const privKey = createStacksPrivateKey(options.senderKey);
+    const pubKey = getPublicKey(privKey);
+    spendingCondition = createSingleSigSpendingCondition(
+      AddressHashMode.SerializeP2PKH,
+      publicKeyToString(pubKey),
+      options.nonce,
+      options.fee
+    );
+  } else {
+    throw new Error('Transaction options must include either senderKey or multiSig options');
+  }
 
   if (options.sponsored) {
     authorization = new SponsoredAuthorization(spendingCondition);
@@ -323,14 +346,30 @@ export async function makeSTXTokenTransfer(
       options.network.version === TransactionVersion.Mainnet
         ? AddressVersion.MainnetSingleSig
         : AddressVersion.TestnetSingleSig;
-    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+    const senderAddress = c32address(addressVersion, transaction.auth.spendingCondition!.signer);
     const txNonce = await getNonce(senderAddress, options.network);
     transaction.setNonce(txNonce);
   }
 
-  if (options.senderKey) {
+  if (options.multiSig) {
+    const signer = new TransactionSigner(transaction);
+    let pubKeys = options.multiSig.publicKeys;
+
+    for (const key of options.multiSig.signerKeys) {
+      const pubKey = pubKeyfromPrivKey(key);
+      pubKeys = pubKeys.filter(pk => pk !== pubKey.data.toString('hex'));
+      signer.signOrigin(createStacksPrivateKey(key));
+    }
+
+    for (const key of pubKeys) {
+      signer.appendOrigin(publicKeyFromBuffer(Buffer.from(key, 'hex')));
+    }
+  } else if (options.senderKey) {
+    const privKey = createStacksPrivateKey(options.senderKey);
     const signer = new TransactionSigner(transaction);
     signer.signOrigin(privKey);
+  } else {
+    throw new Error('Transaction options must include either senderKey or multiSig options');
   }
 
   return transaction;
