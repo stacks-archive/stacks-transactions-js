@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 
 import {
-  makeSTXTokenTransfer,
+  makeUnsignedSTXTokenTransfer,
   makeContractDeploy,
   makeContractCall,
   makeStandardSTXPostCondition,
@@ -18,6 +18,7 @@ import {
   TxBroadcastResultRejected,
   callReadOnlyFunction,
   sponsorTransaction,
+  makeSTXTokenTransfer,
 } from '../../src/builders';
 
 import { deserializeTransaction } from '../../src/transaction';
@@ -209,16 +210,14 @@ test('Make Multi-Sig STX token transfer', async () => {
   const pubKeys = privKeyStrings.map(pubKeyfromPrivKey);
   const pubKeyStrings = pubKeys.map(publicKeyToString);
 
-  const transaction = await makeSTXTokenTransfer({
+  const transaction = await makeUnsignedSTXTokenTransfer({
     recipient,
     amount,
     fee,
     nonce,
     memo: memo,
-    multiSig: {
-      numSignatures: 2,
-      publicKeys: pubKeyStrings,
-    },
+    numSignatures: 2,
+    publicKeys: pubKeyStrings,
   });
 
   const serializedTx = transaction.serialize();

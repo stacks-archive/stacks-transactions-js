@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+
 import { StacksTransaction } from './transaction';
 
 import { StacksNetwork, StacksMainnet, StacksTestnet } from './network';
@@ -232,7 +234,6 @@ export interface MultiSigOptions {
  * @param  {String|PrincipalCV} recipientAddress - the c32check address of the recipient or a
  *                                                  principal clarity value
  * @param  {BigNum} amount - number of tokens to transfer in microstacks
- * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
@@ -244,13 +245,10 @@ export interface MultiSigOptions {
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
  * @param  {Boolean} sponsored - true if another account is sponsoring the transaction fees
- *
- * @param  {MultiSigOptions} multiSig - options for a multi-sig transaction
  */
 export interface TokenTransferOptions {
   recipient: string | PrincipalCV;
   amount: BigNum;
-  senderKey?: string;
   fee?: BigNum;
   nonce?: BigNum;
   network?: StacksNetwork;
@@ -259,20 +257,38 @@ export interface TokenTransferOptions {
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
   sponsored?: boolean;
-  multiSig?: MultiSigOptions;
+}
+
+export interface UnsignedTokenTransferOptions extends TokenTransferOptions {
+  publicKey: string;
+}
+
+export interface SignedTokenTransferOptions extends TokenTransferOptions {
+  senderKey: string;
+}
+
+export interface UnsignedMultiSigTokenTransferOptions extends TokenTransferOptions {
+  numSignatures: number;
+  publicKeys: string[];
+}
+
+export interface SignedMultiSigTokenTransferOptions extends TokenTransferOptions {
+  numSignatures: number;
+  publicKeys: string[];
+  signerKeys: string[];
 }
 
 /**
- * Generates a Stacks token transfer transaction
+ * Generates an unsigned Stacks token transfer transaction
  *
- * Returns a signed Stacks token transfer transaction.
+ * Returns a Stacks token transfer transaction.
  *
- * @param  {TokenTransferOptions} txOptions - an options object for the token transfer
+ * @param  {UnsignedTokenTransferOptions | UnsignedMultiSigTokenTransferOptions} txOptions - an options object for the token transfer
  *
  * @return {StacksTransaction}
  */
-export async function makeSTXTokenTransfer(
-  txOptions: TokenTransferOptions
+export async function makeUnsignedSTXTokenTransfer(
+  txOptions: UnsignedTokenTransferOptions | UnsignedMultiSigTokenTransferOptions
 ): Promise<StacksTransaction> {
   const defaultOptions = {
     fee: new BigNum(0),
@@ -291,25 +307,23 @@ export async function makeSTXTokenTransfer(
   let authorization = null;
   let spendingCondition = null;
 
-  if (options.multiSig) {
-    spendingCondition = createMultiSigSpendingCondition(
-      AddressHashMode.SerializeP2SH,
-      options.multiSig.numSignatures,
-      options.multiSig.publicKeys,
-      options.nonce,
-      options.fee
-    );
-  } else if (options.senderKey) {
-    const privKey = createStacksPrivateKey(options.senderKey);
-    const pubKey = getPublicKey(privKey);
+  if ('publicKey' in options) {
+    // multi-sig
     spendingCondition = createSingleSigSpendingCondition(
       AddressHashMode.SerializeP2PKH,
-      publicKeyToString(pubKey),
+      options.publicKey,
       options.nonce,
       options.fee
     );
   } else {
-    throw new Error('Transaction options must include either senderKey or multiSig options');
+    // multi-sig
+    spendingCondition = createMultiSigSpendingCondition(
+      AddressHashMode.SerializeP2SH,
+      options.numSignatures,
+      options.publicKeys,
+      options.nonce,
+      options.fee
+    );
   }
 
   if (options.sponsored) {
@@ -351,11 +365,39 @@ export async function makeSTXTokenTransfer(
     transaction.setNonce(txNonce);
   }
 
-  if (options.multiSig?.signerKeys) {
-    const signer = new TransactionSigner(transaction);
-    let pubKeys = options.multiSig.publicKeys;
+  return transaction;
+}
 
-    for (const key of options.multiSig.signerKeys) {
+/**
+ * Generates a signed Stacks token transfer transaction
+ *
+ * Returns a signed Stacks token transfer transaction.
+ *
+ * @param  {SignedTokenTransferOptions | SignedMultiSigTokenTransferOptions} txOptions - an options object for the token transfer
+ *
+ * @return {StacksTransaction}
+ */
+export async function makeSTXTokenTransfer(
+  txOptions: SignedTokenTransferOptions | SignedMultiSigTokenTransferOptions
+): Promise<StacksTransaction> {
+  if ('senderKey' in txOptions) {
+    const publicKey = publicKeyToString(getPublicKey(createStacksPrivateKey(txOptions.senderKey)));
+    const options = _.omit(txOptions, 'senderKey');
+    const transaction = await makeUnsignedSTXTokenTransfer({ publicKey, ...options });
+
+    const privKey = createStacksPrivateKey(txOptions.senderKey);
+    const signer = new TransactionSigner(transaction);
+    signer.signOrigin(privKey);
+
+    return transaction;
+  } else {
+    const transaction = await makeUnsignedSTXTokenTransfer(
+      _.omit(txOptions, 'signerKeys') as UnsignedMultiSigTokenTransferOptions
+    );
+
+    const signer = new TransactionSigner(transaction);
+    let pubKeys = txOptions.publicKeys;
+    for (const key of txOptions.signerKeys) {
       const pubKey = pubKeyfromPrivKey(key);
       pubKeys = pubKeys.filter(pk => pk !== pubKey.data.toString('hex'));
       signer.signOrigin(createStacksPrivateKey(key));
@@ -364,13 +406,9 @@ export async function makeSTXTokenTransfer(
     for (const key of pubKeys) {
       signer.appendOrigin(publicKeyFromBuffer(Buffer.from(key, 'hex')));
     }
-  } else if (options.senderKey) {
-    const privKey = createStacksPrivateKey(options.senderKey);
-    const signer = new TransactionSigner(transaction);
-    signer.signOrigin(privKey);
-  }
 
-  return transaction;
+    return transaction;
+  }
 }
 
 /**
