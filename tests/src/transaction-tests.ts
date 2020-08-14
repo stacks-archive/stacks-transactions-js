@@ -240,7 +240,6 @@ test('STX token transfer transaction multi-sig serialization and deserialization
   const anchorMode = AnchorMode.Any;
 
   const address = 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159';
-  const recipient = createStandardPrincipal(address);
   const recipientCV = standardPrincipalCV(address);
   const amount = new BigNum(2500000);
 

@@ -222,8 +222,8 @@ export async function getAbi(
 
 export interface MultiSigOptions {
   numSignatures: number;
-  signerKeys: string[];
   publicKeys: string[];
+  signerKeys?: string[];
 }
 
 /**
@@ -351,7 +351,7 @@ export async function makeSTXTokenTransfer(
     transaction.setNonce(txNonce);
   }
 
-  if (options.multiSig) {
+  if (options.multiSig?.signerKeys) {
     const signer = new TransactionSigner(transaction);
     let pubKeys = options.multiSig.publicKeys;
 
@@ -368,8 +368,6 @@ export async function makeSTXTokenTransfer(
     const privKey = createStacksPrivateKey(options.senderKey);
     const signer = new TransactionSigner(transaction);
     signer.signOrigin(privKey);
-  } else {
-    throw new Error('Transaction options must include either senderKey or multiSig options');
   }
 
   return transaction;

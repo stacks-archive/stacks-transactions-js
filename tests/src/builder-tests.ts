@@ -47,6 +47,7 @@ import * as BigNum from 'bn.js';
 import { enableFetchMocks } from 'jest-fetch-mock';
 import { ClarityAbi } from '../../src/contract-abi';
 import { createStacksPrivateKey, pubKeyfromPrivKey, publicKeyToString } from '../../src/keys';
+import { TransactionSigner } from '../../src/signer';
 
 enableFetchMocks();
 
@@ -203,6 +204,7 @@ test('Make Multi-Sig STX token transfer', async () => {
     '2a584d899fed1d24e26b524f202763c8ab30260167429f157f1c119f550fa6af01',
     'd5200dee706ee53ae98a03fba6cf4fdcc5084c30cfa9e1b3462dcdeaa3e0f1d201',
   ];
+  const privKeys = privKeyStrings.map(createStacksPrivateKey);
 
   const pubKeys = privKeyStrings.map(pubKeyfromPrivKey);
   const pubKeyStrings = pubKeys.map(publicKeyToString);
@@ -215,7 +217,6 @@ test('Make Multi-Sig STX token transfer', async () => {
     memo: memo,
     multiSig: {
       numSignatures: 2,
-      signerKeys: privKeyStrings.slice(0, 2),
       publicKeys: pubKeyStrings,
     },
   });
@@ -224,12 +225,8 @@ test('Make Multi-Sig STX token transfer', async () => {
 
   const tx =
     '00000000010401a23ea89d6529ac48ac766f720e480beec7f1927300000000000000000000000000000000' +
-    '000000030200dc8061e63a8ed7ca4712c257299b4bdc3938e34ccc01ce979dd74e5483c4f971053a12680c' +
-    'bfbea87976543a94500314c9a1eaf33986aef97821eb65fb0c60420200c25702efc2bcf5780e17f8ab3fb5' +
-    'dc509fbfe68c573e844a83b08d6ff0b382c9107690ac4677dc667ca09a7cf9d42e08ff79e6969a80f5ea5a' +
-    'acbf233ae22d0f0003661ec7479330bf1ef7a4c9d1816f089666a112e72d671048e5424fc528ca51530002' +
-    '030200000000000516df0ba3e79792be7be5e50a370289accfc8c9e03200000000002625a074657374206d' +
-    '656d6f00000000000000000000000000000000000000000000000000';
+    '000000000002030200000000000516df0ba3e79792be7be5e50a370289accfc8c9e03200000000002625a0' +
+    '74657374206d656d6f00000000000000000000000000000000000000000000000000';
 
   expect(serializedTx.toString('hex')).toBe(tx);
 
@@ -244,9 +241,25 @@ test('Make Multi-Sig STX token transfer', async () => {
   expect(deserializedTx.auth.spendingCondition!.signer).toEqual(
     'a23ea89d6529ac48ac766f720e480beec7f19273'
   );
-
   const deserializedPayload = deserializedTx.payload as TokenTransferPayload;
   expect(deserializedPayload.amount.toNumber()).toBe(amount.toNumber());
+
+  const signer = new TransactionSigner(deserializedTx);
+  signer.signOrigin(privKeys[0]);
+  signer.signOrigin(privKeys[1]);
+  signer.appendOrigin(pubKeys[2]);
+
+  const serializedSignedTx = deserializedTx.serialize();
+  const signedTx =
+    '00000000010401a23ea89d6529ac48ac766f720e480beec7f1927300000000000000000000000000000000' +
+    '000000030200dc8061e63a8ed7ca4712c257299b4bdc3938e34ccc01ce979dd74e5483c4f971053a12680c' +
+    'bfbea87976543a94500314c9a1eaf33986aef97821eb65fb0c60420200c25702efc2bcf5780e17f8ab3fb5' +
+    'dc509fbfe68c573e844a83b08d6ff0b382c9107690ac4677dc667ca09a7cf9d42e08ff79e6969a80f5ea5a' +
+    'acbf233ae22d0f0003661ec7479330bf1ef7a4c9d1816f089666a112e72d671048e5424fc528ca51530002' +
+    '030200000000000516df0ba3e79792be7be5e50a370289accfc8c9e03200000000002625a074657374206d' +
+    '656d6f00000000000000000000000000000000000000000000000000';
+
+  expect(serializedSignedTx.toString('hex')).toBe(signedTx);
 });
 
 test('Make smart contract deploy', async () => {
