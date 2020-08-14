@@ -21,6 +21,7 @@ import {
   getPublicKey,
   publicKeyToAddress,
   pubKeyfromPrivKey,
+  publicKeyFromBuffer,
 } from './keys';
 
 import { TransactionSigner } from './signer';
@@ -234,11 +235,12 @@ export async function getAbi(
  * @param  {PostCondition[]} postConditions - an array of post conditions to add to the
  *                                                  transaction
  * @param  {Boolean} sponsored - true if another account is sponsoring the transaction fees
+ * @param  {string | Buffer} senderKey - Private key used to sign transaction
+ * @param  {string | Buffer} publicKey - Public key from which to create transaction. Creates unsigned transactions.
  */
 export interface TokenTransferOptions {
   recipient: string | PrincipalCV;
   amount: BigNum;
-  senderKey: string;
   fee?: BigNum;
   nonce?: BigNum;
   network?: StacksNetwork;
@@ -247,6 +249,8 @@ export interface TokenTransferOptions {
   postConditionMode?: PostConditionMode;
   postConditions?: PostCondition[];
   sponsored?: boolean;
+  senderKey?: string | Buffer;
+  publicKey?: string | Buffer;
 }
 
 /**
@@ -271,13 +275,32 @@ export async function makeSTXTokenTransfer(
     sponsored: false,
   };
 
-  const options = Object.assign(defaultOptions, txOptions);
+  // https://github.com/Microsoft/TypeScript/issues/13195
+  const hasUndefinedProperties =
+    Object.values(txOptions).filter(opt => opt === undefined).length > 0;
+
+  if (hasUndefinedProperties) {
+    throw new Error('Must not pass `undefined` object properties. Omit unused properties.');
+  }
+
+  const options = { ...defaultOptions, ...txOptions } as Required<TokenTransferOptions>;
+
+  if (options.senderKey && options.publicKey) {
+    throw new Error('Must only define either `senderKey` or `publicKey`');
+  }
 
   const payload = createTokenTransferPayload(options.recipient, options.amount, options.memo);
 
   const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = createStacksPrivateKey(options.senderKey);
-  const pubKey = getPublicKey(privKey);
+  const privKey = options.senderKey ? createStacksPrivateKey(options.senderKey) : null;
+
+  const pubKeyBuffer =
+    typeof options.publicKey === 'string'
+      ? Buffer.from(options.publicKey, 'hex')
+      : options.publicKey;
+
+  const pubKey = privKey ? getPublicKey(privKey) : publicKeyFromBuffer(pubKeyBuffer);
+
   let authorization = null;
 
   const spendingCondition = new SingleSigSpendingCondition(
@@ -326,7 +349,7 @@ export async function makeSTXTokenTransfer(
     transaction.setNonce(txNonce);
   }
 
-  if (options.senderKey) {
+  if (txOptions.senderKey && privKey !== null) {
     const signer = new TransactionSigner(transaction);
     signer.signOrigin(privKey);
   }

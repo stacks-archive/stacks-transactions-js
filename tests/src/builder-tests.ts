@@ -412,6 +412,32 @@ test('Estimate token transfer fee', async () => {
   expect(resultEstimateFee2.toNumber()).toEqual(estimateFee.toNumber());
 });
 
+test(`${makeSTXTokenTransfer.name} allows *either* senderKey or publicKey`, async () => {
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(0);
+  const network = new StacksTestnet();
+
+  const senderKey = 'cb3df38053d132895220b9ce471f6b676db5b9bf0b4adefb55f2118ece2478df01';
+  const publicKey = Buffer.from([]);
+
+  const args = { recipient, amount, publicKey, senderKey, fee, network };
+  await expect(makeSTXTokenTransfer(args)).rejects.toThrowError();
+});
+
+test(`${makeSTXTokenTransfer.name} ensures undefined optional properties are not allow`, async () => {
+  const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');
+  const amount = new BigNum(12345);
+  const fee = new BigNum(0);
+  const network = new StacksTestnet();
+  const senderKey = 'cb3df38053d132895220b9ce471f6b676db5b9bf0b4adefb55f2118ece2478df01';
+
+  const args = { recipient, amount, senderKey, fee, network, memo: undefined };
+  await expect(makeSTXTokenTransfer(args)).rejects.toThrowError(
+    'Must not pass `undefined` object properties. Omit unused properties.'
+  );
+});
+
 test('Make STX token transfer with fetch account nonce', async () => {
   const nonce = 123;
   const recipient = standardPrincipalCV('SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159');

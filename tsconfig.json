@@ -7,7 +7,7 @@
     "sourceMap": true,
     "outDir": "lib",
     "esModuleInterop": false,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": false
   },
   "include": [
     "src/index.ts",
