@@ -22,6 +22,8 @@ export {
   createSTXPostCondition,
 } from './postcondition';
 
+export { exceedsMaxLengthBytes } from './utils';
+
 export * from './clarity';
 export * from './keys';
 export * from './builders';
