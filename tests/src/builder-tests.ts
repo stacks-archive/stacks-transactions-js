@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 
 import {
   makeUnsignedSTXTokenTransfer,
@@ -43,14 +43,12 @@ import { StacksTestnet, StacksMainnet } from '../../src/network';
 
 import { bufferCV, standardPrincipalCV, bufferCVFromString, serializeCV } from '../../src/clarity';
 
-import * as BigNum from 'bn.js';
+import BigNum from 'bn.js';
 
-import { enableFetchMocks } from 'jest-fetch-mock';
 import { ClarityAbi } from '../../src/contract-abi';
 import { createStacksPrivateKey, pubKeyfromPrivKey, publicKeyToString } from '../../src/keys';
 import { TransactionSigner } from '../../src/signer';
-
-enableFetchMocks();
+import fetchMock from 'jest-fetch-mock';
 
 beforeEach(() => {
   fetchMock.resetMocks();

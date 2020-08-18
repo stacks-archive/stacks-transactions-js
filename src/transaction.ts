@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {
   DEFAULT_CHAIN_ID,
@@ -32,7 +32,7 @@ import { StacksPrivateKey, StacksPublicKey } from './keys';
 
 import { BufferReader } from './bufferReader';
 
-import * as BigNum from 'bn.js';
+import BigNum from 'bn.js';
 import { SerializationError, SigningError } from './errors';
 
 export class StacksTransaction {
@@ -80,13 +80,13 @@ export class StacksTransaction {
   }
 
   signBegin() {
-    const tx = _.cloneDeep(this);
+    const tx = cloneDeep(this);
     tx.auth = tx.auth.intoInitialSighashAuth();
     return tx.txid();
   }
 
   verifyBegin() {
-    const tx = _.cloneDeep(this);
+    const tx = cloneDeep(this);
     tx.auth = tx.auth.intoInitialSighashAuth();
     return tx.txid();
   }

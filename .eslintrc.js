@@ -3,6 +3,11 @@ module.exports = {
     '@blockstack'
   ],
   "rules": {
-    "@typescript-eslint/no-unnecessary-type-assertion": ["off"]
+    "@typescript-eslint/no-unnecessary-type-assertion": ["off"],
+    "no-restricted-globals": ["error", {
+      "name": "fetch",
+      "message": "Use `privateFetch` instead."
+    }
+  ],
   }
 }

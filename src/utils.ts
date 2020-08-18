@@ -2,14 +2,13 @@ import { sha256, sha512 } from 'sha.js';
 
 import { ClarityValue, serializeCV } from './clarity';
 
-import * as RIPEMD160 from 'ripemd160';
+import RIPEMD160 from 'ripemd160';
 
-import * as randombytes from 'randombytes';
+import randombytes from 'randombytes';
 
 import { deserializeCV } from './clarity';
 
-// eslint-disable-next-line import/no-unassigned-import
-import 'cross-fetch/polyfill';
+import fetch from 'cross-fetch';
 import { c32addressDecode } from 'c32check';
 
 export { randombytes as randomBytes };
@@ -139,7 +138,6 @@ export async function fetchPrivate(input: RequestInfo, init?: RequestInit): Prom
     referrerPolicy: 'no-referrer',
   };
   const fetchOpts = Object.assign(defaultFetchOpts, init);
-  // eslint-disable-next-line no-restricted-globals
   const fetchResult = await fetch(input, fetchOpts);
   return fetchResult;
 }

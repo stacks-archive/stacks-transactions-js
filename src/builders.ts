@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import omit from 'lodash/omit';
 
 import { StacksTransaction } from './transaction';
 
@@ -55,10 +55,9 @@ import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincip
 
 import { fetchPrivate, cvToHex, parseReadOnlyResponse } from './utils';
 
-import * as BigNum from 'bn.js';
+import BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
 import { validateContractCall, ClarityAbi } from './contract-abi';
-import { add } from 'lodash';
 import { c32address } from 'c32check';
 
 /**
@@ -382,7 +381,7 @@ export async function makeSTXTokenTransfer(
 ): Promise<StacksTransaction> {
   if ('senderKey' in txOptions) {
     const publicKey = publicKeyToString(getPublicKey(createStacksPrivateKey(txOptions.senderKey)));
-    const options = _.omit(txOptions, 'senderKey');
+    const options = omit(txOptions, 'senderKey');
     const transaction = await makeUnsignedSTXTokenTransfer({ publicKey, ...options });
 
     const privKey = createStacksPrivateKey(txOptions.senderKey);
@@ -392,7 +391,7 @@ export async function makeSTXTokenTransfer(
     return transaction;
   } else {
     const transaction = await makeUnsignedSTXTokenTransfer(
-      _.omit(txOptions, 'signerKeys') as UnsignedMultiSigTokenTransferOptions
+      omit(txOptions, 'signerKeys') as UnsignedMultiSigTokenTransferOptions
     );
 
     const signer = new TransactionSigner(transaction);
@@ -960,7 +959,7 @@ export async function callReadOnlyFunction(
     arguments: args,
   });
 
-  const response = await fetch(url, {
+  const response = await fetchPrivate(url, {
     method: 'POST',
     body,
     headers: {
