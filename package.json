@@ -14,7 +14,7 @@
     "start": "webpack-dev-server",
     "build:node": "shx rm -rf lib && tsc -p tsconfig.build.json",
     "build:node:watch": "shx rm -rf lib && tsc -p tsconfig.build.json --watch",
-    "lint": "eslint ./src ./tests --ext .ts",
+    "lint": "eslint ./src ./tests --ext .ts -f codeframe",
     "lint:fix": "eslint ./src ./tests --ext .ts --fix",
     "test": "jest --config ./jest.config.js --coverage",
     "prepublishOnly": "npm run test && npm run build",

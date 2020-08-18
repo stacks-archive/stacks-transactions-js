@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 
 import {
   AuthType,
@@ -33,7 +33,7 @@ import {
   publicKeyFromSignature,
 } from './keys';
 
-import * as BigNum from 'bn.js';
+import BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
 import { SerializationError, DeserializationError, SigningError } from './errors';
 
@@ -205,7 +205,7 @@ export function isSingleSig(condition: SpendingCondition) {
 }
 
 function clearCondition(condition: SpendingCondition): SpendingCondition {
-  const cloned = _.cloneDeep(condition);
+  const cloned = cloneDeep(condition);
   cloned.nonce = new BigNum(0);
   cloned.fee = new BigNum(0);
 

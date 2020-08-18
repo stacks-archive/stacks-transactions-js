@@ -1,4 +1,5 @@
-import * as _ from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
+import every from 'lodash/every';
 
 import {
   ClarityValue,
@@ -280,11 +281,11 @@ function matchType(cv: ClarityValue, abiType: ClarityAbiType): boolean {
       return (
         union.id == ClarityAbiTypeId.ClarityAbiTypeList &&
         union.type.list.length === cv.list.length &&
-        _.every(cv.list, val => matchType(val, union.type.list.type))
+        every(cv.list, val => matchType(val, union.type.list.type))
       );
     case ClarityType.Tuple:
       if (union.id == ClarityAbiTypeId.ClarityAbiTypeTuple) {
-        const tuple = _.cloneDeep(cv.data);
+        const tuple = cloneDeep(cv.data);
         for (let i = 0; i < union.type.tuple.length; i++) {
           const abiTupleEntry = union.type.tuple[i];
           const key = abiTupleEntry.name;

@@ -2,7 +2,7 @@ import { StacksTransaction } from './transaction';
 
 import { StacksPrivateKey, StacksPublicKey } from './keys';
 import { isSingleSig, MultiSigSpendingCondition } from './authorization';
-import * as _ from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import { SpendingCondition } from './authorization';
 import { AuthType } from './constants';
 import { SigningError } from './errors';
@@ -27,7 +27,7 @@ export class TransactionSigner {
       throw new SigningError('Cannot add sponsor to non-sponsored transaction');
     }
 
-    const tx: StacksTransaction = _.cloneDeep(transaction);
+    const tx: StacksTransaction = cloneDeep(transaction);
     tx.setSponsor(spendingCondition);
     const originSigHash = tx.verifyOrigin();
     const signer = new this(tx);
@@ -94,11 +94,11 @@ export class TransactionSigner {
   }
 
   getTxInComplete(): StacksTransaction {
-    return _.cloneDeep(this.transaction);
+    return cloneDeep(this.transaction);
   }
 
   resume(transaction: StacksTransaction) {
-    this.transaction = _.cloneDeep(transaction);
+    this.transaction = cloneDeep(transaction);
     this.sigHash = transaction.signBegin();
   }
 }
