@@ -308,7 +308,7 @@ export async function makeUnsignedSTXTokenTransfer(
   let spendingCondition = null;
 
   if ('publicKey' in options) {
-    // multi-sig
+    // single-sig
     spendingCondition = createSingleSigSpendingCondition(
       AddressHashMode.SerializeP2PKH,
       options.publicKey,
