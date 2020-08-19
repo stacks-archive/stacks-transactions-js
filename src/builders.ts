@@ -75,7 +75,7 @@ export function getNonce(address: string, network?: StacksNetwork): Promise<BigN
     : defaultNetwork.getAccountApiUrl(address);
 
   return fetchPrivate(url)
-    .then(response => response.json())
+    .then(async response => (await response.json()) as { nonce: string })
     .then(response => Promise.resolve(new BigNum(response.nonce)));
 }
 
@@ -174,14 +174,14 @@ export async function broadcastRawTransaction(
   const response = await fetchPrivate(url, options);
   if (!response.ok) {
     try {
-      return await response.json();
+      return (await response.json()) as TxBroadcastResult;
     } catch (e) {
-      throw Error(`Failed to broadcast transaction: ${e.message}`);
+      throw Error(`Failed to broadcast transaction: ${(e as Error).message}`);
     }
   }
 
   try {
-    return await response.clone().json();
+    return (await response.clone().json()) as TxBroadcastResult;
   } catch (e) {
     return await response.clone().text();
   }
@@ -218,7 +218,7 @@ export async function getAbi(
     );
   }
 
-  return JSON.parse(await response.text());
+  return JSON.parse(await response.text()) as ClarityAbi;
 }
 
 export interface MultiSigOptions {

@@ -70,7 +70,7 @@ export function publicKeyFromSignature(message: string, messageSignature: Messag
     parsedSignature,
     parsedSignature.recoveryParam,
     'hex'
-  );
+  ) as { encodeCompressed: (enc: string) => string };
 
   return publicKey.encodeCompressed('hex');
 }

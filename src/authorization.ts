@@ -132,7 +132,7 @@ export function deserializeTransactionAuthField(bufferReader: BufferReader): Tra
     case AuthFieldType.Signature:
       return createTransactionAuthField(deserializeMessageSignature(bufferReader));
     default:
-      throw new Error(`Unknown auth field type: ${authFieldType}`);
+      throw new Error(`Unknown auth field type: ${JSON.stringify(authFieldType)}`);
   }
 }
 
@@ -548,7 +548,7 @@ export class Authorization extends Deserializable {
         break;
       default:
         throw new SerializationError(
-          `Unexpected transaction AuthType while serializing: ${this.authType}`
+          `Unexpected transaction AuthType while serializing: ${JSON.stringify(this.authType)}`
         );
     }
 
@@ -571,7 +571,7 @@ export class Authorization extends Deserializable {
       // throw new DeserializationError('Not yet implemented: deserializing sponsored transactions');
       default:
         throw new DeserializationError(
-          `Unexpected transaction AuthType while deserializing: ${this.authType}`
+          `Unexpected transaction AuthType while deserializing: ${JSON.stringify(this.authType)}`
         );
     }
   }
