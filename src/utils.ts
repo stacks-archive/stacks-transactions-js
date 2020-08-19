@@ -2,7 +2,7 @@ import { sha256, sha512 } from 'sha.js';
 
 import { ClarityValue, serializeCV } from './clarity';
 
-import RIPEMD160 from 'ripemd160';
+import RIPEMD160 from 'ripemd160-min';
 
 import randombytes from 'randombytes';
 
@@ -91,7 +91,7 @@ export const txidFromData = (data: Buffer): string => new sha512_256().update(da
 
 export const hash160 = (input: Buffer): Buffer => {
   const sha256Result = new sha256().update(input).digest();
-  return new RIPEMD160().update(sha256Result).digest();
+  return Buffer.from(new RIPEMD160().update(sha256Result).digest());
 };
 
 // Internally, the Stacks blockchain encodes address the same as Bitcoin

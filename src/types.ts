@@ -159,7 +159,9 @@ export function addressHashModeToVersion(
         case TransactionVersion.Testnet:
           return AddressVersion.TestnetSingleSig;
         default:
-          throw new Error(`Unexpected txVersion ${txVersion} for hashMode ${hashMode}`);
+          throw new Error(
+            `Unexpected txVersion ${JSON.stringify(txVersion)} for hashMode ${hashMode}`
+          );
       }
     case AddressHashMode.SerializeP2SH:
     case AddressHashMode.SerializeP2WPKH:
@@ -170,10 +172,12 @@ export function addressHashModeToVersion(
         case TransactionVersion.Testnet:
           return AddressVersion.TestnetMultiSig;
         default:
-          throw new Error(`Unexpected txVersion ${txVersion} for hashMode ${hashMode}`);
+          throw new Error(
+            `Unexpected txVersion ${JSON.stringify(txVersion)} for hashMode ${hashMode}`
+          );
       }
     default:
-      throw new Error(`Unexpected hashMode ${hashMode}`);
+      throw new Error(`Unexpected hashMode ${JSON.stringify(hashMode)}`);
   }
 }
 
@@ -190,7 +194,7 @@ export function addressFromPublicKeys(
   version: AddressVersion,
   hashMode: AddressHashMode,
   numSigs: number,
-  publicKeys: Array<StacksPublicKey>
+  publicKeys: StacksPublicKey[]
 ): Address {
   if (publicKeys.length === 0) {
     throw Error('Invalid number of public keys');

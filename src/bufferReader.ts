@@ -9,6 +9,7 @@ function createEnumChecker<T extends string, TEnumValue extends number>(
   return (value: number): value is TEnumValue => enumValueSet.has(value);
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 const enumCheckFunctions = new Map<object, (value: number) => boolean>();
 
 /**
