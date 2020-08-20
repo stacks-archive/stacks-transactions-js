@@ -123,7 +123,7 @@ export class StacksTransaction {
   appendPubkey(publicKey: StacksPublicKey) {
     const cond = this.auth.spendingCondition;
     if (cond && !isSingleSig(cond)) {
-      (cond as MultiSigSpendingCondition).fields.push(createTransactionAuthField(publicKey));
+      cond.fields.push(createTransactionAuthField(publicKey));
     } else {
       throw new Error(`Can't append public key to a singlesig condition`);
     }
@@ -143,9 +143,9 @@ export class StacksTransaction {
       privateKey
     );
     if (isSingleSig(condition)) {
-      (condition as SingleSigSpendingCondition).signature = nextSig;
+      condition.signature = nextSig;
     } else {
-      (condition as MultiSigSpendingCondition).fields.push(createTransactionAuthField(nextSig));
+      condition.fields.push(createTransactionAuthField(nextSig));
     }
 
     return nextSigHash;

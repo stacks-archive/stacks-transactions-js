@@ -51,8 +51,7 @@ export class TransactionSigner {
     }
 
     if (!isSingleSig(this.transaction.auth.spendingCondition)) {
-      const spendingCondition = this.transaction.auth
-        .spendingCondition as MultiSigSpendingCondition;
+      const spendingCondition = this.transaction.auth.spendingCondition;
       if (
         this.checkOversign &&
         spendingCondition.fields.length >= spendingCondition.signaturesRequired

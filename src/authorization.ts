@@ -200,7 +200,7 @@ export function createMultiSigSpendingCondition(
   };
 }
 
-export function isSingleSig(condition: SpendingCondition) {
+export function isSingleSig(condition: SpendingCondition): condition is SingleSigSpendingCondition {
   return 'signature' in condition;
 }
 
@@ -210,9 +210,9 @@ function clearCondition(condition: SpendingCondition): SpendingCondition {
   cloned.fee = new BigNum(0);
 
   if (isSingleSig(cloned)) {
-    (cloned as SingleSigSpendingCondition).signature = emptyMessageSignature();
+    cloned.signature = emptyMessageSignature();
   } else {
-    (cloned as MultiSigSpendingCondition).fields = [];
+    cloned.fields = [];
   }
 
   return cloned;
@@ -293,9 +293,9 @@ export function deserializeMultiSigSpendingCondition(
 
 export function serializeSpendingCondition(condition: SpendingCondition): Buffer {
   if (isSingleSig(condition)) {
-    return serializeSingleSigSpendingCondition(condition as SingleSigSpendingCondition);
+    return serializeSingleSigSpendingCondition(condition);
   } else {
-    return serializeMultiSigSpendingCondition(condition as MultiSigSpendingCondition);
+    return serializeMultiSigSpendingCondition(condition);
   }
 }
 
@@ -418,7 +418,7 @@ function newInitialSigHash(): SpendingCondition {
 
 function verify(condition: SpendingCondition, initialSigHash: string, authType: AuthType): string {
   if (isSingleSig(condition)) {
-    return verifySingleSig(condition as SingleSigSpendingCondition, initialSigHash, authType);
+    return verifySingleSig(condition, initialSigHash, authType);
   } else {
     // TODO: verify multisig
     return '';
