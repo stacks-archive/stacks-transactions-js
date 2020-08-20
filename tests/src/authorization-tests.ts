@@ -32,7 +32,7 @@ test('ECDSA recoverable signature', () => {
     '787970968562da9de8b024a7f36f946b2fdcbf39b2f59247267a9d72730f19276b';
   const privKey = createStacksPrivateKey(privKeyString);
   const messageSignature = signWithKey(privKey, messagetoSign);
-  expect(messageSignature.signature).toBe(correctSignature);
+  expect(messageSignature.data).toBe(correctSignature);
 });
 
 test('Single spending condition serialization and deserialization', () => {
@@ -51,7 +51,7 @@ test('Single spending condition serialization and deserialization', () => {
   expect(deserialized.hashMode).toBe(addressHashMode);
   expect(deserialized.nonce!.toNumber()).toBe(nonce.toNumber());
   expect(deserialized.fee!.toNumber()).toBe(fee.toNumber());
-  expect(deserialized.signature.toString()).toBe(emptySignature.toString());
+  expect(deserialized.signature.data).toBe(emptySignature.data);
 });
 
 test('Single sig spending condition uncompressed', () => {

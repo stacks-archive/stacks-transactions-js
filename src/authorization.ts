@@ -49,7 +49,7 @@ abstract class Deserializable {
 
 export interface MessageSignature {
   readonly type: StacksMessageType.MessageSignature;
-  signature: string;
+  data: string;
 }
 
 export function createMessageSignature(signature: string): MessageSignature {
@@ -60,20 +60,20 @@ export function createMessageSignature(signature: string): MessageSignature {
 
   return {
     type: StacksMessageType.MessageSignature,
-    signature,
+    data: signature,
   };
 }
 
 export function emptyMessageSignature(): MessageSignature {
   return {
     type: StacksMessageType.MessageSignature,
-    signature: Buffer.alloc(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES, 0x00).toString('hex'),
+    data: Buffer.alloc(RECOVERABLE_ECDSA_SIG_LENGTH_BYTES, 0x00).toString('hex'),
   };
 }
 
 export function serializeMessageSignature(messageSignature: MessageSignature): Buffer {
   const bufferArray: BufferArray = new BufferArray();
-  bufferArray.appendHexString(messageSignature.signature);
+  bufferArray.appendHexString(messageSignature.data);
   return bufferArray.concatBuffer();
 }
 
@@ -349,7 +349,7 @@ function makeSigHashPostSign(
   // * the signature
   const hashLength = 32 + 1 + RECOVERABLE_ECDSA_SIG_LENGTH_BYTES;
 
-  const sigHash = curSigHash + leftPadHex(pubKeyEncoding.toString(16)) + signature.toString();
+  const sigHash = curSigHash + leftPadHex(pubKeyEncoding.toString(16)) + signature.data;
 
   if (Buffer.from(sigHash, 'hex').byteLength > hashLength) {
     throw Error('Invalid signature hash length');

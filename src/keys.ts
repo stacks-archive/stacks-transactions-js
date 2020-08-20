@@ -63,7 +63,7 @@ export function publicKeyFromSignature(message: string, messageSignature: Messag
   const ec = new EC('secp256k1');
   const messageBN = ec.keyFromPrivate(message, 'hex').getPrivate().toString(10);
 
-  const parsedSignature = parseRecoverableSignature(messageSignature.signature);
+  const parsedSignature = parseRecoverableSignature(messageSignature.data);
 
   const publicKey = ec.recoverPubKey(
     messageBN,
