@@ -68,15 +68,24 @@ import { c32address } from 'c32check';
  *
  * @return a promise that resolves to an integer
  */
-export function getNonce(address: string, network?: StacksNetwork): Promise<BigNum> {
+export async function getNonce(address: string, network?: StacksNetwork): Promise<BigNum> {
   const defaultNetwork = new StacksMainnet();
   const url = network
     ? network.getAccountApiUrl(address)
     : defaultNetwork.getAccountApiUrl(address);
 
-  return fetchPrivate(url)
-    .then(async response => (await response.json()) as { nonce: string })
-    .then(response => Promise.resolve(new BigNum(response.nonce)));
+  const response = await fetchPrivate(url);
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error fetching nonce. Response ${response.status}: ${response.statusText}. Attempted to fetch ${url} and failed with the message: "${msg}"`
+    );
+  }
+  const result = (await response.json()) as { nonce: string };
+  return new BigNum(result.nonce);
 }
 
 /**
@@ -87,7 +96,7 @@ export function getNonce(address: string, network?: StacksNetwork): Promise<BigN
  *
  * @return a promise that resolves to number of microstacks per byte
  */
-export function estimateTransfer(
+export async function estimateTransfer(
   transaction: StacksTransaction,
   network?: StacksNetwork
 ): Promise<BigNum> {
@@ -113,13 +122,20 @@ export function estimateTransfer(
     ? network.getTransferFeeEstimateApiUrl()
     : defaultNetwork.getTransferFeeEstimateApiUrl();
 
-  return fetchPrivate(url, fetchOptions)
-    .then(response => response.text())
-    .then(feeRateResult => {
-      const txBytes = new BigNum(transaction.serialize().byteLength);
-      const feeRate = new BigNum(feeRateResult);
-      return feeRate.mul(txBytes);
-    });
+  const response = await fetchPrivate(url, fetchOptions);
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error estimating transaction fee. Response ${response.status}: ${response.statusText}. Attempted to fetch ${url} and failed with the message: "${msg}"`
+    );
+  }
+  const feeRateResult = await response.text();
+  const txBytes = new BigNum(transaction.serialize().byteLength);
+  const feeRate = new BigNum(feeRateResult);
+  return feeRate.mul(txBytes);
 }
 
 export type TxBroadcastResultOk = string;
@@ -447,7 +463,7 @@ export interface ContractDeployOptions {
  *
  * @return a promise that resolves to number of microstacks per byte
  */
-export function estimateContractDeploy(
+export async function estimateContractDeploy(
   transaction: StacksTransaction,
   network?: StacksNetwork
 ): Promise<BigNum> {
@@ -475,13 +491,20 @@ export function estimateContractDeploy(
     ? network.getTransferFeeEstimateApiUrl()
     : defaultNetwork.getTransferFeeEstimateApiUrl();
 
-  return fetchPrivate(url, fetchOptions)
-    .then(response => response.text())
-    .then(feeRateResult => {
-      const txBytes = new BigNum(transaction.serialize().byteLength);
-      const feeRate = new BigNum(feeRateResult);
-      return feeRate.mul(txBytes);
-    });
+  const response = await fetchPrivate(url, fetchOptions);
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error estimating contract deploy fee. Response ${response.status}: ${response.statusText}. Attempted to fetch ${url} and failed with the message: "${msg}"`
+    );
+  }
+  const feeRateResult = await response.text();
+  const txBytes = new BigNum(transaction.serialize().byteLength);
+  const feeRate = new BigNum(feeRateResult);
+  return feeRate.mul(txBytes);
 }
 
 /**
@@ -611,7 +634,7 @@ export interface ContractCallOptions {
  *
  * @return a promise that resolves to number of microstacks per byte
  */
-export function estimateContractFunctionCall(
+export async function estimateContractFunctionCall(
   transaction: StacksTransaction,
   network?: StacksNetwork
 ): Promise<BigNum> {
@@ -639,13 +662,20 @@ export function estimateContractFunctionCall(
     ? network.getTransferFeeEstimateApiUrl()
     : defaultNetwork.getTransferFeeEstimateApiUrl();
 
-  return fetchPrivate(url, fetchOptions)
-    .then(response => response.text())
-    .then(feeRateResult => {
-      const txBytes = new BigNum(transaction.serialize().byteLength);
-      const feeRate = new BigNum(feeRateResult);
-      return feeRate.mul(txBytes);
-    });
+  const response = await fetchPrivate(url, fetchOptions);
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error estimating contract call fee. Response ${response.status}: ${response.statusText}. Attempted to fetch ${url} and failed with the message: "${msg}"`
+    );
+  }
+  const feeRateResult = await response.text();
+  const txBytes = new BigNum(transaction.serialize().byteLength);
+  const feeRate = new BigNum(feeRateResult);
+  return feeRate.mul(txBytes);
 }
 
 /**
@@ -966,6 +996,16 @@ export async function callReadOnlyFunction(
       'Content-Type': 'application/json',
     },
   });
+
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error calling read-only function. Response ${response.status}: ${response.statusText}. Attempted to fetch ${url} and failed with the message: "${msg}"`
+    );
+  }
 
   return response.json().then(responseJson => parseReadOnlyResponse(responseJson));
 }
