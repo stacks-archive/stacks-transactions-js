@@ -1,5 +1,3 @@
-import cloneDeep from 'lodash/cloneDeep';
-
 import {
   AuthType,
   AddressHashMode,
@@ -11,7 +9,7 @@ import {
   StacksMessageType,
 } from './constants';
 
-import { BufferArray, txidFromData, sha512_256, leftPadHex } from './utils';
+import { BufferArray, txidFromData, sha512_256, leftPadHex, cloneDeep } from './utils';
 
 import {
   addressFromPublicKeys,
@@ -33,7 +31,7 @@ import {
   publicKeyFromSignature,
 } from './keys';
 
-import BigNum from 'bn.js';
+import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
 import { SerializationError, DeserializationError, SigningError } from './errors';
 

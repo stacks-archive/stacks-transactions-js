@@ -14,7 +14,7 @@ module.exports = {
     "no-restricted-globals": ["error", {
       "name": "fetch",
       "message": "Use `privateFetch` instead."
-    }
-  ],
+    }],
+    "@typescript-eslint/ban-ts-comment": "off",
   }
 }
