@@ -18,7 +18,7 @@ import {
 
 import { ClarityValue, serializeCV, deserializeCV } from './clarity/';
 
-import BigNum from 'bn.js';
+import * as BigNum from 'bn.js';
 import { BufferReader } from './bufferReader';
 import { PrincipalCV, standardPrincipalCV, principalCV } from './clarity/types/principalCV';
 

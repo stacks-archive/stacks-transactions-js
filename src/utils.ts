@@ -4,12 +4,16 @@ import { ClarityValue, serializeCV } from './clarity';
 
 import RIPEMD160 from 'ripemd160-min';
 
-import randombytes from 'randombytes';
+import * as randombytes from 'randombytes';
 
 import { deserializeCV } from './clarity';
 
 import fetch from 'cross-fetch';
 import { c32addressDecode } from 'c32check';
+
+// Note: lodash is using old-style ts exports and requires this
+// @ts-expect-error
+import * as lodashCloneDeep from 'lodash/cloneDeep';
 
 export { randombytes as randomBytes };
 
@@ -53,6 +57,17 @@ export const hexStringToInt = (hexString: string): number => parseInt(hexString,
 
 export const exceedsMaxLengthBytes = (string: string, maxLengthBytes: number): boolean =>
   string ? Buffer.from(string).length > maxLengthBytes : false;
+
+export function cloneDeep<T>(obj: T): T {
+  return lodashCloneDeep(obj);
+}
+
+export function omit<T, K extends keyof any>(obj: T, prop: K): Omit<T, K> {
+  const clone = cloneDeep(obj);
+  // @ts-expect-error
+  delete clone[prop];
+  return clone;
+}
 
 export class sha512_256 extends sha512 {
   constructor() {

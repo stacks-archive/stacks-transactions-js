@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs';
 
 import {
   makeUnsignedSTXTokenTransfer,
@@ -43,7 +43,7 @@ import { StacksTestnet, StacksMainnet } from '../../src/network';
 
 import { bufferCV, standardPrincipalCV, bufferCVFromString, serializeCV } from '../../src/clarity';
 
-import BigNum from 'bn.js';
+import * as BigNum from 'bn.js';
 
 import { ClarityAbi } from '../../src/contract-abi';
 import { createStacksPrivateKey, pubKeyfromPrivKey, publicKeyToString } from '../../src/keys';

@@ -48,11 +48,10 @@ import {
 
 import { TransactionSigner } from '../../src/signer';
 
-import BigNum from 'bn.js';
+import * as BigNum from 'bn.js';
 import fetchMock from 'jest-fetch-mock';
 import { BufferReader } from '../../src/bufferReader';
 import { standardPrincipalCV } from '../../src/clarity';
-import { length } from 'bn.js';
 
 beforeEach(() => {
   fetchMock.resetMocks();

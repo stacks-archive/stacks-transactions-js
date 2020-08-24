@@ -1,4 +1,4 @@
-import BigNum from 'bn.js';
+import * as BigNum from 'bn.js';
 import { CLARITY_INT_SIZE } from '../../constants';
 import { ClarityType } from '../clarityValue';
 

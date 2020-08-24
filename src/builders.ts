@@ -1,5 +1,3 @@
-import omit from 'lodash/omit';
-
 import { StacksTransaction } from './transaction';
 
 import { StacksNetwork, StacksMainnet, StacksTestnet } from './network';
@@ -53,9 +51,9 @@ import {
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
 
-import { fetchPrivate, cvToHex, parseReadOnlyResponse } from './utils';
+import { fetchPrivate, cvToHex, parseReadOnlyResponse, cloneDeep, omit } from './utils';
 
-import BigNum from 'bn.js';
+import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
 import { validateContractCall, ClarityAbi } from './contract-abi';
 import { c32address } from 'c32check';
@@ -406,9 +404,8 @@ export async function makeSTXTokenTransfer(
 
     return transaction;
   } else {
-    const transaction = await makeUnsignedSTXTokenTransfer(
-      omit(txOptions, 'signerKeys') as UnsignedMultiSigTokenTransferOptions
-    );
+    const options = omit(txOptions, 'signerKeys');
+    const transaction = await makeUnsignedSTXTokenTransfer(options);
 
     const signer = new TransactionSigner(transaction);
     let pubKeys = txOptions.publicKeys;

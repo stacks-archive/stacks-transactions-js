@@ -2,7 +2,7 @@ import { StacksTransaction } from './transaction';
 
 import { StacksPrivateKey, StacksPublicKey } from './keys';
 import { isSingleSig, MultiSigSpendingCondition } from './authorization';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from './utils';
 import { SpendingCondition } from './authorization';
 import { AuthType } from './constants';
 import { SigningError } from './errors';

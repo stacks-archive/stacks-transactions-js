@@ -1,5 +1,3 @@
-import cloneDeep from 'lodash/cloneDeep';
-
 import {
   DEFAULT_CHAIN_ID,
   TransactionVersion,
@@ -22,7 +20,7 @@ import {
   createTransactionAuthField,
 } from './authorization';
 
-import { BufferArray, txidFromData } from './utils';
+import { BufferArray, txidFromData, cloneDeep } from './utils';
 
 import { Payload, serializePayload, deserializePayload } from './payload';
 
@@ -32,7 +30,7 @@ import { StacksPrivateKey, StacksPublicKey } from './keys';
 
 import { BufferReader } from './bufferReader';
 
-import BigNum from 'bn.js';
+import * as BigNum from 'bn.js';
 import { SerializationError, SigningError } from './errors';
 
 export class StacksTransaction {
