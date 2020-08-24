@@ -38,37 +38,6 @@ export class BufferArray {
   }
 }
 
-export class BufferReader {
-  buffer: Buffer;
-  index: number;
-
-  constructor(buffer: Buffer) {
-    this.buffer = buffer;
-    this.index = 0;
-  }
-
-  read(bytes: number, incrementIndex = true): Buffer {
-    const readBuffer = Buffer.alloc(bytes);
-    this.buffer.copy(readBuffer, 0, this.index, this.index + bytes);
-    if (incrementIndex) {
-      this.index += bytes;
-    }
-    return readBuffer;
-  }
-
-  readByte(incrementIndex = true): number {
-    const val = this.buffer[this.index];
-    if (incrementIndex) {
-      this.index += 1;
-    }
-    return val;
-  }
-
-  setIndex(index: number) {
-    this.index = index;
-  }
-}
-
 export const leftPadHex = (hexString: string): string =>
   hexString.length % 2 == 0 ? hexString : `0${hexString}`;
 
@@ -121,14 +90,41 @@ export class sha512_256 extends sha512 {
 
 export const txidFromData = (data: Buffer): string => new sha512_256().update(data).digest('hex');
 
-export const hash160 = (input: string) => {
-  const inputBuffer = Buffer.from(input, 'hex');
-  const sha256Result = new sha256().update(inputBuffer).digest('hex');
-  return new RIPEMD160().update(Buffer.from(sha256Result, 'hex')).digest('hex');
+export const hash160 = (input: Buffer): Buffer => {
+  const sha256Result = new sha256().update(input).digest();
+  return new RIPEMD160().update(sha256Result).digest();
 };
 
-export const hash_p2pkh = (input: string) => {
-  return hash160(input);
+// Internally, the Stacks blockchain encodes address the same as Bitcoin
+// single-sig address (p2pkh)
+export const hashP2PKH = (input: Buffer): string => {
+  return hash160(input).toString('hex');
+};
+
+// Internally, the Stacks blockchain encodes address the same as Bitcoin
+// multi-sig address (p2sh)
+export const hashP2SH = (numSigs: number, pubKeys: Buffer[]): string => {
+  if (numSigs > 15 || pubKeys.length > 15) {
+    throw Error('P2SH multisig address can only contain up to 15 public keys');
+  }
+
+  // construct P2SH script
+  const bufferArray = new BufferArray();
+  // OP_n
+  bufferArray.appendByte(80 + numSigs);
+  // public keys prepended by their length
+  pubKeys.forEach(pubKey => {
+    bufferArray.appendByte(pubKey.length);
+    bufferArray.push(pubKey);
+  });
+  // OP_m
+  bufferArray.appendByte(80 + pubKeys.length);
+  // OP_CHECKMULTISIG
+  bufferArray.appendByte(174);
+
+  const redeemScript = bufferArray.concatBuffer();
+  const redeemScriptHash = hash160(redeemScript);
+  return redeemScriptHash.toString('hex');
 };
 
 export function isClarityName(name: string) {

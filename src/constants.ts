@@ -26,6 +26,8 @@ enum StacksMessageType {
   PublicKey,
   LengthPrefixedList,
   Payload,
+  MessageSignature,
+  TransactionAuthField,
 }
 
 enum PayloadType {
@@ -70,13 +72,16 @@ enum AddressHashMode {
   // We support four different modes due to legacy compatibility with Stacks v1 addresses:
   /** SingleSigHashMode - hash160(public-key), same as bitcoin's p2pkh */
   SerializeP2PKH = 0x00,
-  /** SingleSigHashMode - hash160(multisig-redeem-script), same as bitcoin's multisig p2sh */
+  /** MultiSigHashMode - hash160(multisig-redeem-script), same as bitcoin's multisig p2sh */
   SerializeP2SH = 0x01,
-  /** MultiSigHashMode - hash160(segwit-program-00(p2pkh)), same as bitcoin's p2sh-p2wpkh */
+  /** SingleSigHashMode - hash160(segwit-program-00(p2pkh)), same as bitcoin's p2sh-p2wpkh */
   SerializeP2WPKH = 0x02,
   /** MultiSigHashMode - hash160(segwit-program-00(public-keys)), same as bitcoin's p2sh-p2wsh */
   SerializeP2WSH = 0x03,
 }
+
+type SingleSigHashMode = AddressHashMode.SerializeP2PKH | AddressHashMode.SerializeP2WPKH;
+type MultiSigHashMode = AddressHashMode.SerializeP2SH | AddressHashMode.SerializeP2WSH;
 
 enum AddressVersion {
   MainnetSingleSig = 22,
@@ -177,6 +182,8 @@ export {
   PostConditionPrincipalID,
   AuthType,
   AddressHashMode,
+  SingleSigHashMode,
+  MultiSigHashMode,
   AddressVersion,
   PubKeyEncoding,
   FungibleConditionCode,

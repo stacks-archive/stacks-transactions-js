@@ -21,8 +21,9 @@ import {
   intToHexString,
   hexStringToInt,
   exceedsMaxLengthBytes,
-  hash_p2pkh,
+  hashP2PKH,
   rightPadHexToLength,
+  hashP2SH,
   hash160,
 } from './utils';
 
@@ -31,6 +32,15 @@ import { BufferReader } from './bufferReader';
 import { PostCondition, serializePostCondition, deserializePostCondition } from './postcondition';
 import { Payload, deserializePayload, serializePayload } from './payload';
 import { DeserializationError } from './errors';
+import {
+  deserializeTransactionAuthField,
+  deserializeMessageSignature,
+  MessageSignature,
+  serializeMessageSignature,
+  serializeTransactionAuthField,
+  TransactionAuthField,
+} from './authorization';
+import { deserialize } from 'v8';
 
 export type StacksMessage =
   | Address
@@ -41,7 +51,9 @@ export type StacksMessage =
   | MemoString
   | AssetInfo
   | PostCondition
-  | StacksPublicKey;
+  | StacksPublicKey
+  | TransactionAuthField
+  | MessageSignature;
 
 export function serializeStacksMessage(message: StacksMessage): Buffer {
   switch (message.type) {
@@ -63,6 +75,10 @@ export function serializeStacksMessage(message: StacksMessage): Buffer {
       return serializeLPList(message);
     case StacksMessageType.Payload:
       return serializePayload(message);
+    case StacksMessageType.TransactionAuthField:
+      return serializeTransactionAuthField(message);
+    case StacksMessageType.MessageSignature:
+      return serializeMessageSignature(message);
   }
 }
 
@@ -93,6 +109,10 @@ export function deserializeStacksMessage(
         throw new DeserializationError('No List Type specified');
       }
       return deserializeLPList(bufferReader, listType);
+    case StacksMessageType.MessageSignature:
+      return deserializeMessageSignature(bufferReader);
+    default:
+      throw new Error('Could not recognize StacksMessageType');
   }
 }
 
@@ -192,7 +212,9 @@ export function addressFromPublicKeys(
 
   switch (hashMode) {
     case AddressHashMode.SerializeP2PKH:
-      return addressFromVersionHash(version, hash_p2pkh(publicKeyToString(publicKeys[0])));
+      return addressFromVersionHash(version, hashP2PKH(publicKeys[0].data));
+    case AddressHashMode.SerializeP2SH:
+      return addressFromVersionHash(version, hashP2SH(numSigs, publicKeys.map(serializePublicKey)));
     default:
       throw Error(
         `Not yet implemented: address construction using public keys for hash mode: ${hashMode}`
@@ -486,6 +508,9 @@ export function deserializeLPList(
         break;
       case StacksMessageType.PublicKey:
         l.push(deserializePublicKey(bufferReader));
+        break;
+      case StacksMessageType.TransactionAuthField:
+        l.push(deserializeTransactionAuthField(bufferReader));
         break;
     }
   }

@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+
 import { StacksTransaction } from './transaction';
 
 import { StacksNetwork, StacksMainnet, StacksTestnet } from './network';
@@ -9,10 +11,10 @@ import {
 } from './payload';
 
 import {
-  SingleSigSpendingCondition,
   StandardAuthorization,
   SponsoredAuthorization,
-  SpendingCondition,
+  createSingleSigSpendingCondition,
+  createMultiSigSpendingCondition,
 } from './authorization';
 
 import {
@@ -21,6 +23,7 @@ import {
   getPublicKey,
   publicKeyToAddress,
   pubKeyfromPrivKey,
+  publicKeyFromBuffer,
 } from './keys';
 
 import { TransactionSigner } from './signer';
@@ -45,6 +48,7 @@ import {
   AnchorMode,
   TransactionVersion,
   TxRejectedReason,
+  SingleSigHashMode,
 } from './constants';
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
@@ -54,6 +58,8 @@ import { fetchPrivate, cvToHex, parseReadOnlyResponse } from './utils';
 import * as BigNum from 'bn.js';
 import { ClarityValue, PrincipalCV } from './clarity';
 import { validateContractCall, ClarityAbi } from './contract-abi';
+import { add } from 'lodash';
+import { c32address } from 'c32check';
 
 /**
  * Lookup the nonce for an address from a core node
@@ -216,13 +222,18 @@ export async function getAbi(
   return JSON.parse(await response.text());
 }
 
+export interface MultiSigOptions {
+  numSignatures: number;
+  publicKeys: string[];
+  signerKeys?: string[];
+}
+
 /**
  * STX token transfer transaction options
  *
  * @param  {String|PrincipalCV} recipientAddress - the c32check address of the recipient or a
  *                                                  principal clarity value
  * @param  {BigNum} amount - number of tokens to transfer in microstacks
- * @param  {String} senderKey - hex string sender private key used to sign transaction
  * @param  {BigNum} fee - transaction fee in microstacks
  * @param  {BigNum} nonce - a nonce must be increased monotonically with each new transaction
  * @param  {StacksNetwork} network - the Stacks blockchain network this transaction is destined for
@@ -238,7 +249,6 @@ export async function getAbi(
 export interface TokenTransferOptions {
   recipient: string | PrincipalCV;
   amount: BigNum;
-  senderKey: string;
   fee?: BigNum;
   nonce?: BigNum;
   network?: StacksNetwork;
@@ -249,17 +259,36 @@ export interface TokenTransferOptions {
   sponsored?: boolean;
 }
 
+export interface UnsignedTokenTransferOptions extends TokenTransferOptions {
+  publicKey: string;
+}
+
+export interface SignedTokenTransferOptions extends TokenTransferOptions {
+  senderKey: string;
+}
+
+export interface UnsignedMultiSigTokenTransferOptions extends TokenTransferOptions {
+  numSignatures: number;
+  publicKeys: string[];
+}
+
+export interface SignedMultiSigTokenTransferOptions extends TokenTransferOptions {
+  numSignatures: number;
+  publicKeys: string[];
+  signerKeys: string[];
+}
+
 /**
- * Generates a Stacks token transfer transaction
+ * Generates an unsigned Stacks token transfer transaction
  *
- * Returns a signed Stacks token transfer transaction.
+ * Returns a Stacks token transfer transaction.
  *
- * @param  {TokenTransferOptions} txOptions - an options object for the token transfer
+ * @param  {UnsignedTokenTransferOptions | UnsignedMultiSigTokenTransferOptions} txOptions - an options object for the token transfer
  *
  * @return {StacksTransaction}
  */
-export async function makeSTXTokenTransfer(
-  txOptions: TokenTransferOptions
+export async function makeUnsignedSTXTokenTransfer(
+  txOptions: UnsignedTokenTransferOptions | UnsignedMultiSigTokenTransferOptions
 ): Promise<StacksTransaction> {
   const defaultOptions = {
     fee: new BigNum(0),
@@ -275,17 +304,27 @@ export async function makeSTXTokenTransfer(
 
   const payload = createTokenTransferPayload(options.recipient, options.amount, options.memo);
 
-  const addressHashMode = AddressHashMode.SerializeP2PKH;
-  const privKey = createStacksPrivateKey(options.senderKey);
-  const pubKey = getPublicKey(privKey);
   let authorization = null;
+  let spendingCondition = null;
 
-  const spendingCondition = new SingleSigSpendingCondition(
-    addressHashMode,
-    publicKeyToString(pubKey),
-    options.nonce,
-    options.fee
-  );
+  if ('publicKey' in options) {
+    // single-sig
+    spendingCondition = createSingleSigSpendingCondition(
+      AddressHashMode.SerializeP2PKH,
+      options.publicKey,
+      options.nonce,
+      options.fee
+    );
+  } else {
+    // multi-sig
+    spendingCondition = createMultiSigSpendingCondition(
+      AddressHashMode.SerializeP2SH,
+      options.numSignatures,
+      options.publicKeys,
+      options.nonce,
+      options.fee
+    );
+  }
 
   if (options.sponsored) {
     authorization = new SponsoredAuthorization(spendingCondition);
@@ -321,17 +360,55 @@ export async function makeSTXTokenTransfer(
       options.network.version === TransactionVersion.Mainnet
         ? AddressVersion.MainnetSingleSig
         : AddressVersion.TestnetSingleSig;
-    const senderAddress = publicKeyToAddress(addressVersion, pubKey);
+    const senderAddress = c32address(addressVersion, transaction.auth.spendingCondition!.signer);
     const txNonce = await getNonce(senderAddress, options.network);
     transaction.setNonce(txNonce);
   }
 
-  if (options.senderKey) {
+  return transaction;
+}
+
+/**
+ * Generates a signed Stacks token transfer transaction
+ *
+ * Returns a signed Stacks token transfer transaction.
+ *
+ * @param  {SignedTokenTransferOptions | SignedMultiSigTokenTransferOptions} txOptions - an options object for the token transfer
+ *
+ * @return {StacksTransaction}
+ */
+export async function makeSTXTokenTransfer(
+  txOptions: SignedTokenTransferOptions | SignedMultiSigTokenTransferOptions
+): Promise<StacksTransaction> {
+  if ('senderKey' in txOptions) {
+    const publicKey = publicKeyToString(getPublicKey(createStacksPrivateKey(txOptions.senderKey)));
+    const options = _.omit(txOptions, 'senderKey');
+    const transaction = await makeUnsignedSTXTokenTransfer({ publicKey, ...options });
+
+    const privKey = createStacksPrivateKey(txOptions.senderKey);
     const signer = new TransactionSigner(transaction);
     signer.signOrigin(privKey);
-  }
 
-  return transaction;
+    return transaction;
+  } else {
+    const transaction = await makeUnsignedSTXTokenTransfer(
+      _.omit(txOptions, 'signerKeys') as UnsignedMultiSigTokenTransferOptions
+    );
+
+    const signer = new TransactionSigner(transaction);
+    let pubKeys = txOptions.publicKeys;
+    for (const key of txOptions.signerKeys) {
+      const pubKey = pubKeyfromPrivKey(key);
+      pubKeys = pubKeys.filter(pk => pk !== pubKey.data.toString('hex'));
+      signer.signOrigin(createStacksPrivateKey(key));
+    }
+
+    for (const key of pubKeys) {
+      signer.appendOrigin(publicKeyFromBuffer(Buffer.from(key, 'hex')));
+    }
+
+    return transaction;
+  }
 }
 
 /**
@@ -439,7 +516,7 @@ export async function makeContractDeploy(
 
   let authorization = null;
 
-  const spendingCondition = new SingleSigSpendingCondition(
+  const spendingCondition = createSingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
@@ -621,7 +698,7 @@ export async function makeContractCall(txOptions: ContractCallOptions): Promise<
 
   let authorization = null;
 
-  const spendingCondition = new SingleSigSpendingCondition(
+  const spendingCondition = createSingleSigSpendingCondition(
     addressHashMode,
     publicKeyToString(pubKey),
     options.nonce,
@@ -928,7 +1005,7 @@ export async function sponsorTransaction(
   const defaultOptions = {
     fee: new BigNum(0),
     sponsorNonce: new BigNum(0),
-    sponsorAddressHashmode: AddressHashMode.SerializeP2PKH,
+    sponsorAddressHashmode: AddressHashMode.SerializeP2PKH as SingleSigHashMode,
   };
 
   const options = Object.assign(defaultOptions, sponsorOptions);
@@ -973,7 +1050,7 @@ export async function sponsorTransaction(
     options.sponsorNonce = sponsorNonce;
   }
 
-  const sponsorSpendingCondition = new SingleSigSpendingCondition(
+  const sponsorSpendingCondition = createSingleSigSpendingCondition(
     options.sponsorAddressHashmode,
     publicKeyToString(sponsorPubKey),
     options.sponsorNonce,
