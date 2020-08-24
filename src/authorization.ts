@@ -516,7 +516,7 @@ export class Authorization extends Deserializable {
       case AuthType.Standard:
         return verify(this.spendingCondition!, initialSigHash, AuthType.Standard);
       case AuthType.Sponsored:
-        return verify(this.spendingCondition!, initialSigHash, AuthType.Sponsored);
+        return verify(this.spendingCondition!, initialSigHash, AuthType.Standard);
       default:
         throw new SigningError('Invalid origin auth type');
     }
