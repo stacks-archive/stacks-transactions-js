@@ -14,20 +14,27 @@ import { c32addressDecode } from 'c32check';
 
 export { randombytes as randomBytes };
 
-export class BufferArray extends Array<Buffer> {
+export class BufferArray {
+  _value: Buffer[] = [];
+  get value() {
+    return this._value;
+  }
   appendHexString(hexString: string) {
-    this.push(Buffer.from(hexString, 'hex'));
+    this.value.push(Buffer.from(hexString, 'hex'));
   }
 
+  push(buffer: Buffer) {
+    return this._value.push(buffer);
+  }
   appendByte(octet: number) {
     if (!Number.isInteger(octet) || octet < 0 || octet > 255) {
       throw new Error(`Value ${octet} is not a valid byte`);
     }
-    this.push(Buffer.from([octet]));
+    this.value.push(Buffer.from([octet]));
   }
 
   concatBuffer(): Buffer {
-    return Buffer.concat(this);
+    return Buffer.concat(this.value);
   }
 }
 

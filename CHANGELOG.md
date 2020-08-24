@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Multi-Sig (P2SH) transaction support
 
+## v0.6.1
+- Fixed `BufferArray` class so that it does not need to rely on extending the Array native class
 
 ## v0.6.0
 - Added ability to create sponsored transactions using `sponsorTransaction()`
