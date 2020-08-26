@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Multi-Sig (P2SH) transaction support
+- Support for clarity string types
 
 ## v0.6.1
 - Fixed `BufferArray` class so that it does not need to rely on extending the Array native class
