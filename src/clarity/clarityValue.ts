@@ -10,7 +10,10 @@ import {
   ResponseOkCV,
   ListCV,
   TupleCV,
+  StringAsciiCV,
+  StringUtf8CV,
 } from '.';
+
 import { principalToString } from './types/principalCV';
 import { CLARITY_INT_SIZE } from '../constants';
 import { isClarityName } from '../utils';
@@ -33,6 +36,8 @@ export enum ClarityType {
   OptionalSome = 0x0a,
   List = 0x0b,
   Tuple = 0x0c,
+  StringASCII = 0x0d,
+  StringUTF8 = 0x0e,
 }
 
 export type ClarityValue =
@@ -46,7 +51,9 @@ export type ClarityValue =
   | ResponseErrorCV
   | ResponseOkCV
   | ListCV
-  | TupleCV;
+  | TupleCV
+  | StringAsciiCV
+  | StringUtf8CV;
 
 export function cvToString(val: ClarityValue, encoding: 'tryAscii' | 'hex' = 'tryAscii'): string {
   switch (val.type) {
@@ -83,6 +90,10 @@ export function cvToString(val: ClarityValue, encoding: 'tryAscii' | 'hex' = 'tr
       return `(tuple ${Object.keys(val.data)
         .map(key => `(${key} ${cvToString(val.data[key], encoding)})`)
         .join(' ')})`;
+    case ClarityType.StringASCII:
+      return `"${val.data}"`;
+    case ClarityType.StringUTF8:
+      return `u"${val.data}"`;
   }
 }
 
@@ -114,5 +125,9 @@ export function getCVTypeString(val: ClarityValue): string {
       return `(tuple ${Object.keys(val.data)
         .map(key => `(${key} ${getCVTypeString(val.data[key])})`)
         .join(' ')})`;
+    case ClarityType.StringASCII:
+      return `(string-ascii ${Buffer.from(val.data, 'ascii').length})`;
+    case ClarityType.StringUTF8:
+      return `(string-utf8 ${Buffer.from(val.data, 'utf8').length})`;
   }
 }
