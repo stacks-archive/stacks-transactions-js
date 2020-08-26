@@ -18,6 +18,7 @@ import {
 import { BufferReader } from '../bufferReader';
 import { deserializeAddress, deserializeLPString } from '../types';
 import { DeserializationError } from '../errors';
+import { stringAsciiCV, stringUtf8CV } from './types/stringCV';
 
 export default function deserializeCV(buffer: BufferReader | Buffer): ClarityValue {
   const bufferReader = Buffer.isBuffer(buffer) ? new BufferReader(buffer) : buffer;
@@ -82,6 +83,16 @@ export default function deserializeCV(buffer: BufferReader | Buffer): ClarityVal
         tupleContents[clarityName] = deserializeCV(bufferReader);
       }
       return tupleCV(tupleContents);
+
+    case ClarityType.StringASCII:
+      const asciiStrLen = bufferReader.readUInt32BE();
+      const asciiStr = bufferReader.readBuffer(asciiStrLen).toString('ascii');
+      return stringAsciiCV(asciiStr);
+
+    case ClarityType.StringUTF8:
+      const utf8StrLen = bufferReader.readUInt32BE();
+      const utf8Str = bufferReader.readBuffer(utf8StrLen).toString('utf8');
+      return stringUtf8CV(utf8Str);
 
     default:
       throw new DeserializationError(
