@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { createContractCallPayload } from '../../src/payload';
+
 import {
   trueCV,
   intCV,
@@ -14,7 +15,10 @@ import {
   responseOkCV,
   responseErrorCV,
   noneCV,
+  stringAsciiCV,
+  stringUtf8CV,
 } from '../../src/clarity';
+
 import {
   validateContractCall,
   ClarityAbi,
@@ -41,6 +45,8 @@ test('ABI validation', () => {
       key6: someCV(falseCV()),
       key7: responseOkCV(trueCV()),
       key8: listCV([trueCV(), falseCV()]),
+      key9: stringAsciiCV('Hello World'),
+      key10: stringUtf8CV('Hello World'),
     }),
   ];
 
@@ -94,6 +100,8 @@ test('ABI validation fail, tuple mistyped', () => {
       key6: noneCV(),
       key7: responseErrorCV(trueCV()),
       key8: falseCV(),
+      key9: stringAsciiCV('Hello World'),
+      key10: stringUtf8CV('Hello World'),
     }),
   ];
 
@@ -105,6 +113,7 @@ test('ABI validation fail, tuple mistyped', () => {
   );
 
   expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
+    // Don't forget to include spaces at the end of each line of this multiline string
     oneLineTrim`
     Clarity function \`tuple-test\` expects argument 1 to be of type 
       (tuple 
@@ -115,7 +124,9 @@ test('ABI validation fail, tuple mistyped', () => {
         (key5 (buff 3)) 
         (key6 (optional bool)) 
         (key7 (response bool bool)) 
-        (key8 (list 2 bool))), not 
+        (key8 (list 2 bool)) 
+        (key9 (string-ascii 11)) 
+        (key10 (string-utf8 11))), not 
       (tuple 
         (key1 bool) 
         (key2 int) 
@@ -124,7 +135,9 @@ test('ABI validation fail, tuple mistyped', () => {
         (key5 (buff 3)) 
         (key6 (optional none)) 
         (key7 (responseError bool)) 
-        (key8 bool))`
+        (key8 bool) 
+        (key9 (string-ascii 11)) 
+        (key10 (string-utf8 11)))`
   );
 });
 
@@ -153,6 +166,7 @@ test('ABI validation fail, tuple wrong key', () => {
   );
 
   expect(() => validateContractCall(payload, TEST_ABI)).toThrow(
+    // Don't forget to include spaces at the end of each line of this multiline string
     oneLineTrim`
     Clarity function \`tuple-test\` expects argument 1 to be of type 
     (tuple 
@@ -163,7 +177,9 @@ test('ABI validation fail, tuple wrong key', () => {
       (key5 (buff 3)) 
       (key6 (optional bool)) 
       (key7 (response bool bool)) 
-      (key8 (list 2 bool))), not 
+      (key8 (list 2 bool)) 
+      (key9 (string-ascii 11)) 
+      (key10 (string-utf8 11))), not 
     (tuple 
       (wrong-key bool) 
       (key2 int) 

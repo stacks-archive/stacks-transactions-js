@@ -12,7 +12,9 @@
           { "name": "key5", "type": { "buffer": { "length": 3 } } },
           { "name": "key6", "type": { "optional": "bool" } },
           { "name": "key7", "type": { "response": { "ok": "bool", "error": "bool" } } },
-          { "name": "key8", "type": { "list": { "type": "bool", "length": 2 } } }
+          { "name": "key8", "type": { "list": { "type": "bool", "length": 2 } } },
+          { "name": "key9", "type": { "string-ascii": { "length": 11 } } },
+          { "name": "key10", "type": { "string-utf8": { "length": 11 } } }
         ]}}
       ],
       "outputs": { "type": { "response": { "ok": "bool", "error": "none" } } }
