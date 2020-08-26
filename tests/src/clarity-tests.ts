@@ -22,6 +22,10 @@ import {
   TupleCV,
   standardPrincipalCVFromAddress,
   contractPrincipalCVFromStandard,
+  stringAsciiCV,
+  StringAsciiCV,
+  stringUtf8CV,
+  StringUtf8CV,
 } from '../../src/clarity';
 import { BufferReader } from '../../src/bufferReader';
 import { cvToString } from '../../src/clarity/clarityValue';
@@ -125,6 +129,18 @@ describe('Clarity Types', () => {
         return bufA.compare(bufB);
       });
       expect(Object.keys(serializedDeserialized.data)).toEqual(lexicographic);
+    });
+
+    test('StringAsciiCV', () => {
+      const str = stringAsciiCV('hello world');
+      const serializedDeserialized = serializeDeserialize(str) as StringAsciiCV;
+      expect(serializedDeserialized).toEqual(str);
+    });
+
+    test('StringUtf8CV', () => {
+      const str = stringUtf8CV('hello world');
+      const serializedDeserialized = serializeDeserialize(str) as StringUtf8CV;
+      expect(serializedDeserialized).toEqual(str);
     });
   });
 
@@ -285,6 +301,8 @@ describe('Clarity Types', () => {
           a: trueCV(),
           b: falseCV(),
         }),
+        m: stringAsciiCV('hello world'),
+        n: stringUtf8CV('hello \u{1234}'),
       });
 
       const tupleString = cvToString(tuple);
@@ -303,7 +321,9 @@ describe('Clarity Types', () => {
           (i (ok true)) 
           (j (err false)) 
           (k (list true false)) 
-          (l (tuple (a true) (b false))))`
+          (l (tuple (a true) (b false))) 
+          (m "hello world") 
+          (n u"hello \u{1234}"))`
       );
     });
 
