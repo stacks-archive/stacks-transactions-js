@@ -138,7 +138,7 @@ describe('Clarity Types', () => {
     });
 
     test('StringUtf8CV', () => {
-      const str = stringUtf8CV('hello world');
+      const str = stringUtf8CV('hello 🌾');
       const serializedDeserialized = serializeDeserialize(str) as StringUtf8CV;
       expect(serializedDeserialized).toEqual(str);
     });
