@@ -15,10 +15,13 @@ import {
 } from './clarity';
 import { ContractCallPayload, createContractCallPayload } from './payload';
 import { NotImplementedError } from './errors';
+import { stringAsciiCV, stringUtf8CV } from './clarity/types/stringCV';
 
 // From https://github.com/blockstack/stacks-blockchain-sidecar/blob/master/src/event-stream/contract-abi.ts
 
 export type ClarityAbiTypeBuffer = { buffer: { length: number } };
+export type ClarityAbiTypeStringAscii = { 'string-ascii': { length: number } };
+export type ClarityAbiTypeStringUtf8 = { 'string-utf8': { length: number } };
 export type ClarityAbiTypeResponse = { response: { ok: ClarityAbiType; error: ClarityAbiType } };
 export type ClarityAbiTypeOptional = { optional: ClarityAbiType };
 export type ClarityAbiTypeTuple = { tuple: { name: string; type: ClarityAbiType }[] };
@@ -43,7 +46,9 @@ export type ClarityAbiType =
   | ClarityAbiTypeResponse
   | ClarityAbiTypeOptional
   | ClarityAbiTypeTuple
-  | ClarityAbiTypeList;
+  | ClarityAbiTypeList
+  | ClarityAbiTypeStringAscii
+  | ClarityAbiTypeStringUtf8;
 
 export enum ClarityAbiTypeId {
   ClarityAbiTypeUInt128 = 1,
@@ -56,12 +61,18 @@ export enum ClarityAbiTypeId {
   ClarityAbiTypeOptional = 8,
   ClarityAbiTypeTuple = 9,
   ClarityAbiTypeList = 10,
+  ClarityAbiTypeStringAscii = 11,
+  ClarityAbiTypeStringUtf8 = 12,
 }
 
 export const isClarityAbiPrimitive = (val: ClarityAbiType): val is ClarityAbiTypePrimitive =>
   typeof val === 'string';
 export const isClarityAbiBuffer = (val: ClarityAbiType): val is ClarityAbiTypeBuffer =>
   (val as ClarityAbiTypeBuffer).buffer !== undefined;
+export const isClarityAbiStringAscii = (val: ClarityAbiType): val is ClarityAbiTypeStringAscii =>
+  (val as ClarityAbiTypeStringAscii)['string-ascii'] !== undefined;
+export const isClarityAbiStringUtf8 = (val: ClarityAbiType): val is ClarityAbiTypeStringUtf8 =>
+  (val as ClarityAbiTypeStringUtf8)['string-utf8'] !== undefined;
 export const isClarityAbiResponse = (val: ClarityAbiType): val is ClarityAbiTypeResponse =>
   (val as ClarityAbiTypeResponse).response !== undefined;
 export const isClarityAbiOptional = (val: ClarityAbiType): val is ClarityAbiTypeOptional =>
@@ -81,7 +92,9 @@ export type ClarityAbiTypeUnion =
   | { id: ClarityAbiTypeId.ClarityAbiTypeResponse; type: ClarityAbiTypeResponse }
   | { id: ClarityAbiTypeId.ClarityAbiTypeOptional; type: ClarityAbiTypeOptional }
   | { id: ClarityAbiTypeId.ClarityAbiTypeTuple; type: ClarityAbiTypeTuple }
-  | { id: ClarityAbiTypeId.ClarityAbiTypeList; type: ClarityAbiTypeList };
+  | { id: ClarityAbiTypeId.ClarityAbiTypeList; type: ClarityAbiTypeList }
+  | { id: ClarityAbiTypeId.ClarityAbiTypeStringAscii; type: ClarityAbiTypeStringAscii }
+  | { id: ClarityAbiTypeId.ClarityAbiTypeStringUtf8; type: ClarityAbiTypeStringUtf8 };
 
 export function getTypeUnion(val: ClarityAbiType): ClarityAbiTypeUnion {
   if (isClarityAbiPrimitive(val)) {
@@ -108,6 +121,10 @@ export function getTypeUnion(val: ClarityAbiType): ClarityAbiTypeUnion {
     return { id: ClarityAbiTypeId.ClarityAbiTypeTuple, type: val };
   } else if (isClarityAbiList(val)) {
     return { id: ClarityAbiTypeId.ClarityAbiTypeList, type: val };
+  } else if (isClarityAbiStringAscii(val)) {
+    return { id: ClarityAbiTypeId.ClarityAbiTypeStringAscii, type: val };
+  } else if (isClarityAbiStringUtf8(val)) {
+    return { id: ClarityAbiTypeId.ClarityAbiTypeStringUtf8, type: val };
   } else {
     throw new Error(`Unexpected Clarity ABI type: ${JSON.stringify(val)}`);
   }
@@ -145,6 +162,10 @@ function encodeClarityValue(
       return noneCV();
     case ClarityAbiTypeId.ClarityAbiTypeBuffer:
       return bufferCV(Buffer.from(val, 'utf8'));
+    case ClarityAbiTypeId.ClarityAbiTypeStringAscii:
+      return stringAsciiCV(val);
+    case ClarityAbiTypeId.ClarityAbiTypeStringUtf8:
+      return stringUtf8CV(val);
     case ClarityAbiTypeId.ClarityAbiTypeResponse:
       throw new NotImplementedError(`Unsupported encoding for Clarity type: ${union.id}`);
     case ClarityAbiTypeId.ClarityAbiTypeOptional:
@@ -169,6 +190,10 @@ export function getTypeString(val: ClarityAbiType): string {
     return val;
   } else if (isClarityAbiBuffer(val)) {
     return `(buff ${val.buffer.length})`;
+  } else if (isClarityAbiStringAscii(val)) {
+    return `(string-ascii ${val['string-ascii'].length})`;
+  } else if (isClarityAbiStringUtf8(val)) {
+    return `(string-utf8 ${val['string-utf8'].length})`;
   } else if (isClarityAbiResponse(val)) {
     return `(response ${getTypeString(val.response.ok)} ${getTypeString(val.response.error)})`;
   } else if (isClarityAbiOptional(val)) {
@@ -251,6 +276,16 @@ function matchType(cv: ClarityValue, abiType: ClarityAbiType): boolean {
       return (
         union.id === ClarityAbiTypeId.ClarityAbiTypeBuffer &&
         union.type.buffer.length >= cv.buffer.length
+      );
+    case ClarityType.StringASCII:
+      return (
+        union.id === ClarityAbiTypeId.ClarityAbiTypeStringAscii &&
+        union.type['string-ascii'].length >= cv.data.length
+      );
+    case ClarityType.StringUTF8:
+      return (
+        union.id === ClarityAbiTypeId.ClarityAbiTypeStringUtf8 &&
+        union.type['string-utf8'].length >= cv.data.length
       );
     case ClarityType.OptionalNone:
       return (
