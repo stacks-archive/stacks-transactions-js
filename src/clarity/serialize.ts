@@ -15,6 +15,7 @@ import {
 } from '.';
 import { BufferArray } from '../utils';
 import { SerializationError } from '../errors';
+import { StringAsciiCV, StringUtf8CV } from './types/stringCV';
 
 function bufferWithTypeID(typeId: ClarityType, buffer: Buffer): Buffer {
   const id = Buffer.from([typeId]);
@@ -98,6 +99,27 @@ function serializeTupleCV(cv: TupleCV) {
   return bufferWithTypeID(cv.type, buffers.concatBuffer());
 }
 
+function serializeStringCV(cv: StringAsciiCV | StringUtf8CV, encoding: 'ascii' | 'utf8') {
+  const buffers = new BufferArray();
+
+  const str = Buffer.from(cv.data, encoding);
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(str.length);
+
+  buffers.push(len);
+  buffers.push(str);
+
+  return bufferWithTypeID(cv.type, buffers.concatBuffer());
+}
+
+function serializeStringAsciiCV(cv: StringAsciiCV) {
+  return serializeStringCV(cv, 'ascii');
+}
+
+function serializeStringUtf8CV(cv: StringUtf8CV) {
+  return serializeStringCV(cv, 'utf8');
+}
+
 export function serializeCV(value: ClarityValue): Buffer {
   switch (value.type) {
     case ClarityType.BoolTrue:
@@ -122,6 +144,10 @@ export function serializeCV(value: ClarityValue): Buffer {
       return serializeListCV(value);
     case ClarityType.Tuple:
       return serializeTupleCV(value);
+    case ClarityType.StringASCII:
+      return serializeStringAsciiCV(value);
+    case ClarityType.StringUTF8:
+      return serializeStringUtf8CV(value);
     default:
       throw new SerializationError('Unable to serialize. Invalid Clarity Value.');
   }
