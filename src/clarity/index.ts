@@ -3,6 +3,7 @@ import { BooleanCV, TrueCV, FalseCV, trueCV, falseCV } from './types/booleanCV';
 import { IntCV, UIntCV, intCV, uintCV } from './types/intCV';
 import { BufferCV, bufferCV, bufferCVFromString } from './types/bufferCV';
 import { OptionalCV, noneCV, someCV } from './types/optionalCV';
+
 import {
   ResponseCV,
   ResponseOkCV,
@@ -10,6 +11,7 @@ import {
   responseOkCV,
   responseErrorCV,
 } from './types/responseCV';
+
 import {
   StandardPrincipalCV,
   ContractPrincipalCV,
@@ -20,8 +22,10 @@ import {
   PrincipalCV,
   contractPrincipalCVFromStandard,
 } from './types/principalCV';
+
 import { ListCV, listCV } from './types/listCV';
 import { TupleCV, tupleCV } from './types/tupleCV';
+import { StringAsciiCV, StringUtf8CV, stringUtf8CV, stringAsciiCV } from './types/stringCV';
 import { serializeCV } from './serialize';
 import deserializeCV from './deserialize';
 
@@ -44,6 +48,8 @@ export {
   ContractPrincipalCV,
   ListCV,
   TupleCV,
+  StringAsciiCV,
+  StringUtf8CV,
 };
 
 // Value construction functions
@@ -65,6 +71,8 @@ export {
   contractPrincipalCVFromStandard,
   listCV,
   tupleCV,
+  stringAsciiCV,
+  stringUtf8CV,
   getCVTypeString,
 };
 
