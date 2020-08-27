@@ -281,6 +281,36 @@ describe('Clarity Types', () => {
       const serialized = serializeCV(tuple).toString('hex');
       expect(serialized).toEqual('0c000000020362617a0906666f6f62617203');
     });
+
+    test('Ascii String Vector', () => {
+      const str = stringAsciiCV('hello world');
+      const serialized = serializeCV(str).toString('hex');
+      expect(serialized).toEqual('0d0000000b68656c6c6f20776f726c64');
+    });
+
+    test('Ascii String Escaped Length', () => {
+      const strings = [
+        stringAsciiCV('\\'),
+        stringAsciiCV('\"'),
+        stringAsciiCV('\n'),
+        stringAsciiCV('\t'),
+        stringAsciiCV('\r'),
+        stringAsciiCV('\0'),
+      ];
+      const serialized = strings.map(serializeCV);
+      serialized.forEach(ser => {
+        const reader = new BufferReader(ser);
+        const serializedStringLenByte = reader.readBuffer(5)[4];
+        expect(serializedStringLenByte).toEqual(1);
+        expect(ser.length).toEqual(6);
+      })
+    });
+
+    test('Utf8 String Vector', () => {
+      const str = stringUtf8CV('hello world');
+      const serialized = serializeCV(str).toString('hex');
+      expect(serialized).toEqual('0e0000000b68656c6c6f20776f726c64');
+    });
   });
 
   describe('Clarity Value To Clarity String Literal', () => {
