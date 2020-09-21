@@ -169,6 +169,79 @@ const network = new StacksMainnet();
 broadcastTransaction(sponsoredTx, network);
 ```
 
+## Supporting multi-signature transactions
+To generate a multi-sig transaction, first create an unsigned transaction.
+The `numSignatures` and `publicKeys` properties in the options object must be set:
+
+```typescript
+import {
+  makeUnsignedSTXTokenTransfer,
+  createStacksPrivateKey,
+  pubKeyfromPrivKey,
+  publicKeyToString,
+  TransactionSigner,
+  standardPrincipalCV,
+  BufferReader,
+} from "@blockstack/stacks-transactions";
+const BigNum = require("bn.js");
+
+const recipient = standardPrincipalCV("SP3FGQ8...");
+const amount = new BigNum(2500000);
+const fee = new BigNum(0);
+const nonce = new BigNum(0);
+const memo = "test memo";
+
+const privKeyStrings = [ "6d430bb9...", "2a584d89...", "d5200dee..."];
+
+// create private key objects from string array
+const privKeys = privKeyStrings.map(createStacksPrivateKey);
+
+// generate public keys from private key string array
+const pubKeys = privKeyStrings.map(pubKeyfromPrivKey);
+
+// create public key string array from objects
+const pubKeyStrings = pubKeys.map(publicKeyToString);
+
+const transaction = await makeUnsignedSTXTokenTransfer({
+  recipient,
+  amount,
+  fee,
+  nonce,
+  memo,
+  // number of signature required
+  numSignatures: 2,
+  // public key string array with >= numSignatures elements
+  publicKeys: pubKeyStrings,
+});
+
+const serializedTx = transaction.serialize();
+```
+
+This transaction payload can be passed along to other participants to sign. In addition to
+meeting the numSignatures requirement, the public keys of the parties who did not sign the
+transaction must be appended to the signature.
+
+```typescript
+// deserialize and sign transaction
+const bufferReader = new BufferReader(serializedTx);
+const deserializedTx = deserializeTransaction(bufferReader);
+
+const signer = new TransactionSigner(deserializedTx);
+
+// first signature
+signer.signOrigin(privKeys[0]);
+
+// second signature
+signer.signOrigin(privKeys[1]);
+
+// after meeting the numSignatures requirement, the public 
+// keys of the participants who did not sign must be appended
+signer.appendOrigin(pubKeys[2]);
+
+// the serialized multi-sig tx
+const serializedSignedTx = deserializedTx.serialize();
+```
+
 ## Calling Read-only Contract Functions
 
 Read-only contract functions can be called without generating or broadcasting a transaction. Instead it works via a direct API call to a Stacks node.
