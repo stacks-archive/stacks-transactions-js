@@ -170,7 +170,8 @@ broadcastTransaction(sponsoredTx, network);
 ```
 
 ## Supporting multi-signature transactions
-To generate a multi-sig transaction, first create an unsigned transaction as the origin. The `numSignatures` and `publicKeys` properties in the options object must be set:
+To generate a multi-sig transaction, first create an unsigned transaction.
+The `numSignatures` and `publicKeys` properties in the options object must be set:
 
 ```typescript
 import {
@@ -214,11 +215,11 @@ const transaction = await makeUnsignedSTXTokenTransfer({
 });
 
 const serializedTx = transaction.serialize();
-
-console.log(serializedTx.toString("hex"));
 ```
 
-Now, the raw transaction payload can be transmitted. The recipient will deserialize and sign the transaction:
+This transaction payload can be passed along to other participants to sign. In addition to
+meeting the numSignatures requirement, the public keys of the parties who did not sign the
+transaction must be appended to the signature.
 
 ```typescript
 // deserialize and sign transaction
@@ -226,14 +227,19 @@ const bufferReader = new BufferReader(serializedTx);
 const deserializedTx = deserializeTransaction(bufferReader);
 
 const signer = new TransactionSigner(deserializedTx);
+
+// first signature
 signer.signOrigin(privKeys[0]);
+
+// second signature
 signer.signOrigin(privKeys[1]);
+
+// after meeting the numSignatures requirement, the public 
+// keys of the participants who did not sign must be appended
 signer.appendOrigin(pubKeys[2]);
 
+// the serialized multi-sig tx
 const serializedSignedTx = deserializedTx.serialize();
-
-// signed, serialized transaction payload
-console.log(serializedSignedTx.toString("hex"));
 ```
 
 ## Calling Read-only Contract Functions
