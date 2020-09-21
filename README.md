@@ -169,6 +169,73 @@ const network = new StacksMainnet();
 broadcastTransaction(sponsoredTx, network);
 ```
 
+## Supporting multi-signature transactions
+To generate a multi-sig transaction, first create an unsigned transaction as the origin. The `numSignatures` and `publicKeys` properties in the options object must be set:
+
+```typescript
+import {
+  makeUnsignedSTXTokenTransfer,
+  createStacksPrivateKey,
+  pubKeyfromPrivKey,
+  publicKeyToString,
+  TransactionSigner,
+  standardPrincipalCV,
+  BufferReader,
+} from "@blockstack/stacks-transactions";
+const BigNum = require("bn.js");
+
+const recipient = standardPrincipalCV("SP3FGQ8...");
+const amount = new BigNum(2500000);
+const fee = new BigNum(0);
+const nonce = new BigNum(0);
+const memo = "test memo";
+
+const privKeyStrings = [ "6d430bb9...", "2a584d89...", "d5200dee..."];
+
+// create private key objects from string array
+const privKeys = privKeyStrings.map(createStacksPrivateKey);
+
+// generate public keys from private key string array
+const pubKeys = privKeyStrings.map(pubKeyfromPrivKey);
+
+// create public key string array from objects
+const pubKeyStrings = pubKeys.map(publicKeyToString);
+
+const transaction = await makeUnsignedSTXTokenTransfer({
+  recipient,
+  amount,
+  fee,
+  nonce,
+  memo,
+  // number of signature required
+  numSignatures: 2,
+  // public key string array with >= numSignatures elements
+  publicKeys: pubKeyStrings,
+});
+
+const serializedTx = transaction.serialize();
+
+console.log(serializedTx.toString("hex"));
+```
+
+Now, the raw transaction payload can be transmitted. The recipient will deserialize and sign the transaction:
+
+```typescript
+// deserialize and sign transaction
+const bufferReader = new BufferReader(serializedTx);
+const deserializedTx = deserializeTransaction(bufferReader);
+
+const signer = new TransactionSigner(deserializedTx);
+signer.signOrigin(privKeys[0]);
+signer.signOrigin(privKeys[1]);
+signer.appendOrigin(pubKeys[2]);
+
+const serializedSignedTx = deserializedTx.serialize();
+
+// signed, serialized transaction payload
+console.log(serializedSignedTx.toString("hex"));
+```
+
 ## Calling Read-only Contract Functions
 
 Read-only contract functions can be called without generating or broadcasting a transaction. Instead it works via a direct API call to a Stacks node.
