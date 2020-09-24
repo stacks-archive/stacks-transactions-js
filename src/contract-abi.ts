@@ -17,7 +17,7 @@ import { ContractCallPayload, createContractCallPayload } from './payload';
 import { NotImplementedError } from './errors';
 import { stringAsciiCV, stringUtf8CV } from './clarity/types/stringCV';
 
-// From https://github.com/blockstack/stacks-blockchain-sidecar/blob/master/src/event-stream/contract-abi.ts
+// From https://github.com/blockstack/stacks-blockchain-api/blob/master/src/event-stream/contract-abi.ts
 
 export type ClarityAbiTypeBuffer = { buffer: { length: number } };
 export type ClarityAbiTypeStringAscii = { 'string-ascii': { length: number } };
