@@ -8,9 +8,7 @@
     "outDir": "lib",
     "sourceMap": true
   },
-  "include": [
-    "src",
-  ],
+  "include": ["src"],
   "typedocOptions": {
     "readme": "overview.md",
     "mode": "file",
@@ -18,7 +16,7 @@
     "excludeProtected": true,
     "excludeExternals": true,
     "excludeNotExported": false,
-    "includes" : "mdincludes",
+    "includes": "mdincludes",
     "includeDeclarations": false,
     "gitRevision": "master",
     "listInvalidSymbolLinks": true,
