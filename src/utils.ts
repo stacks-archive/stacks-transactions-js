@@ -156,7 +156,10 @@ export async function fetchPrivate(input: RequestInfo, init?: RequestInit): Prom
   const fetchResult = await fetch(input, fetchOpts);
   return fetchResult;
 }
-
+/**
+ * Converts a clarity value to a hex encoded string with `0x` prefix
+ * @param cv
+ */
 export function cvToHex(cv: ClarityValue) {
   const serialized = serializeCV(cv);
   return `0x${serialized.toString('hex')}`;
@@ -174,6 +177,10 @@ export interface ReadOnlyFunctionResponse {
   result: string;
 }
 
+/**
+ * Converts the response of a read-only function call into its Clarity Value
+ * @param param
+ */
 export const parseReadOnlyResponse = ({ result }: ReadOnlyFunctionResponse): ClarityValue => {
   const hex = result.slice(2);
   const bufferCV = Buffer.from(hex, 'hex');
