@@ -19,6 +19,7 @@ import {
   callReadOnlyFunction,
   sponsorTransaction,
   makeSTXTokenTransfer,
+  getMapEntry,
 } from '../../src/builders';
 
 import { deserializeTransaction } from '../../src/transaction';
@@ -41,7 +42,16 @@ import {
 
 import { StacksTestnet, StacksMainnet } from '../../src/network';
 
-import { bufferCV, standardPrincipalCV, bufferCVFromString, serializeCV } from '../../src/clarity';
+import {
+  bufferCV,
+  standardPrincipalCV,
+  bufferCVFromString,
+  serializeCV,
+  tupleCV,
+  uintCV,
+  stringAsciiCV,
+  someCV,
+} from '../../src/clarity';
 
 import * as BigNum from 'bn.js';
 
@@ -50,6 +60,7 @@ import { createStacksPrivateKey, pubKeyfromPrivKey, publicKeyToString } from '..
 import { TransactionSigner } from '../../src/signer';
 import fetchMock from 'jest-fetch-mock';
 import { SingleSigSpendingCondition } from '../../src/authorization';
+import { cvToHex } from '../../src/utils';
 
 beforeEach(() => {
   fetchMock.resetMocks();
@@ -1052,4 +1063,29 @@ test('Call read-only function', async () => {
   expect(fetchMock.mock.calls.length).toEqual(1);
   expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
   expect(result).toEqual(mockResult);
+});
+
+test('Get map entry', async () => {
+  const contractAddress = 'ST3KC0MTNW34S1ZXD36JYKFD3JJMWA01M55DSJ4JE';
+  const contractName = 'kv-store';
+  const mapName = 'map';
+  const network = new StacksTestnet();
+  const mockResult = someCV(tupleCV({ value: stringAsciiCV('result') }));
+  const key = tupleCV({ key: uintCV(1) });
+  const options = {
+    contractAddress,
+    contractName,
+    mapName,
+    key,
+    network,
+  };
+
+  const apiUrl = network.getMapEntryCallApiUrl(contractAddress, contractName, mapName);
+  fetchMock.mockOnce(`{"data": "${cvToHex(mockResult)}"}`);
+
+  const result = await getMapEntry(options);
+
+  expect(fetchMock.mock.calls.length).toEqual(1);
+  expect(fetchMock.mock.calls[0][0]).toEqual(apiUrl);
+  expect(result).toEqual(mockResult.value);
 });

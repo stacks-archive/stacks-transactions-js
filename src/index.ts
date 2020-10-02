@@ -30,4 +30,4 @@ export * from './types';
 export * from './constants';
 export * from './contract-abi';
 export * from './signer';
-export { cvToHex, parseReadOnlyResponse } from './utils';
+export { cvToHex, parseReadOnlyResponse, parseGetMapEntryResponse } from './utils';

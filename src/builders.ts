@@ -51,10 +51,25 @@ import {
 
 import { AssetInfo, createLPList, createStandardPrincipal, createContractPrincipal } from './types';
 
-import { fetchPrivate, cvToHex, parseReadOnlyResponse, cloneDeep, omit } from './utils';
+import {
+  fetchPrivate,
+  cvToHex,
+  parseReadOnlyResponse,
+  cloneDeep,
+  omit,
+  parseGetMapEntryResponse,
+} from './utils';
 
 import * as BigNum from 'bn.js';
-import { ClarityValue, PrincipalCV } from './clarity';
+import {
+  ClarityType,
+  ClarityValue,
+  OptionalCV,
+  PrincipalCV,
+  serializeCV,
+  SomeCV,
+  TupleCV,
+} from './clarity';
 import { validateContractCall, ClarityAbi } from './contract-abi';
 import { c32address } from 'c32check';
 
@@ -955,7 +970,7 @@ export interface ReadOnlyFunctionOptions {
  *
  * @param  {ReadOnlyFunctionOptions} readOnlyFunctionOptions - the options object
  *
- * Returns an object with a status bool (okay) and a result string that is a serialized clarity value in hex format.
+ * Returns a clarity value if the call was successful, otherwise throws an error.
  *
  * @return {ClarityValue}
  */
@@ -1005,6 +1020,62 @@ export async function callReadOnlyFunction(
   }
 
   return response.json().then(responseJson => parseReadOnlyResponse(responseJson));
+}
+
+export interface GetMapEntryOptions {
+  contractName: string;
+  contractAddress: string;
+  mapName: string;
+  key: TupleCV;
+  network?: StacksNetwork;
+}
+/**
+ * Queries a data map from a contract interface
+ *
+ * @param  {GetMapEntryOptions} getMapEntry - the options object
+ *
+ * Returns the map value as TupleCV if the map contains the given key, otherwise throws an error.
+ *
+ * @return {TupleCV}
+ */
+export async function getMapEntry(getMapEntryOptions: GetMapEntryOptions): Promise<TupleCV> {
+  const defaultOptions = {
+    network: new StacksMainnet(),
+  };
+
+  const options = Object.assign(defaultOptions, getMapEntryOptions);
+
+  const { contractName, contractAddress, mapName, key, network } = options;
+
+  const url = network.getMapEntryCallApiUrl(contractAddress, contractName, mapName);
+  const body = cvToHex(key);
+
+  const response = await fetchPrivate(url, {
+    method: 'POST',
+    body,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    let msg = '';
+    try {
+      msg = await response.text();
+    } catch (error) {}
+    throw new Error(
+      `Error getting map entry. Response ${response.status}: ${response.statusText}. Attempted to fetch ${url} and failed with the message: "${msg}"`
+    );
+  }
+
+  return response.json().then(responseJson => {
+    const optionalCV = parseGetMapEntryResponse(responseJson);
+    if (optionalCV.type === ClarityType.OptionalNone) {
+      throw new Error(`Error getting map entry. Key does not exists in map ${mapName}`);
+    } else {
+      return (optionalCV as SomeCV).value as TupleCV;
+    }
+  });
 }
 
 /**

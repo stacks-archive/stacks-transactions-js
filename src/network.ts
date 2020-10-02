@@ -18,6 +18,7 @@ export interface StacksNetwork {
     contractName: string,
     functionName: string
   ) => string;
+  getMapEntryCallApiUrl: (contractAddress: string, contractNam: string, mapName: string) => string;
 }
 
 export class StacksMainnet implements StacksNetwork {
@@ -29,6 +30,7 @@ export class StacksMainnet implements StacksNetwork {
   accountEndpoint = '/v2/accounts';
   contractAbiEndpoint = '/v2/contracts/interface';
   readOnlyFunctionCallEndpoint = '/v2/contracts/call-read';
+  mapEntryCallEndpoint = '/v2/map_entry';
   getBroadcastApiUrl = () => `${this.coreApiUrl}${this.broadcastEndpoint}`;
   getTransferFeeEstimateApiUrl = () => `${this.coreApiUrl}${this.transferFeeEstimateEndpoint}`;
   getAccountApiUrl = (address: string) =>
@@ -43,6 +45,13 @@ export class StacksMainnet implements StacksNetwork {
     `${this.coreApiUrl}${
       this.readOnlyFunctionCallEndpoint
     }/${contractAddress}/${contractName}/${encodeURIComponent(functionName)}`;
+  getMapEntryCallApiUrl = (
+    contractAddress: string,
+    contractName: string,
+    mapName: string,
+    proof: string = '0'
+  ) =>
+    `${this.coreApiUrl}${this.mapEntryCallEndpoint}/${contractAddress}/${contractName}/${mapName}?proof=${proof}`;
 }
 
 export class StacksTestnet extends StacksMainnet implements StacksNetwork {

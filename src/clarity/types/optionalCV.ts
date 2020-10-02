@@ -12,7 +12,7 @@ interface SomeCV {
 }
 
 const noneCV = (): OptionalCV => ({ type: ClarityType.OptionalNone });
-const someCV = (value: ClarityValue): OptionalCV => ({ type: ClarityType.OptionalSome, value });
+const someCV = (value: ClarityValue): SomeCV => ({ type: ClarityType.OptionalSome, value });
 const optionalCVOf = (value?: ClarityValue): OptionalCV => {
   if (value) {
     return someCV(value);
@@ -21,4 +21,4 @@ const optionalCVOf = (value?: ClarityValue): OptionalCV => {
   }
 };
 
-export { OptionalCV, noneCV, someCV, optionalCVOf };
+export { OptionalCV, SomeCV, noneCV, someCV, optionalCVOf };
