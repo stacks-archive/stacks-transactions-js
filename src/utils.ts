@@ -180,7 +180,7 @@ export interface ReadOnlyFunctionResponse {
 
 /**
  * Converts the response of a read-only function call into its Clarity Value
- * @param param
+ * @param param0 the read-only function response
  */
 export const parseReadOnlyResponse = ({ result }: ReadOnlyFunctionResponse): ClarityValue => {
   const hex = result.slice(2);
@@ -188,11 +188,20 @@ export const parseReadOnlyResponse = ({ result }: ReadOnlyFunctionResponse): Cla
   return deserializeCV(bufferCV);
 };
 
+/**
+ * Map Entry query response object
+ * @param {string} data - a hex encoded string of the optional map entry
+ * @param {string?} proof - the MARF proof of the data
+ */
 export interface GetMapEntryResponse {
   data: string;
   proof?: string;
 }
 
+/**
+ * Converts the response of a map entry call into its Clarity Value
+ * @param param0 the map entry call response
+ */
 export const parseGetMapEntryResponse = ({ data }: GetMapEntryResponse): OptionalCV => {
   const hex = data.slice(2);
   const bufferCV = Buffer.from(hex, 'hex');

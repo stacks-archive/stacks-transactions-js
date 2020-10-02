@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-Sig (P2SH) transaction support
 - Support for clarity string types
 - Added `createTxWithSignature` method to
-- Added `cvToHex` and `parseReadOnlyResponse`
+- Added `getMapEntry` method to query contract data maps
+- Added `cvToHex` and `parseReadOnlyResponse`, `parseMapEntryResponse`
 
 ## v0.6.1
 
