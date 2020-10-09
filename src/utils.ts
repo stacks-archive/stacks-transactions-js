@@ -1,6 +1,6 @@
 import { sha256, sha512 } from 'sha.js';
 
-import { ClarityValue, serializeCV } from './clarity';
+import { ClarityType, ClarityValue, serializeCV, TupleCV } from './clarity';
 
 import RIPEMD160 from 'ripemd160-min';
 
@@ -14,6 +14,7 @@ import { c32addressDecode } from 'c32check';
 // Note: lodash is using old-style ts exports and requires this
 // @ts-expect-error
 import * as lodashCloneDeep from 'lodash/cloneDeep';
+import { noneCV, OptionalCV, optionalCVOf } from './clarity/types/optionalCV';
 
 export { randombytes as randomBytes };
 
@@ -156,7 +157,10 @@ export async function fetchPrivate(input: RequestInfo, init?: RequestInit): Prom
   const fetchResult = await fetch(input, fetchOpts);
   return fetchResult;
 }
-
+/**
+ * Converts a clarity value to a hex encoded string with `0x` prefix
+ * @param cv
+ */
 export function cvToHex(cv: ClarityValue) {
   const serialized = serializeCV(cv);
   return `0x${serialized.toString('hex')}`;
@@ -174,12 +178,40 @@ export interface ReadOnlyFunctionResponse {
   result: string;
 }
 
+/**
+ * Converts the response of a read-only function call into its Clarity Value
+ * @param param0 the read-only function response
+ */
 export const parseReadOnlyResponse = ({ result }: ReadOnlyFunctionResponse): ClarityValue => {
   const hex = result.slice(2);
   const bufferCV = Buffer.from(hex, 'hex');
   return deserializeCV(bufferCV);
 };
 
+/**
+ * Map Entry query response object
+ * @param {string} data - a hex encoded string of the optional map entry
+ * @param {string?} proof - the MARF proof of the data
+ */
+export interface GetMapEntryResponse {
+  data: string;
+  proof?: string;
+}
+
+/**
+ * Converts the response of a map entry call into its Clarity Value
+ * @param param0 the map entry call response
+ */
+export const parseGetMapEntryResponse = ({ data }: GetMapEntryResponse): OptionalCV => {
+  const hex = data.slice(2);
+  const bufferCV = Buffer.from(hex, 'hex');
+  return deserializeCV(bufferCV) as OptionalCV;
+};
+
+/**
+ *
+ * @param stacksAddress
+ */
 export const validateStacksAddress = (stacksAddress: string): boolean => {
   try {
     c32addressDecode(stacksAddress);
