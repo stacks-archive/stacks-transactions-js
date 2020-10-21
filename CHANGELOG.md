@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `getMapEntry` method to query contract data maps
 - Added `cvToHex` and `parseReadOnlyResponse`, `parseMapEntryResponse`
 
+### Changed
+
+- Default buffer to string encoding is now `hex` in the `cvToString()` method
+
 ## v0.6.1
 
 - Fixed `BufferArray` class so that it does not need to rely on extending the Array native class
