@@ -1,3 +1,5 @@
+## This package has been moved into the (Stacks.js Monorepo)[https://github.com/blockstack/stacks.js]. This repo will no longer be maintained.
+
 # Stacks Transactions JS [![npm](https://img.shields.io/npm/v/@blockstack/stacks-transactions?color=red)](https://www.npmjs.com/package/@blockstack/stacks-transactions)
 The JavaScript library for generating Stacks 2.0 transactions. 
 
